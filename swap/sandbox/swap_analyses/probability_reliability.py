@@ -20,8 +20,6 @@ def getLabelReal(subs, score='score'):
         res['prob'].append(sub[score])
     return res
 
-def val2bin(val,bins):
-
 # Check data in data base
 db = DB()
 cfg = Config()
