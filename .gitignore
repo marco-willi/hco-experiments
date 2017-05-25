@@ -118,3 +118,5 @@ manifest
 *.sublime*
 .Rproj.user
 *.Rhistory
+*.bak
+*.Rproj
