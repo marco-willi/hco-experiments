@@ -120,3 +120,4 @@ manifest
 *.Rhistory
 *.bak
 *.Rproj
+transfer_learning/config/credentials.ini
