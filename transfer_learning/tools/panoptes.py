@@ -1,6 +1,6 @@
 # import modules
 from panoptes_client import Project, Panoptes
-from config.config import *
+from config.config import config, config_credentials
 import urllib.request
 import pandas as pd
 import json

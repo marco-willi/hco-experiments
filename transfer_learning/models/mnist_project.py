@@ -8,16 +8,23 @@ from tools.data_generator import DataFetcher
 import numpy as np
 from main import test_dict, train_dict, val_dict
 from keras.preprocessing.image import array_to_img
+from config.config import config
 
 ##################################
 # Parameters
 ##################################
 
-batch_size = 32
-num_classes = 10
-epochs = 5
-data_augmentation = False
-image_shape = (28, 28, 1)
+batch_size = eval(config['modelling']['batch_size'])
+num_classes = int(config['modelling']['num_classes'])
+num_epochs = int(config['modelling']['num_epochs'])
+data_augmentation = eval(config['modelling']['data_augmentation'])
+
+image_size_save = config['modelling']['image_size_save'].split(',')
+image_size_save = tuple([int(x) for x in image_size_save])
+
+image_size_model = config['modelling']['image_size_model'].split(',')
+image_size_model = tuple([int(x) for x in image_size_model])
+
 
 ##################################
 # Data Generator
@@ -25,18 +32,19 @@ image_shape = (28, 28, 1)
 
 # generate junks of input data
 data_fetcher_train = DataFetcher(train_dict, asynch_read=True,
-                                 image_size=image_shape[0:2],
-                                 batch_size=1e3)
+                                 image_size=image_size_save[0:2],
+                                 batch_size=eval(config['modelling']['batch_size_big']),
+                                 disk_scratch = config['paths']['path_scratch'])
 
 data_fetcher_test = DataFetcher(test_dict, asynch_read=True,
-                                image_size=image_shape[0:2],
+                                image_size=image_size_save[0:2],
                                 n_big_batches=1,
-                                batch_size=None)
+                                disk_scratch = config['paths']['path_scratch'])
 
 data_fetcher_val = DataFetcher(val_dict, asynch_read=True,
-                               image_size=image_shape[0:2],
+                               image_size=image_size_save[0:2],
                                n_big_batches=1,
-                               batch_size=None)
+                               disk_scratch = config['paths']['path_scratch'])
 
 # generate input data from a generator function that applies
 # random / static transformations to the input
@@ -59,7 +67,7 @@ datagen = ImageDataGenerator(
 model = Sequential()
 model.add(Conv2D(32, kernel_size=(3, 3),
                  activation='relu',
-                 input_shape=image_shape))
+                 input_shape=image_size_model))
 model.add(Conv2D(64, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Dropout(0.25))
@@ -92,15 +100,15 @@ def keras_preprocessing(X, Y, num_classes):
 ##################################
 
 # get test data
-X_test, Y_test, test_original_ids = data_fetcher_test.get_batch()
+X_test, Y_test, test_original_ids = data_fetcher_test.nextBatch()
 X_test, Y_test = keras_preprocessing(X_test, Y_test, num_classes=num_classes)
 
 # get validation data
-X_val, Y_val, val_original_ids = data_fetcher_val.get_batch()
+X_val, Y_val, val_original_ids = data_fetcher_val.nextBatch()
 X_val, Y_val = keras_preprocessing(X_val, Y_val, num_classes=num_classes)
 
 # Training loop over number of epochs
-for e in range(epochs):
+for e in range(num_epochs):
     print("------------------------------------------")
     print("Epoch %d" % e)
     print("------------------------------------------")
@@ -108,7 +116,7 @@ for e in range(epochs):
     # generated from the DataGenerator class
     for i in range(0, data_fetcher_train.n_batches):
         # get next batch
-        X_train, Y_train, original_ids = data_fetcher_train.get_batch()
+        X_train, Y_train, original_ids = data_fetcher_train.nextBatch()
         # transform to keras specific formats
         X_train, Y_train = keras_preprocessing(X_train, Y_train,
                                                num_classes=num_classes)
@@ -129,11 +137,26 @@ for e in range(epochs):
                     validation_data=(X_test,Y_test))
         else:
             model.fit(X_train, Y_train, batch_size=batch_size, epochs=1,
-                      validation_data=(X_test,Y_test))
+                      validation_data=(X_test,Y_test), verbose=2)
 
+
+##################################
+# Evaluation
+##################################
 
 model.test_on_batch(X_val, Y_val)
 model.metrics_names
+
+
+##################################
+# Save
+##################################
+
+path_to_save = config['paths']['path_final_models']
+model_id = config['model']['identifier']
+model.save(path_to_save + model_id + '.h5')
+
+
 
 #
 import random as rand
