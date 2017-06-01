@@ -2,7 +2,7 @@
 import random
 import numpy as np
 from PIL import Image
-from keras.preprocessing.image import img_to_array
+from keras.preprocessing.image import img_to_array, array_to_img
 import requests
 from io import BytesIO
 import aiohttp
@@ -46,10 +46,23 @@ class DataBatch(object):
         if self.is_stored:
             if self.storage == "memory":
                 dat = self.raw_data
+                return dat['X_data'], dat['y_data'], dat['original_ids']
+
             elif self.storage == "disk":
                 batch_file = 'batch' + str(self.batch_id) + '.pkl'
                 dat = pkl.load(open(self.disk_storage_path + batch_file, "rb"))
-            return dat['X_data'], dat['y_data'], dat['original_ids']
+                return dat['X_data'], dat['y_data'], dat['original_ids']
+
+            elif self.storage == "numpy":
+                batch_file = 'batch' + str(self.batch_id) + '.npy'
+                X_data = np.load(self.disk_storage_path + "X_" + batch_file)
+                y_data = np.load(self.disk_storage_path + "y_" + batch_file)
+                original_ids = np.load(self.disk_storage_path + "i_" + batch_file)
+                return X_data, y_data, original_ids
+            elif self.storage == "disk_raw":
+                batch_dir = self.disk_storage_path + "batch" + str(self.batch_id)
+                for i in range(0, len(self.y_data)):
+                    raise NotImplementedError
         else:
             pass
 
@@ -68,10 +81,28 @@ class DataBatch(object):
             # check batch directory
             batch_file = 'batch' + str(self.batch_id) + '.pkl'
             if batch_file in os.listdir(self.disk_storage_path):
-                pass
+                print("Overwriting: %s" % batch_file)
             else:
                 pkl.dump(data_dict,
                          open(self.disk_storage_path + batch_file, "wb"))
+        # save in native numpy format
+        elif storage == "numpy":
+            batch_file = 'batch' + str(self.batch_id) + '.npy'
+            if batch_file in os.listdir(self.disk_storage_path):
+                print("Overwriting: %s" % batch_file)
+            else:
+                np.save(self.disk_storage_path + "X_" + batch_file, X_data)
+                np.save(self.disk_storage_path + "y_" + batch_file, y_data)
+                np.save(self.disk_storage_path + "i_" + batch_file, original_ids)
+        # save to disk as images
+        elif storage == "disk_raw":
+            # create new directory for batch
+            batch_dir = self.disk_storage_path + "batch" + str(self.batch_id)
+            os.mkdir(batch_dir)
+            # loop through all images and store
+            for i in range(0, X_data.shape[0]):
+                img = array_to_img(X_data[i, :, :, :])
+                img.save(batch_dir + "/" + i + ".jpeg")
         else:
             # do nothing
             return None
@@ -79,7 +110,6 @@ class DataBatch(object):
         # set flags and parameters
         self.is_stored = True
         self.storage = storage
-
 
 
 class DataFetcher(object):
@@ -128,8 +158,6 @@ class DataFetcher(object):
 
         # define batches
         self._defineBatches()
-
-
 
         # check input
         assert (n_big_batches is None) | (batch_size is None)
@@ -188,9 +216,11 @@ class DataFetcher(object):
                         chunk = await response.content.read()
                         if not chunk:
                             break
-                        img = Image.open(BytesIO(chunk))
-                        binary_images_dict[key] = img
-
+                        try:
+                            img = Image.open(BytesIO(chunk))
+                            binary_images_dict[key] = img
+                        except IOError:
+                            print("Could not access image: %s \n" % url)
                 return await response.release()
 
         # asynchronous main loop
@@ -278,6 +308,8 @@ class DataFetcher(object):
             save_to = "memory"
         elif self.disk_scratch is not None:
             save_to = "disk"
+        elif self.disk_scratch is not None:
+            save_to = "disk_raw"
         else:
             save_to = "none"
 
@@ -294,12 +326,61 @@ class DataFetcher(object):
         # return X np array, label array, original ids
         return X_data, y_data, original_ids
 
+    def storeAllOnDisk(self, path):
+        """ store all images on disk in class specific folders """
+        # fetch meta data
+        urls = list()
+        original_ids = list()
+        y_data = list()
+        ids = list()
+        for key in self.data_dict.getIds():
+            value = self.data_dict.getDict()[key]
+            y_data.append(value['y_data'])
+            urls.append(value['url'])
+            original_ids.append(value['subject_id'])
+            ids.append(key)
+
+        # save in chunks of 1000 images
+        cuts = [x for x in range(0, self.n_observations, 1000)]
+        if cuts[-1] < self.n_observations:
+            cuts.append(self.n_observations)
+
+        # convert batch sizes to integers
+        cuts = [int(x) for x in cuts]
+
+        for i in range(0, (len(cuts) - 1)):
+
+            idx = [x for x in range(cuts[i], cuts[i+1])]
+
+            current_ids = [ids[z] for z in idx]
+            current_urls = [urls[z] for z in idx]
+            current_y = [y_data[z] for z in idx]
+            # invoke asynchronous read
+            if self.asynch_read is True:
+                binary_images = self._get_async_url_bytes(current_ids,
+                                                          current_urls)
+
+            # store on disk
+            for c_id, c_y in zip(current_ids, current_y):
+                # check directory
+                if not os.path.isdir(path + str(c_y)):
+                    os.mkdir(path + str(c_y))
+                # define path
+                path_img = path + str(c_y) + "/" + \
+                           str(c_id) + ".jpeg"
+                img = binary_images[c_id]
+                img = img.resize(self.image_size)
+                img.save(path_img)
+        return None
 
 
 if __name__ == "__main__":
-    gen = DataFetcher(test_dict, asynch_read=True, image_size = (28, 28),
+    import time
+    gen = DataFetcher(test_dir, asynch_read=True, image_size = (28, 28),
                       batch_size=100,
                       disk_scratch = 'D:/Studium_GD/Zooniverse/Data/transfer_learning_project/scratch/')
+
+    gen.storeAllOnDisk(path = 'D:/Studium_GD/Zooniverse/Data/transfer_learning_project/scratch/')
     time_start = time.time()
     X_data, y_data, original_ids = gen.nextBatch()
     print("Required: %s seconds" % (time.time()-time_start))
@@ -311,7 +392,7 @@ if __name__ == "__main__":
 
 
 
-    gen = DataFetcher(test_dict, asynch_read=True, image_size = (28, 28),
+    gen = DataFetcher(test_dir, asynch_read=True, image_size = (28, 28),
                       batch_size=100)
     time_start = time.time()
     X_data, y_data, original_ids = gen.nextBatch()

@@ -6,13 +6,13 @@ import pandas as pd
 import json
 import time
 
-# get my project
-project_id = int(config['projects']['panoptes_id'])
-my_project = Project.find(id=project_id)
-
 # connect to panoptes
 Panoptes.connect(username=config_credentials['Zooniverse']['username'],
                  password=config_credentials['Zooniverse']['password'])
+
+# get my project
+project_id = int(config['projects']['panoptes_id'])
+my_project = Project.find(id=project_id)
 
 
 # function to get classification data

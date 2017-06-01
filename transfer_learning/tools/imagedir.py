@@ -22,7 +22,7 @@ class ImageDir(object):
         """ Returns Image Directory Info """
         return self.image_dict[key]
 
-    def getImageData(self, key):
+    def getOneImage(self, key):
         """ Returns Image Object """
         img_dir = self.getImageInfo(key)
         response = requests.get(img_dir['url'])
