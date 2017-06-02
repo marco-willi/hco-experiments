@@ -5,13 +5,11 @@ from PIL import Image
 from keras.preprocessing.image import img_to_array, array_to_img
 import requests
 from io import BytesIO
-import aiohttp
-import asyncio
-import async_timeout
 import time
 import os
 import pickle as pkl
 import psutil
+from tools.image_url_loader import ImageUrlLoader
 
 
 # Class to define a Batch of Data
@@ -46,19 +44,18 @@ class DataBatch(object):
         if self.is_stored:
             if self.storage == "memory":
                 dat = self.raw_data
-                return dat['X_data'], dat['y_data'], dat['original_ids']
+                return dat['X_data'], dat['y_data']
 
             elif self.storage == "disk":
                 batch_file = 'batch' + str(self.batch_id) + '.pkl'
                 dat = pkl.load(open(self.disk_storage_path + batch_file, "rb"))
-                return dat['X_data'], dat['y_data'], dat['original_ids']
+                return dat['X_data'], dat['y_data']
 
             elif self.storage == "numpy":
                 batch_file = 'batch' + str(self.batch_id) + '.npy'
                 X_data = np.load(self.disk_storage_path + "X_" + batch_file)
                 y_data = np.load(self.disk_storage_path + "y_" + batch_file)
-                original_ids = np.load(self.disk_storage_path + "i_" + batch_file)
-                return X_data, y_data, original_ids
+                return X_data, y_data
             elif self.storage == "disk_raw":
                 batch_dir = self.disk_storage_path + "batch" + str(self.batch_id)
                 for i in range(0, len(self.y_data)):
@@ -66,12 +63,11 @@ class DataBatch(object):
         else:
             pass
 
-    def storeBatch(self, storage, X_data, y_data, original_ids):
+    def storeBatch(self, storage, X_data, y_data):
         """ Function to store a batch in memory / disk / or elsewhere """
         # data to store
         data_dict = {'X_data': X_data,
-                     'y_data': y_data,
-                     'original_ids': original_ids}
+                     'y_data': y_data}
         # store in memory
         if storage == "memory":
             # dict with data
@@ -93,7 +89,6 @@ class DataBatch(object):
             else:
                 np.save(self.disk_storage_path + "X_" + batch_file, X_data)
                 np.save(self.disk_storage_path + "y_" + batch_file, y_data)
-                np.save(self.disk_storage_path + "i_" + batch_file, original_ids)
         # save to disk as images
         elif storage == "disk_raw":
             # create new directory for batch
@@ -141,7 +136,7 @@ class DataFetcher(object):
         self.batch_size = batch_size
         self.n_big_batches = n_big_batches
         self.asynch_read = asynch_read
-        self.n_observations = len(data_dict.getIds())
+        self.n_observations = len(data_dict.paths)
         self.current_batch_id = 0
         self.random_shuffle_batches = random_shuffle_batches
         self.batches = None
@@ -159,6 +154,9 @@ class DataFetcher(object):
         # define batches
         self._defineBatches()
 
+        # Instantiate Image Loader
+        self.imageLoader = ImageUrlLoader(parallel=asynch_read)
+
         # check input
         assert (n_big_batches is None) | (batch_size is None)
         assert (n_big_batches is not None) | (batch_size is not None)
@@ -166,7 +164,7 @@ class DataFetcher(object):
     def _defineBatches(self):
         """ Function to split observations into batches """
         # extract all ids
-        all_keys = list(self.data_dict.getIds())
+        all_keys = list(self.data_dict.unique_ids)
 
         # randomly shuffle keys
         if self.random_shuffle_batches:
@@ -201,60 +199,21 @@ class DataFetcher(object):
         self.n_batches = len(batches.keys())
         self.batches = batches
 
-    def _get_async_url_bytes(self, ids, urls):
-        """ Function to read data from a list of urls in an asynchronous way to
-            speed up the retrieveal
-        """
-        # prepare result dictionary
-        binary_images_dict = dict()
-
-        # define asynchronous functions
-        async def download_coroutine(session, key, url):
-            with async_timeout.timeout(180):
-                async with session.get(url) as response:
-                    while True:
-                        chunk = await response.content.read()
-                        if not chunk:
-                            break
-                        try:
-                            img = Image.open(BytesIO(chunk))
-                            binary_images_dict[key] = img
-                        except IOError:
-                            print("Could not access image: %s \n" % url)
-                return await response.release()
-
-        # asynchronous main loop
-        async def main(loop):
-            async with aiohttp.ClientSession(loop=loop) as session:
-                tasks = [download_coroutine(session, key, url) for
-                         key, url in zip(ids, urls)]
-                await asyncio.gather(*tasks)
-
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main(loop))
-        return binary_images_dict
-
-    def _dictOfImagesToNumpy(self, ids, images_dict, labels):
-        """ Converts dictionary of image objects to numpy array """
-        # build image data array, y_labels and original subject ids
-        y_data = list()
-        i = 0
-        for key, label in zip(ids, labels):
+    def _listOfImagesToNumpy(self, images):
+        """ Converts list of image objects to numpy array """
+        # build image data array, y_labels
+        for i in range(0, len(images)):
             if self.image_size is not None:
-                img = images_dict[key].resize(self.image_size)
+                img = images[i].resize(self.image_size)
             else:
-                img = images_dict[key]
+                img = images[i]
             img_arr = img_to_array(img)
             if i == 0:
-                dims = [len(ids)] + list(img_arr.shape)
+                dims = [len(images)] + list(img_arr.shape)
                 X_data = np.zeros(shape=dims)
             X_data[i, :, :, :] = img_arr
-            i += 1
-            y_data.append(int(label))
 
-        y_data = np.array(y_data)
-
-        return X_data, y_data
+        return X_data
 
     def nextBatch(self, batch_to_get_id=None):
         """ Get next batch or specify specific batch id to get """
@@ -269,38 +228,25 @@ class DataFetcher(object):
         # check if batch is available in memory / disk
         if batch_to_get.is_stored:
             # get batch data
-            X_data, y_data, original_ids = batch_to_get.getBatchData()
-            # return X np array, label array, original ids
-            return X_data, y_data, original_ids
+            X_data, y_data = batch_to_get.getBatchData()
+            # return X np array, label array
+            return X_data, y_data
 
         # get data of current batch
         urls = list()
-        original_ids = list()
+
         for key in batch_to_get.ids:
-            value = self.data_dict.getDict()[key]
+            value = self.data_dict.data_dict[key]
             batch_to_get.batch_subjects[key] = value
-            batch_to_get.y_data.append(value['y_data'])
-            urls.append(value['url'])
-            original_ids.append(value['subject_id'])
+            batch_to_get.y_data.append(value['label'])
+            urls.append(value['path'])
 
-        # invoke asynchronous read
-        if self.asynch_read is True:
-            binary_images = self._get_async_url_bytes(batch_to_get.ids,
-                                                      urls)
-
-        # invoke sequential read
-        else:
-            binary_images = dict()
-            for key, value in batch_to_get.items():
-                response = requests.get(value['url'])
-                img = Image.open(BytesIO(response.content))
-                binary_images[key] = img
+        # get images using Image Loader class
+        binary_images = self.imageLoader.getImages(urls)
 
         # convert images to array
-        X_data, y_data = \
-            self._dictOfImagesToNumpy(ids=batch_to_get.ids,
-                                      images_dict=binary_images,
-                                      labels=batch_to_get.y_data)
+        X_data = self._listOfImagesToNumpy(images=binary_images)
+        y_data = np.array(batch_to_get.y_data)
 
         # decide where to store batch
         system_memory_usage_percent = psutil.virtual_memory()[2]
@@ -315,7 +261,7 @@ class DataFetcher(object):
 
         # store batch
         batch_to_get.storeBatch(storage=save_to, X_data=X_data,
-                                y_data=y_data, original_ids=original_ids)
+                                y_data=y_data)
 
         # increment current batch
         if self.current_batch_id < (self.n_batches-1):
@@ -323,22 +269,16 @@ class DataFetcher(object):
         else:
             self.current_batch_id = 0
 
-        # return X np array, label array, original ids
-        return X_data, y_data, original_ids
+        # return X np array, label array
+        return X_data, y_data
 
     def storeAllOnDisk(self, path):
         """ store all images on disk in class specific folders """
         # fetch meta data
         urls = list()
-        original_ids = list()
-        y_data = list()
-        ids = list()
-        for key in self.data_dict.getIds():
-            value = self.data_dict.getDict()[key]
-            y_data.append(value['y_data'])
-            urls.append(value['url'])
-            original_ids.append(value['subject_id'])
-            ids.append(key)
+        y_data = self.data_dict.labels
+        ids = self.data_dict.unique_ids
+        urls = self.data_dict.paths
 
         # save in chunks of 1000 images
         cuts = [x for x in range(0, self.n_observations, 1000)]
@@ -355,12 +295,12 @@ class DataFetcher(object):
             current_ids = [ids[z] for z in idx]
             current_urls = [urls[z] for z in idx]
             current_y = [y_data[z] for z in idx]
+
             # invoke asynchronous read
-            if self.asynch_read is True:
-                binary_images = self._get_async_url_bytes(current_ids,
-                                                          current_urls)
+            binary_images = self.imageLoader.getImages(current_urls)
 
             # store on disk
+            img_id = 0
             for c_id, c_y in zip(current_ids, current_y):
                 # check directory
                 if not os.path.isdir(path + str(c_y)):
@@ -368,9 +308,10 @@ class DataFetcher(object):
                 # define path
                 path_img = path + str(c_y) + "/" + \
                            str(c_id) + ".jpeg"
-                img = binary_images[c_id]
+                img = binary_images[img_id]
                 img = img.resize(self.image_size)
                 img.save(path_img)
+                img_id += 1
         return None
 
 
@@ -382,24 +323,25 @@ if __name__ == "__main__":
 
     gen.storeAllOnDisk(path = 'D:/Studium_GD/Zooniverse/Data/transfer_learning_project/scratch/')
     time_start = time.time()
-    X_data, y_data, original_ids = gen.nextBatch()
+    X_data, y_data = gen.nextBatch()
     print("Required: %s seconds" % (time.time()-time_start))
-    X_data2, y_data2, original_ids2 = gen.nextBatch(batch_to_get_id=0)
+    X_data2, y_data2 = gen.nextBatch(batch_to_get_id=0)
     print("Required: %s seconds" % (time.time()-time_start))
     url_test = 'https://panoptes-uploads.zooniverse.org/production/subject_location/a44e26b9-be8a-453e-9af0-5899c17e7efc.jpeg'
     response = requests.get(url_test)
     img = Image.open(BytesIO(response.content))
-
+    assert(np.array_equal(X_data, X_data2))
 
 
     gen = DataFetcher(test_dir, asynch_read=True, image_size = (28, 28),
                       batch_size=100)
     time_start = time.time()
-    X_data, y_data, original_ids = gen.nextBatch()
+    X_data, y_data = gen.nextBatch()
     print("Required: %s seconds" % (time.time()-time_start))
-    X_data2, y_data2, original_ids2 = gen.nextBatch(batch_to_get_id=0)
+    X_data2, y_data2 = gen.nextBatch(batch_to_get_id=0)
     print("Required: %s seconds" % (time.time()-time_start))
     np.array_equal(X_data, X_data2)
+    assert(np.array_equal(X_data, X_data2))
 
 
 

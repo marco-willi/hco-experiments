@@ -61,30 +61,45 @@ for key, val in subs.items():
 ########################
 
 
-id_train, id_test = train_test_split(list(data_dict.keys()), train_size = 0.95,
-                                     random_state=int(config['modelling']['random_seed']))
+id_train, id_test = train_test_split(list(data_dict.keys()), train_size=0.95,
+                                     random_state=int(config['modelling']
+                                                      ['random_seed']))
 
-id_test, id_val = train_test_split(id_test, train_size = 0.5,
-                                   random_state=int(config['modelling']['random_seed']))
+id_test, id_val = train_test_split(id_test, train_size=0.5,
+                                   random_state=int(config['modelling']
+                                                    ['random_seed']))
 
-def create_data_dict(data_dict, keys):
-    new_dict = dict()
+
+
+def create_image_dir(data_dict, keys):
+    """ Generates directory of images with necessary meta-data """
+    # prepare necessary structures
+    info_dict = dict()
+    ids = list()
+    paths = list()
+    labels = list()
+
+    # loop through all relevant keys and fill data
     for key in keys:
-        new_dict[key] = data_dict[key] #.copy()
-    return new_dict
+        dat = data_dict[key]
+        ids.append(key)
+        paths.append(dat['url'])
+        labels.append(dat['y_data'])
+        info_dict[key] = data_dict[key]
 
-train_dict = create_data_dict(data_dict, keys=id_train)
-test_dict = create_data_dict(data_dict, keys=id_test)
-val_dict = create_data_dict(data_dict, keys=id_val)
+    # create Image directory object
+    img_dir = ImageDir(paths=paths, labels=labels,
+                       unique_ids=ids, info_dict=info_dict)
+    return img_dir
+
 
 # generate image directories
-train_dir = ImageDir(train_dict)
-test_dir = ImageDir(test_dict)
-val_dir = ImageDir(val_dict)
-
+train_dir = create_image_dir(data_dict, keys=id_train)
+test_dir = create_image_dir(data_dict, keys=id_test)
+val_dir = create_image_dir(data_dict, keys=id_val)
 
 # get random image
-train_dir.getOneImage(list(train_dir.getIds())[1])
+train_dir.getOneImage(train_dir.unique_ids[0])
 
 # generate some figures
 n_subjects = len(subs.keys())

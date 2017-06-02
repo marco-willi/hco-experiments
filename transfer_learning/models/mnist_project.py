@@ -6,10 +6,11 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from tools.data_generator import DataFetcher
 import numpy as np
-from main import test_dict, train_dict, val_dict
+from main import test_dir, train_dir, val_dir
 from keras.preprocessing.image import array_to_img
 from config.config import config
-
+from scipy.misc import imresize
+from scipy.ndimage.interpolation import zoom
 ##################################
 # Parameters
 ##################################
@@ -31,17 +32,18 @@ image_size_model = tuple([int(x) for x in image_size_model])
 ##################################
 
 # generate junks of input data
-data_fetcher_train = DataFetcher(train_dict, asynch_read=True,
+data_fetcher_train = DataFetcher(train_dir, asynch_read=True,
                                  image_size=image_size_save[0:2],
                                  batch_size=eval(config['modelling']['batch_size_big']),
-                                 disk_scratch = config['paths']['path_scratch'])
+                                 disk_scratch = config['paths']['path_scratch'],
+                                 random_shuffle_batches=True)
 
-data_fetcher_test = DataFetcher(test_dict, asynch_read=True,
+data_fetcher_test = DataFetcher(test_dir, asynch_read=True,
                                 image_size=image_size_save[0:2],
                                 n_big_batches=1,
                                 disk_scratch = config['paths']['path_scratch'])
 
-data_fetcher_val = DataFetcher(val_dict, asynch_read=True,
+data_fetcher_val = DataFetcher(val_dir, asynch_read=True,
                                image_size=image_size_save[0:2],
                                n_big_batches=1,
                                disk_scratch = config['paths']['path_scratch'])
@@ -89,22 +91,40 @@ model.compile(loss='categorical_crossentropy',
 # Keras Data Pre-Processing
 ##################################
 
-def keras_preprocessing(X, Y, num_classes):
-    Y = keras.utils.to_categorical(Y, num_classes)
+def keras_preprocessing(X, Y, num_classes, target_shape=image_size_model):
+    if num_classes > 2:
+        Y = keras.utils.to_categorical(Y, num_classes)
     X = X.astype('float32')
     X /= 255
+    # convert size if different
+    if not X.shape[1:4] == target_shape:
+        if X.shape[4] == 1:
+            raise ValueError("Image Transformation for 1-D images  \
+                             not supported")
+        # create empty target array
+        new_size = tuple([X.shape[0]] + list(target_shape))
+        X_new = np.zeros(shape=new_size)
+        # loop over all images and resize
+        for i in range(0, X.shape[0]):
+            X_i = imresize(X[i, :, :, :],
+                           target_shape,
+                           interp='bilinear',
+                           mode=None)
+            X_new[i, :, :, :] = X_i
+        X = X_new
     return X, Y
+
 
 ##################################
 # Training
 ##################################
 
 # get test data
-X_test, Y_test, test_original_ids = data_fetcher_test.nextBatch()
+X_test, Y_test = data_fetcher_test.nextBatch()
 X_test, Y_test = keras_preprocessing(X_test, Y_test, num_classes=num_classes)
 
 # get validation data
-X_val, Y_val, val_original_ids = data_fetcher_val.nextBatch()
+X_val, Y_val = data_fetcher_val.nextBatch()
 X_val, Y_val = keras_preprocessing(X_val, Y_val, num_classes=num_classes)
 
 # Training loop over number of epochs
@@ -116,7 +136,7 @@ for e in range(num_epochs):
     # generated from the DataGenerator class
     for i in range(0, data_fetcher_train.n_batches):
         # get next batch
-        X_train, Y_train, original_ids = data_fetcher_train.nextBatch()
+        X_train, Y_train = data_fetcher_train.nextBatch()
         # transform to keras specific formats
         X_train, Y_train = keras_preprocessing(X_train, Y_train,
                                                num_classes=num_classes)
@@ -137,7 +157,7 @@ for e in range(num_epochs):
                     validation_data=(X_test,Y_test))
         else:
             model.fit(X_train, Y_train, batch_size=batch_size, epochs=1,
-                      validation_data=(X_test,Y_test), verbose=2)
+                      validation_data=(X_test,Y_test), verbose=1)
 
 
 ##################################

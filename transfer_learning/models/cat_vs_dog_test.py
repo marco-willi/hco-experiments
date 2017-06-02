@@ -128,11 +128,11 @@ print("Loading Test/Validation data")
 print(print_separator)
 
 # get test data
-X_test, Y_test, test_original_ids = data_fetcher_test.nextBatch()
+X_test, Y_test = data_fetcher_test.nextBatch()
 X_test, Y_test = keras_preprocessing(X_test, Y_test, num_classes=num_classes)
 
 # get validation data
-X_val, Y_val, val_original_ids = data_fetcher_val.nextBatch()
+X_val, Y_val = data_fetcher_val.nextBatch()
 X_val, Y_val = keras_preprocessing(X_val, Y_val, num_classes=num_classes)
 
 print(print_separator)
@@ -148,7 +148,7 @@ for e in range(num_epochs):
     # generated from the DataGenerator class
     for i in range(0, data_fetcher_train.n_batches):
         # get next batch
-        X_train, Y_train, original_ids = data_fetcher_train.nextBatch()
+        X_train, Y_train = data_fetcher_train.nextBatch()
         # transform to keras specific formats
         X_train, Y_train = keras_preprocessing(X_train, Y_train,
                                                num_classes=num_classes)
