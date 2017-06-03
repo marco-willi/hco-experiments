@@ -14,13 +14,14 @@ from config.config import config
 cls = panoptes.get_classifications(panoptes.my_project)
 subs = panoptes.get_subject_info(panoptes.my_project)
 
+project_id = config['projects']['panoptes_id']
 
 ########################
 # Create Annotations
 ########################
 
 # encode labels to numerics
-labels_all = config['modelling']['classes'].split(",")
+labels_all = config[project_id]['classes'].split(",")
 le = LabelEncoder()
 le.fit(labels_all)
 
@@ -62,11 +63,11 @@ for key, val in subs.items():
 
 
 id_train, id_test = train_test_split(list(data_dict.keys()), train_size=0.95,
-                                     random_state=int(config['modelling']
+                                     random_state=int(config[project_id]
                                                       ['random_seed']))
 
 id_test, id_val = train_test_split(id_test, train_size=0.5,
-                                   random_state=int(config['modelling']
+                                   random_state=int(config[project_id]
                                                     ['random_seed']))
 
 

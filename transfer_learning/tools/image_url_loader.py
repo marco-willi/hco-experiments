@@ -5,6 +5,7 @@ from io import BytesIO
 import aiohttp
 import asyncio
 import async_timeout
+import time
 
 
 class ImageUrlLoader(object):
@@ -12,6 +13,7 @@ class ImageUrlLoader(object):
     def __init__(self, parallel=True):
         self.parallel = parallel
         self.size = None
+        self.s3 = boto3.resource('s3', 'us-east-1')
 
     def _getOneImageFromURL(self, url):
         """ Load one Image From URL """
@@ -87,12 +89,21 @@ if __name__ == "__main__":
     # test
     img_loader = ImageUrlLoader()
     # get some image urls
-    urls = [train_dir.getDict()[u]['url'] for u in
-            list(train_dir.getIds())[0:10]]
+    urls = train_dir.paths[0:128]
+
+    time_start = time.time()
     imgs = img_loader.getImages(urls)
+    time_end = time.time()
+    print("To Fetch %s images in parallel, it took: %s seconds" %
+          (len(imgs), time_end - time_start))
 
     # get some image urls
+    time_start = time.time()
     img_loader2 = ImageUrlLoader(parallel=False)
+
     imgs2 = img_loader2.getImages(urls)
+    time_end = time.time()
+    print("To Fetch %s images in seq., it took: %s seconds" %
+          (len(imgs), time_end - time_start))
 
     assert(imgs == imgs2)

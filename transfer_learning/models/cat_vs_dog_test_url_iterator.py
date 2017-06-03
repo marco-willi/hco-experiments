@@ -7,7 +7,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from tools.data_generator import DataFetcher
 import numpy as np
-from main import test_dir, train_dir, val_dir
+from main import test_dir, train_dir, val_dir, project_id
 from keras.preprocessing.image import array_to_img
 from config.config import config
 from scipy.misc import imresize
@@ -16,15 +16,15 @@ from scipy.misc import imresize
 # Parameters
 ##################################
 
-batch_size = eval(config['modelling']['batch_size'])
-num_classes = int(config['modelling']['num_classes'])
-num_epochs = int(config['modelling']['num_epochs'])
-data_augmentation = eval(config['modelling']['data_augmentation'])
+batch_size = eval(config[project_id]['batch_size'])
+num_classes = int(config[project_id]['num_classes'])
+num_epochs = int(config[project_id]['num_epochs'])
+data_augmentation = eval(config[project_id]['data_augmentation'])
 
-image_size_save = config['modelling']['image_size_save'].split(',')
+image_size_save = config[project_id]['image_size_save'].split(',')
 image_size_save = tuple([int(x) for x in image_size_save])
 
-image_size_model = config['modelling']['image_size_model'].split(',')
+image_size_model = config[project_id]['image_size_model'].split(',')
 image_size_model = tuple([int(x) for x in image_size_model])
 
 print_separator = "------------------------------------------"

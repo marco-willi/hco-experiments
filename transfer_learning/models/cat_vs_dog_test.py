@@ -6,7 +6,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from tools.data_generator import DataFetcher
 import numpy as np
-from main import test_dir, train_dir, val_dir
+from main import test_dir, train_dir, val_dir, project_id
 from keras.preprocessing.image import array_to_img
 from config.config import config
 from scipy.misc import imresize
@@ -15,15 +15,15 @@ from scipy.misc import imresize
 # Parameters
 ##################################
 
-batch_size = eval(config['modelling']['batch_size'])
-num_classes = int(config['modelling']['num_classes'])
-num_epochs = int(config['modelling']['num_epochs'])
-data_augmentation = eval(config['modelling']['data_augmentation'])
+batch_size = eval(config[project_id]['batch_size'])
+num_classes = int(config[project_id]['num_classes'])
+num_epochs = int(config[project_id]['num_epochs'])
+data_augmentation = eval(config[project_id]['data_augmentation'])
 
-image_size_save = config['modelling']['image_size_save'].split(',')
+image_size_save = config[project_id]['image_size_save'].split(',')
 image_size_save = tuple([int(x) for x in image_size_save])
 
-image_size_model = config['modelling']['image_size_model'].split(',')
+image_size_model = config[project_id]['image_size_model'].split(',')
 image_size_model = tuple([int(x) for x in image_size_model])
 
 print_separator = "------------------------------------------"
@@ -35,7 +35,7 @@ print_separator = "------------------------------------------"
 # generate junks of input data
 data_fetcher_train = DataFetcher(train_dir, asynch_read=True,
                                  image_size=image_size_save[0:2],
-                                 batch_size=eval(config['modelling']['batch_size_big']),
+                                 batch_size=eval(config[project_id]['batch_size_big']),
                                  disk_scratch = config['paths']['path_scratch'],
                                  random_shuffle_batches=True)
 
@@ -52,16 +52,9 @@ data_fetcher_val = DataFetcher(val_dir, asynch_read=True,
 # generate input data from a generator function that applies
 # random / static transformations to the input
 datagen = ImageDataGenerator(
-        featurewise_center=False,  # set input mean to 0 over the dataset
-        samplewise_center=False,  # set each sample mean to 0
-        featurewise_std_normalization=False,  # divide inputs by std of the dataset
-        samplewise_std_normalization=False,  # divide each input by its std
-        zca_whitening=False,  # apply ZCA whitening
-        rotation_range=10,  # randomly rotate images in the range (degrees, 0 to 180)
-        width_shift_range=0,  # randomly shift images horizontally (fraction of total width)
-        height_shift_range=0,  # randomly shift images vertically (fraction of total height)
-        horizontal_flip=False,  # randomly flip images
-        vertical_flip=False)  # randomly flip images
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True)
 
 ##################################
 # Model Definition
@@ -163,7 +156,7 @@ for e in range(num_epochs):
             model.fit_generator(
                     datagen.flow(X_train, Y_train,
                                  batch_size=batch_size,
-                                 shuffle=False),
+                                 shuffle=True),
                     steps_per_epoch=(np.ceil(Y_train.shape[0] / batch_size)),
                     epochs=1,
                     validation_data=(X_test, Y_test))
