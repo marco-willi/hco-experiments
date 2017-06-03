@@ -34,3 +34,26 @@ class ImageDir(object):
         response = requests.get(img_dir['path'])
         img = Image.open(BytesIO(response.content))
         return img
+
+
+# Helper function to generate image dir from data dictionary
+def create_image_dir(data_dict, keys):
+    """ Generates directory of images with necessary meta-data """
+    # prepare necessary structures
+    info_dict = dict()
+    ids = list()
+    paths = list()
+    labels = list()
+
+    # loop through all relevant keys and fill data
+    for key in keys:
+        dat = data_dict[key]
+        ids.append(key)
+        paths.append(dat['url'])
+        labels.append(dat['y_data'])
+        info_dict[key] = data_dict[key]
+
+    # create Image directory object
+    img_dir = ImageDir(paths=paths, labels=labels,
+                       unique_ids=ids, info_dict=info_dict)
+    return img_dir

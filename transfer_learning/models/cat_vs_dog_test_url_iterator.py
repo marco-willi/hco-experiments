@@ -79,6 +79,7 @@ val_generator = test_datagen.flow_from_urls(
         class_mode='binary')
 
 
+
 ##################################
 # Model Definition
 ##################################

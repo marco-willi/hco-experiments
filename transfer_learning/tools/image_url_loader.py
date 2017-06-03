@@ -6,6 +6,7 @@ import aiohttp
 import asyncio
 import async_timeout
 import time
+import os
 
 
 class ImageUrlLoader(object):
@@ -13,7 +14,6 @@ class ImageUrlLoader(object):
     def __init__(self, parallel=True):
         self.parallel = parallel
         self.size = None
-        self.s3 = boto3.resource('s3', 'us-east-1')
 
     def _getOneImageFromURL(self, url):
         """ Load one Image From URL """
@@ -29,18 +29,18 @@ class ImageUrlLoader(object):
 
         # define asynchronous functions
         async def download_coroutine(session, key, url):
-            with async_timeout.timeout(180):
-                async with session.get(url) as response:
-                    while True:
-                        chunk = await response.content.read()
-                        if not chunk:
-                            break
-                        try:
-                            img = Image.open(BytesIO(chunk))
-                            images_dict[key] = img
-                        except IOError:
-                            print("Could not access image: %s \n" % url)
-                return await response.release()
+            #with async_timeout.timeout(180):
+            async with session.get(url) as response:
+                while True:
+                    chunk = await response.content.read()
+                    if not chunk:
+                        break
+                    try:
+                        img = Image.open(BytesIO(chunk))
+                        images_dict[key] = img
+                    except IOError:
+                        print("Could not access image: %s \n" % url)
+            return await response.release()
 
         # asynchronous main loop
         async def main(loop):
@@ -82,6 +82,67 @@ class ImageUrlLoader(object):
 
         # return list of image objects
         return res
+
+    def storeOnDisk(self, urls, labels, ids, path, target_size=None,
+                    chunk_size=1000):
+        """ store all images on disk in class specific folders """
+
+        # check
+        assert os.path.exists(path)
+
+        # ensure / at end of path
+        if path[-1] != '/':
+            path = path + '/'
+
+        # create class specific directories
+        for sub_dir in set(labels):
+            if not os.path.exists(path + str(sub_dir)):
+                os.mkdir(path + str(sub_dir))
+
+        # get relevant data from dictionary
+        size = len(urls)
+
+        # define chunks of images to load
+        cuts = [x for x in range(0, size, chunk_size)]
+        if cuts[-1] < size:
+            cuts.append(size)
+
+        # convert chunk sizes to integers
+        cuts = [int(x) for x in cuts]
+
+        for i in range(0, (len(cuts) - 1)):
+
+            idx = [x for x in range(cuts[i], cuts[i+1])]
+
+            chunk_ids = [ids[z] for z in idx]
+            chunk_urls = [urls[z] for z in idx]
+            chunk_y = [labels[z] for z in idx]
+
+            # invoke asynchronous read
+            binary_images = self.getImages(chunk_urls)
+
+            # store on disk
+            img_id = 0
+            for c_id, c_y in zip(chunk_ids, chunk_y):
+                # define path
+                path_img = path + str(c_y) + "/" + \
+                           str(c_id) + ".jpeg"
+
+                # get current image
+                img = binary_images[img_id]
+
+                # resize if specified
+                if target_size is not None:
+                    img = img.resize(target_size)
+
+                # save to disk
+                img.save(path_img)
+                img_id += 1
+
+        return None
+
+
+
 
 
 if __name__ == "__main__":
