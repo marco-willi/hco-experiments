@@ -89,13 +89,13 @@ def train(train_dir, test_dir, val_dir):
 
     # this is a similar generator, for validation data
     test_generator = datagen_test.flow_from_directory(
-            'data/test',
+            save_dir + 'test',
             target_size=image_size_model[0:2],
             batch_size=batch_size,
             class_mode='binary')
 
     val_generator = datagen_test.flow_from_directory(
-            'data/val',
+            save_dir + 'val',
             target_size=image_size_model[0:2],
             batch_size=batch_size,
             class_mode='binary')
@@ -135,10 +135,10 @@ def train(train_dir, test_dir, val_dir):
 
     model.fit_generator(
             train_generator,
-            steps_per_epoch=len(train_dir.urls) // batch_size,
+            steps_per_epoch=len(train_dir.paths) // batch_size,
             epochs=num_epochs,
             validation_data=test_generator,
-            validation_steps=len(test_dir.urls) // batch_size)
+            validation_steps=len(test_dir.paths) // batch_size)
 
     ##################################
     # Save
