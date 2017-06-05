@@ -1,12 +1,7 @@
 # Test AWS I/O performance
 
 # load modules
-from tools import panoptes
-from tools.imagedir import ImageDir, create_image_dir
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from config.config import config
-from models.cat_vs_dog_test_disk_only import train
 from tools.image_url_loader import ImageUrlLoader
 
 from main import prep_data
