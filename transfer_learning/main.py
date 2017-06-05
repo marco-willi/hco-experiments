@@ -4,6 +4,7 @@ from tools.imagedir import ImageDir, create_image_dir
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from config.config import config
+import importlib
 from models.cat_vs_dog_test_disk_only import train
 
 # some tests
@@ -99,7 +100,16 @@ def main():
     ########################
     # Call Model
     ########################
-    train(train_dir, test_dir, val_dir)
+
+    # retrieve current model file
+    project_id = config['projects']['panoptes_id']
+    model_file = config[project_id]['model_file']
+
+    # import model file
+    model = importlib.import_module('models.' + model_file)
+
+    # train model
+    model.train(train_dir, test_dir, val_dir)
 
 
 if __name__ == "__main__":
