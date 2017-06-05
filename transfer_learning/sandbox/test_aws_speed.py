@@ -167,6 +167,60 @@ def test_read_disk(batch_sizes):
         log.info("---------------------------------------------------------------")
 
 
+###############################
+# Read from URL Keras Iterator
+###############################
+
+def test_read_url_keras(batch_sizes):
+    # image directory
+    img_dir = config['paths']['path_scratch'] + 'aws_test'
+    project_id = config['projects']['panoptes_id']
+
+    image_size_model = config[project_id]['image_size_model'].split(',')
+    image_size_model = tuple([int(x) for x in image_size_model])
+
+    # randomly sample urls
+    urls = train_dir.paths
+    labels = train_dir.labels
+
+    # iterate through images in different batch sizes
+    # batch_size = eval(config[project_id]['batch_size'])
+    from tools.image import ImageDataGenerator
+
+    datagen = ImageDataGenerator(
+        rescale=1./255)
+
+    log.info("URLs from Keras Iterator")
+    for b in batch_sizes:
+
+        # use keras to perform tests
+        generator = datagen.flow_from_urls(
+            urls=urls,
+            labels=labels,
+            classes=['0','1'],
+            target_size=image_size_model[0:2],
+            batch_size=b,
+            class_mode='binary')
+
+        # do 10 tests
+        times = list()
+        for i in range(0, 10):
+
+            # fetch urls
+            time_st = time.time()
+            X_data, y_data = generator.next()
+            time_e = time.time()
+            time_req = time_e - time_st
+            times.append(time_req)
+        # print summary
+        avg = np.average(times)
+        std = np.std(times)
+        per_sec = b / avg
+        log.info("Batch Size: " + str(b))
+        log.info("Average: %s, STD: %s, Image/s: %s" % (avg, std, per_sec))
+        log.info("---------------------------------------------------------------")
+
+
 if __name__ == '__main__':
 
     # log
@@ -189,5 +243,6 @@ if __name__ == '__main__':
     test_url_seq([1, 10, 50, 100])
     test_url_disk(batch_sizes)
     test_read_disk(batch_sizes)
+    test_read_url_keras([10, 50, 100])
 
     console.close()
