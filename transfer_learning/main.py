@@ -12,8 +12,7 @@ def test(train_dir):
     train_dir.getOneImage(train_dir.unique_ids[0])
 
 
-# Main Program
-def main():
+def prep_data():
 
     ########################
     # Get Project Info
@@ -85,6 +84,17 @@ def main():
     train_dir = create_image_dir(data_dict, keys=id_train)
     test_dir = create_image_dir(data_dict, keys=id_test)
     val_dir = create_image_dir(data_dict, keys=id_val)
+
+    return train_dir, test_dir, val_dir
+
+
+# Main Program
+def main():
+
+    ########################
+    # Get Data
+    ########################
+    train_dir, test_dir, val_dir = prep_data()
 
     ########################
     # Call Model

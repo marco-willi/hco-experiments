@@ -8,7 +8,9 @@ import async_timeout
 import time
 import os
 
-
+# Class to get images from URLs
+# Returns Image objects or stores them on disk
+# specify either parallel or sequential reading
 class ImageUrlLoader(object):
     """ Load images from URLs """
     def __init__(self, parallel=True):
