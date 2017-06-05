@@ -1103,7 +1103,7 @@ class URLIterator(Iterator):
         print('Found %d images belonging to %d classes.' % (self.samples, self.num_class))
 
         # initialize image loader
-        self.image_loader = ImageUrlLoader(parallel=False)
+        self.image_loader = ImageUrlLoader(parallel=True)
 
         # second, build an index of the images in the different class subfolders
         self.filenames = urls

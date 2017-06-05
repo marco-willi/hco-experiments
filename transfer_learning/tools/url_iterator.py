@@ -1,4 +1,4 @@
-from keras.preprocessing.image import Iterator, img_to_array
+from keras.preprocessing.image import Iterator, img_to_array, array_to_img
 import numpy as np
 from six.moves import range
 import os
@@ -96,7 +96,7 @@ class URLIterator(Iterator):
         print('Found %d images belonging to %d classes.' % (self.samples, self.num_class))
 
         # initialize image loader
-        self.image_loader = ImageUrlLoader()
+        self.image_loader = ImageUrlLoader(parallel=True)
 
         # second, build an index of the images in the different class subfolders
         self.filenames = urls
@@ -111,18 +111,20 @@ class URLIterator(Iterator):
         """
         with self.lock:
             index_array, current_index, current_batch_size = next(self.index_generator)
+
+            # build image batch
+            urls_in_batch = list()
+            for i, j in enumerate(index_array):
+                urls_in_batch.append(self.filenames[j])
+
+            # get image batch
+            imgs = self.image_loader.getImages(urls_in_batch)
+
         # The transformation of images is not under thread lock
         # so it can be done in parallel
         batch_x = np.zeros((current_batch_size,) + self.image_shape, dtype=K.floatx())
         grayscale = self.color_mode == 'grayscale'
 
-        # build image batch
-        urls_in_batch = list()
-        for i, j in enumerate(index_array):
-            urls_in_batch.append(self.filenames[j])
-
-        # get image batch
-        imgs = self.image_loader.getImages(urls_in_batch)
 
         # transform images
         for img in imgs:

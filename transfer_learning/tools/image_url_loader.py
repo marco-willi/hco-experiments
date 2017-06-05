@@ -55,6 +55,44 @@ class ImageUrlLoader(object):
         loop.run_until_complete(main(loop))
         return images_dict
 
+
+    def _getAsyncUrls2(self, urls, ids):
+        """ Load multiple urls in a parallel way """
+
+        # prepare result dictionary
+        images_dict = dict()
+
+
+
+
+        # define asynchronous functions
+        async def download_coroutine(session, key, url):
+            #with async_timeout.timeout(180):
+            async with session.get(url) as response:
+                while True:
+                    chunk = await response.content.read()
+                    if not chunk:
+                        break
+                    try:
+                        img = Image.open(BytesIO(chunk))
+                        images_dict[key] = img
+                    except IOError:
+                        print("Could not access image: %s \n" % url)
+            return await response.release()
+
+        # asynchronous main loop
+        async def main(loop):
+            async with aiohttp.ClientSession(loop=loop) as session:
+                tasks = [download_coroutine(session, key, url) for
+                         key, url in zip(ids, urls)]
+                await asyncio.gather(*tasks)
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main(loop))
+        return images_dict
+
+
     def getImages(self, urls):
         """ Retrieve images from list of urls """
 
@@ -76,7 +114,7 @@ class ImageUrlLoader(object):
             internal_ids = [x for x in range(0, size)]
 
             # invoke parallel read
-            res_dict = self._getAsyncUrls(urls, internal_ids)
+            res_dict = self._getAsyncUrls2(urls, internal_ids)
 
             # ensure correct ordering
             for i in internal_ids:
