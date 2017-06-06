@@ -107,12 +107,13 @@ def train(train_dir, test_dir, val_dir):
     # Evaluation
     ##################################
 
-    model.evaluate_generator(
-            test_generator,
-            steps=len(test_dir.paths) // cfg['batch_size'],
-            workers=4,
-            pickle_safe=False)
+    eval_metrics = model.evaluate_generator(
+                    test_generator,
+                    steps=len(test_dir.paths) // cfg['batch_size'],
+                    workers=4,
+                    pickle_safe=False)
 
+    print(eval_metrics)
 
     ##################################
     # Save

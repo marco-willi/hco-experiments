@@ -31,7 +31,7 @@ def train(train_dir, test_dir, val_dir):
     print("Saving data on disk ....")
     print(print_separator)
     print("Saving train data ....")
-    time_s = time()
+    time_s = time.time()
     train_data_loader.storeOnDisk(urls=train_dir.paths,
                                   labels=train_dir.labels,
                                   ids=train_dir.unique_ids,

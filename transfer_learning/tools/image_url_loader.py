@@ -216,7 +216,7 @@ class ImageUrlLoader(object):
                 # print progress
                 jj += 1
                 if jj % 500 == 0:
-                    print("%s stored on disk" % (round(jj/size, 0)))
+                    print("%s / %s stored on disk" % (jj,size))
 
         return None
 
