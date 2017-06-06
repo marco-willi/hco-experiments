@@ -6,6 +6,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from config.config import config
 from tools.model_helpers import model_save, model_param_loader
+import time
 
 
 def train(train_dir, test_dir, val_dir):
@@ -30,6 +31,7 @@ def train(train_dir, test_dir, val_dir):
     print("Saving data on disk ....")
     print(print_separator)
     print("Saving train data ....")
+    time_s = time()
     train_data_loader.storeOnDisk(urls=train_dir.paths,
                                   labels=train_dir.labels,
                                   ids=train_dir.unique_ids,
@@ -51,6 +53,10 @@ def train(train_dir, test_dir, val_dir):
                                 path=cfg['scratch'] + 'val',
                                 target_size=cfg['image_size_save'][0:2],
                                 chunk_size=100)
+
+    print("Finished saving on disk after %s minutes" %
+          ((time.time() - time_s) // 60))
+
 
     ##################################
     # Data Generator
@@ -119,12 +125,26 @@ def train(train_dir, test_dir, val_dir):
     # Training
     ##################################
 
+    time_s = time.time()
     model.fit_generator(
             train_generator,
             steps_per_epoch=len(train_dir.paths) // cfg['batch_size'],
             epochs=cfg['num_epochs'],
             validation_data=test_generator,
             validation_steps=len(test_dir.paths) // cfg['batch_size'],
+            workers=4,
+            pickle_safe=True)
+
+    print("Finished training after %s minutes" %
+          ((time.time() - time_s) // 60))
+
+    ##################################
+    # Evaluation
+    ##################################
+
+    model.evaluate_generator(
+            test_generator,
+            steps=len(test_dir.paths) // cfg['batch_size'],
             workers=4,
             pickle_safe=True)
 

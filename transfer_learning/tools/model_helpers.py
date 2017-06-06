@@ -1,5 +1,8 @@
+import os
+
+
 # Function to save model
-def model_save(model, config, postfix=None):
+def model_save(model, config, postfix=None, create_dir=True):
     path_persistent = config['paths']['path_persistent']
     path_to_save = path_persistent + config['paths']['path_final_models']
     model_id = config['model']['identifier']
@@ -10,6 +13,12 @@ def model_save(model, config, postfix=None):
         out_name = '%s_%s' % (model_id, postfix)
     else:
         out_name = model_id
+
+    # check path
+    if not os.path.exists(path_to_save) & create_dir:
+        os.mkdir(path_to_save)
+    else:
+        NameError("Path not Found")
 
     model.save(path_to_save + out_name + '.h5')
 

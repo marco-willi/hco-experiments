@@ -5,6 +5,7 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from config.config import config
 from tools.model_helpers import model_save, model_param_loader
+import time
 
 
 def train(train_dir, test_dir, val_dir):
@@ -88,6 +89,7 @@ def train(train_dir, test_dir, val_dir):
     # Training
     ##################################
 
+    time_s = time.time()
     model.fit_generator(
             train_generator,
             steps_per_epoch=len(train_dir.paths) // cfg['batch_size'],
@@ -96,6 +98,21 @@ def train(train_dir, test_dir, val_dir):
             pickle_safe=False,
             validation_data=test_generator,
             validation_steps=len(test_dir.paths) // cfg['batch_size'])
+
+    print("Finished training after %s minutes" %
+          ((time.time() - time_s) // 60))
+
+
+    ##################################
+    # Evaluation
+    ##################################
+
+    model.evaluate_generator(
+            test_generator,
+            steps=len(test_dir.paths) // cfg['batch_size'],
+            workers=4,
+            pickle_safe=False)
+
 
     ##################################
     # Save

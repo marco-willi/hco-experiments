@@ -121,11 +121,14 @@ class ImageUrlLoader(object):
         return res
 
     def storeOnDisk(self, urls, labels, ids, path, target_size=None,
-                    chunk_size=1000, overwrite=False):
+                    chunk_size=1000, overwrite=False, create_path=True):
         """ store all images on disk in class specific folders """
 
         # check
-        assert os.path.exists(path)
+        if not os.path.exists(path) & create_path:
+            os.mkdir(path)
+        else:
+            NameError("Path not Found")
 
         # ensure / at end of path
         if path[-1] != '/':
