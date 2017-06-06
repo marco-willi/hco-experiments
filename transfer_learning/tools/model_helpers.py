@@ -1,7 +1,10 @@
 # Function to save model
 def model_save(model, config, postfix=None):
-    path_to_save = config['paths']['path_final_models']
+    path_persistent = config['paths']['path_persistent']
+    path_to_save = path_persistent + config['paths']['path_final_models']
     model_id = config['model']['identifier']
+
+    path_to_save = path_to_save.replace("//", "/")
 
     if postfix is not None:
         out_name = '%s_%s' % (model_id, postfix)
@@ -28,6 +31,7 @@ def model_param_loader(config):
     image_size_model = tuple([int(x) for x in image_size_model])
 
     scratch = config['paths']['path_scratch']
+    path_persistent = config['paths']['path_persistent']
 
     # build config dictionary for easier use in code
     cfg = dict()
@@ -38,5 +42,6 @@ def model_param_loader(config):
     cfg['image_size_save'] = image_size_save
     cfg['image_size_model'] = image_size_model
     cfg['scratch'] = scratch
+    cfg['persistent'] = path_persistent
 
     return cfg

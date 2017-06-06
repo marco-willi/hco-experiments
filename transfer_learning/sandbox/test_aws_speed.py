@@ -244,6 +244,6 @@ if __name__ == '__main__':
     test_url_seq([1, 10, 50, 100])
     test_url_disk(batch_sizes)
     test_read_disk(batch_sizes)
-    test_read_url_keras([10, 50, 100])
+    test_read_url_keras(batch_sizes)
 
     console.close()

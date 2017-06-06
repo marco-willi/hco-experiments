@@ -124,7 +124,9 @@ def train(train_dir, test_dir, val_dir):
             steps_per_epoch=len(train_dir.paths) // cfg['batch_size'],
             epochs=cfg['num_epochs'],
             validation_data=test_generator,
-            validation_steps=len(test_dir.paths) // cfg['batch_size'])
+            validation_steps=len(test_dir.paths) // cfg['batch_size'],
+            workers=4,
+            pickle_safe=True)
 
     ##################################
     # Save
