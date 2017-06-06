@@ -231,6 +231,7 @@ if __name__ == '__main__':
     log.getLogger('').addHandler(console)
     log.getLogger("requests").setLevel(log.WARNING)
     log.getLogger("urllib3").setLevel(log.WARNING)
+    log.getLogger("asyncio").setLevel(log.WARNING)
 
     # get data
     train_dir, test_dir, val_dir = prep_data()

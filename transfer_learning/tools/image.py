@@ -16,6 +16,7 @@ import warnings
 from tools.image_url_loader import ImageUrlLoader
 
 from keras import backend as K
+import time
 
 try:
     from PIL import Image as pil_image
@@ -1123,6 +1124,7 @@ class URLIterator(Iterator):
         batch_x = np.zeros((current_batch_size,) + self.image_shape, dtype=K.floatx())
         grayscale = self.color_mode == 'grayscale'
 
+        time_s = time.time()
         # build image batch
         urls_in_batch = list()
         for i, j in enumerate(index_array):
@@ -1131,6 +1133,10 @@ class URLIterator(Iterator):
         # get image batch
         imgs = self.image_loader.getImages(urls_in_batch)
 
+        time_e = time.time()
+        # print("Took %s seconds to getImages" % (time_e-time_s))
+
+        time_s = time.time()
         # transform images
         for img in imgs:
             # resize image
@@ -1140,6 +1146,8 @@ class URLIterator(Iterator):
             x = self.image_data_generator.standardize(x)
             batch_x[i] = x
 
+        time_e = time.time()
+        # print("Took %s seconds to transform images" % (time_e-time_s))
         # optionally save augmented images to disk for debugging purposes
         if self.save_to_dir:
             for i in range(current_batch_size):

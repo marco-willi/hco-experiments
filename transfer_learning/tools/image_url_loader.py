@@ -138,12 +138,12 @@ class ImageUrlLoader(object):
         for sub_dir in set(labels):
             if not os.path.exists(path + str(sub_dir)):
                 os.mkdir(path + str(sub_dir))
-            # TODO: check file existence and skip
 
+        # TODO: check file existence and skip
         # generate all possible paths and check if file exists
         # TODO: check file existence and skip
-#        for i, y in zip(ids, labels):
-#            path_img_all = path + str(y) + "/" + str(i) + ".jpeg"
+        # for i, y in zip(ids, labels):
+        #    path_img_all = path + str(y) + "/" + str(i) + ".jpeg"
 
         # get relevant data from dictionary
         size = len(urls)
@@ -191,11 +191,13 @@ class ImageUrlLoader(object):
         return None
 
 if __name__ == "__main__":
-    from main import train_dir
+    from main import prep_data
+    train_dir, test_dir, val_dir = prep_data()
+
     # test
     img_loader = ImageUrlLoader()
     # get some image urls
-    urls = train_dir.paths[0:128]
+    urls = train_dir.paths[512:630]
 
     time_start = time.time()
     imgs = img_loader.getImages(urls)
