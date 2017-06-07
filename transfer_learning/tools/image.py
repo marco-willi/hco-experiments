@@ -486,8 +486,9 @@ class ImageDataGenerator(object):
                        save_prefix='',
                        save_format='png',
                        follow_links=False):
-        return URLIterator(self, urls, labels, classes,
+        return URLIterator(self, urls, labels,
                            target_size=target_size, color_mode=color_mode,
+                           classes=classes,
                            class_mode=class_mode,
                            data_format=self.data_format,
                            batch_size=batch_size, shuffle=shuffle, seed=seed,
@@ -1052,9 +1053,9 @@ class URLIterator(Iterator):
             (if `save_to_dir` is set).
     """
 
-    def __init__(self, image_data_generator, urls, labels, classes,
+    def __init__(self, image_data_generator, urls, labels,
                  target_size=(256, 256), color_mode='rgb',
-                 class_mode='categorical',
+                 classes=None, class_mode='categorical',
                  batch_size=32, shuffle=True, seed=None,
                  data_format=None,
                  save_to_dir=None, save_prefix='', save_format='png',
@@ -1080,7 +1081,14 @@ class URLIterator(Iterator):
                 self.image_shape = self.target_size + (1,)
             else:
                 self.image_shape = (1,) + self.target_size
-        self.classes = classes
+
+        if classes is not None:
+            self.classes = classes
+        else:
+            self.classes = np.unique(labels)
+
+        self.num_class = np.unique(self.classes).shape[0]
+
         if class_mode not in {'categorical', 'binary', 'sparse',
                               'input', None}:
             raise ValueError('Invalid class_mode:', class_mode,
@@ -1097,9 +1105,9 @@ class URLIterator(Iterator):
         # first, count the number of samples and classes
         self.samples = len(urls)
 
-        self.num_class = np.unique(classes).shape[0]
 
-        self.class_indices = dict(zip(classes, range(len(classes))))
+
+        self.class_indices = dict(zip(self.classes, range(len(self.classes))))
 
         print('Found %d images belonging to %d classes.' % (self.samples, self.num_class))
 
@@ -1108,7 +1116,8 @@ class URLIterator(Iterator):
 
         # second, build an index of the images in the different class subfolders
         self.filenames = urls
-        self.classes = np.zeros((self.samples,), dtype='int32')
+        # self.classes = np.zeros((self.samples,), dtype='int32')
+        self.classes = np.array(self.labels,dtype='int32')
 
         super(URLIterator, self).__init__(self.samples, batch_size, shuffle, seed)
 
@@ -1135,16 +1144,25 @@ class URLIterator(Iterator):
 
         time_e = time.time()
         # print("Took %s seconds to getImages" % (time_e-time_s))
-
+        # import pdb; pdb.set_trace()
         time_s = time.time()
         # transform images
+        ii = 0
         for img in imgs:
+            # handle color modes
+            if grayscale:
+                if img.mode != 'L':
+                    img = img.convert('L')
+            else:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
             # resize image
             img = img.resize(self.target_size)
             x = img_to_array(img, data_format=self.data_format)
             x = self.image_data_generator.random_transform(x)
             x = self.image_data_generator.standardize(x)
-            batch_x[i] = x
+            batch_x[ii] = x
+            ii += 1
 
         time_e = time.time()
         # print("Took %s seconds to transform images" % (time_e-time_s))

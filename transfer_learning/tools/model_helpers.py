@@ -3,9 +3,12 @@ import os
 
 # Function to save model
 def model_save(model, config, postfix=None, create_dir=True):
+    # extract project id for further loading project specifc configs
+    project_id = config['projects']['panoptes_id']
+
     path_persistent = config['paths']['path_persistent']
     path_to_save = path_persistent + config['paths']['path_final_models']
-    model_id = config['model']['identifier']
+    model_id = config[project_id]['identifier']
 
     path_to_save = path_to_save.replace("//", "/")
 

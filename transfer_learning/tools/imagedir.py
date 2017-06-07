@@ -4,7 +4,7 @@ import requests
 from io import BytesIO
 
 class ImageDir(object):
-    """ Class to save image directory """
+    """ Class to implement image directory """
     def __init__(self, paths, labels, unique_ids, info_dict):
         """
             paths: list with paths/urls to images
