@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from config.config import config
 import importlib
 from models.cat_vs_dog_test_disk_only import train
+from db.generate_annotations import generate_annotations_from_panoptes
 
 # some tests
 def test(train_dir):
@@ -19,7 +20,7 @@ def prep_data():
     # Get Project Info
     ########################
 
-    # get classification & subject data
+    # get classification & subject data via Panoptes client
     cls = panoptes.get_classifications(panoptes.my_project)
     subs = panoptes.get_subject_info(panoptes.my_project)
 
@@ -35,36 +36,8 @@ def prep_data():
     le = LabelEncoder()
     le.fit(labels_all)
 
-    # generate labels from annotations (or somewhere else)
-    labels = dict()
-    for key, val in subs.items():
-        if '#label' not in val['metadata']:
-            next
-        else:
-            labels[key] = int(le.transform([val['metadata']['#label']]))
-
-    # get subjects with labels
-    subs_remove = subs.keys() - labels.keys()
-
-    # remove subjects without label
-    for rem in subs_remove:
-        subs.pop(rem, None)
-
-    ########################
-    # Data Directory
-    ########################
-
-    # create generic dictionary to be used for the modelling part
-    # contains generic id, y_label, url, subject_id
-    data_dict = dict()
-    i = 0
-    for key, val in subs.items():
-        data_dict[i] = {'y_data': int(le.transform([val['metadata']
-                                                       ['#label']])),
-                        'class': val['metadata']['#label'],
-                        'url': val['url'],
-                        'subject_id': key}
-        i += 1
+    # dictionary with subject_id as key,
+    data_dict = generate_annotations_from_panoptes(subs, le)
 
     ########################
     # Test / train /

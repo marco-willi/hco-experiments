@@ -3,11 +3,17 @@ import os
 
 # Function to save model
 def model_save(model, config, postfix=None, create_dir=True):
+
     # extract project id for further loading project specifc configs
     project_id = config['projects']['panoptes_id']
 
-    path_persistent = config['paths']['path_persistent']
-    path_to_save = path_persistent + config['paths']['path_final_models']
+    # load paths
+    cfg_paths = path_loader(config)
+
+    # get path to save models
+    path_to_save = cfg_paths['save']
+
+    # define model name to save
     model_id = config[project_id]['identifier']
 
     path_to_save = path_to_save.replace("//", "/")
@@ -24,6 +30,14 @@ def model_save(model, config, postfix=None, create_dir=True):
         NameError("Path not Found")
 
     model.save(path_to_save + out_name + '.h5')
+
+
+# function to load path parameters
+def path_loader(config):
+    if eval(config['general']['debug']):
+        return config['paths_debug']
+    else:
+        return config['paths']
 
 
 # function to load parameters used for model training

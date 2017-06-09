@@ -5,7 +5,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from config.config import config
-from tools.model_helpers import model_save, model_param_loader
+from tools.model_helpers import model_save, model_param_loader, path_loader
 import time
 
 
@@ -15,6 +15,8 @@ def train(train_dir, test_dir, val_dir):
     ##################################
 
     cfg = model_param_loader(config)
+    cfg_path = path_loader(config)
+
     print_separator = "---------------------------------"
 
     ##################################
@@ -35,14 +37,14 @@ def train(train_dir, test_dir, val_dir):
     train_data_loader.storeOnDisk(urls=train_dir.paths,
                                   labels=train_dir.labels,
                                   ids=train_dir.unique_ids,
-                                  path=cfg['scratch'] + 'train',
+                                  path=cfg_path['images'] + 'train',
                                   target_size=cfg['image_size_save'][0:2],
                                   chunk_size=100)
     print("Saving test data ....")
     test_data_loader.storeOnDisk(urls=test_dir.paths,
                                  labels=test_dir.labels,
                                  ids=test_dir.unique_ids,
-                                 path=cfg['scratch'] + 'test',
+                                 path=cfg_path['images'] + 'test',
                                  target_size=cfg['image_size_save'][0:2],
                                  chunk_size=100)
 
@@ -50,7 +52,7 @@ def train(train_dir, test_dir, val_dir):
     val_data_loader.storeOnDisk(urls=val_dir.paths,
                                 labels=val_dir.labels,
                                 ids=val_dir.unique_ids,
-                                path=cfg['scratch'] + 'val',
+                                path=cfg_path['images'] + 'val',
                                 target_size=cfg['image_size_save'][0:2],
                                 chunk_size=100)
 
@@ -74,20 +76,20 @@ def train(train_dir, test_dir, val_dir):
         rescale=1./255)
 
     train_generator = datagen_train.flow_from_directory(
-            cfg['scratch'] + 'train',
+            cfg_path['scratch'] + 'train',
             target_size=cfg['image_size_model'][0:2],  # all images will be resized
             batch_size=cfg['batch_size'],
             class_mode='binary')
 
     # this is a similar generator, for validation data
     test_generator = datagen_test.flow_from_directory(
-            cfg['scratch'] + 'test',
+            cfg_path['scratch'] + 'test',
             target_size=cfg['image_size_model'][0:2],
             batch_size=cfg['batch_size'],
             class_mode='binary')
 
     val_generator = datagen_test.flow_from_directory(
-            cfg['scratch'] + 'val',
+            cfg_path['scratch'] + 'val',
             target_size=cfg['image_size_model'][0:2],
             batch_size=cfg['batch_size'],
             class_mode='binary')
