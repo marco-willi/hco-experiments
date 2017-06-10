@@ -124,6 +124,12 @@ class ImageUrlLoader(object):
                     chunk_size=1000, overwrite=False, create_path=True):
         """ store all images on disk in class specific folders """
 
+        # generate artificial ids because of duplicates
+        ids_input = ids
+        ids_new = [x for x in range(0, len(ids))]
+        ids = [str(old) + '_' + str(new) for old,
+               new in zip(ids_input, ids_new)]
+
         # check
         if not os.path.exists(path) & create_path:
             os.mkdir(path)

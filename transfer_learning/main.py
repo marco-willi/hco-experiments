@@ -2,11 +2,11 @@
 from tools import panoptes
 from tools.imagedir import ImageDir, create_image_dir
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+
 from config.config import config
 import importlib
-from models.cat_vs_dog_test_disk_only import train
 from db.generate_annotations import generate_annotations_from_panoptes
+from tools.subjects import SubjectSet, Subject
 
 # some tests
 def test(train_dir):
@@ -21,30 +21,35 @@ def prep_data():
     ########################
 
     # get classification & subject data via Panoptes client
-    cls = panoptes.get_classifications(panoptes.my_project)
+    # cls = panoptes.get_classifications(panoptes.my_project)
     subs = panoptes.get_subject_info(panoptes.my_project)
 
     # extract project id for further loading project specifc configs
     project_id = config['projects']['panoptes_id']
 
     ########################
-    # Create Annotations
+    # Create Subject Set
     ########################
 
-    # encode labels to numerics
-    labels_all = config[project_id]['classes'].split(",")
-    le = LabelEncoder()
-    le.fit(labels_all)
+    all_classes = config[project_id]['classes'].split(",")
+    subject_set = SubjectSet(labels=all_classes)
 
-    # dictionary with subject_id as key,
-    data_dict = generate_annotations_from_panoptes(subs, le)
+    for key, value in subs.items():
+        subject = Subject(identifier=key,
+                          label=value['metadata']['#label'],
+                          meta_data=value['metadata'],
+                          urls=value['url'],
+                          label_num=subject_set.getLabelEncoder().transform(
+                                  [value['metadata']['#label']])
+                          )
+        subject_set.addSubject(key, subject)
 
     ########################
     # Test / train /
     # validation splits
     ########################
 
-    id_train, id_test = train_test_split(list(data_dict.keys()),
+    id_train, id_test = train_test_split(list(subject_set.getAllIDs()),
                                          train_size=0.95,
                                          random_state=int(config[project_id]
                                                           ['random_seed']))
@@ -54,12 +59,19 @@ def prep_data():
                                        random_state=int(config[project_id]
                                                         ['random_seed']))
 
-    # generate image directories
-    train_dir = create_image_dir(data_dict, keys=id_train)
-    test_dir = create_image_dir(data_dict, keys=id_test)
-    val_dir = create_image_dir(data_dict, keys=id_val)
+    # generate new subject sets
+    train_set = SubjectSet(labels=all_classes)
+    test_set = SubjectSet(labels=all_classes)
+    val_set = SubjectSet(labels=all_classes)
 
-    return train_dir, test_dir, val_dir
+    set_ids = [id_train, id_test, id_val]
+    sets = [train_set, test_set, val_set]
+    for si, s in zip(set_ids, sets):
+        for i in si:
+            sub = subject_set.getSubject(i)
+            s.addSubject(i, sub)
+
+    return train_set, test_set, val_set
 
 
 # Main Program
@@ -68,7 +80,7 @@ def main():
     ########################
     # Get Data
     ########################
-    train_dir, test_dir, val_dir = prep_data()
+    train_set, test_set, val_set = prep_data()
 
     ########################
     # Call Model
@@ -82,7 +94,7 @@ def main():
     model = importlib.import_module('models.' + model_file)
 
     # train model
-    model.train(train_dir, test_dir, val_dir)
+    model.train(train_set, test_set, val_set)
 
 
 if __name__ == "__main__":

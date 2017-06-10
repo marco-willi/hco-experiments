@@ -56,8 +56,6 @@ def model_param_loader(config):
     image_size_model = config[project_id]['image_size_model'].split(',')
     image_size_model = tuple([int(x) for x in image_size_model])
 
-    scratch = config['paths']['path_scratch']
-    path_persistent = config['paths']['path_persistent']
 
     # build config dictionary for easier use in code
     cfg = dict()
@@ -67,7 +65,5 @@ def model_param_loader(config):
     cfg['data_augmentation'] = data_augmentation
     cfg['image_size_save'] = image_size_save
     cfg['image_size_model'] = image_size_model
-    cfg['scratch'] = scratch
-    cfg['persistent'] = path_persistent
 
     return cfg

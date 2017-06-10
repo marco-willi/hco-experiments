@@ -9,12 +9,14 @@ from tools.model_helpers import model_save, model_param_loader
 import time
 
 
-def train(train_dir, test_dir, val_dir):
+def train(train_set, test_set, val_set):
     ##################################
     # Parameters
     ##################################
 
     cfg = model_param_loader(config)
+    cfg_path = path_loader(config)
+
     print_separator = "---------------------------------"
 
     ##################################
@@ -30,26 +32,29 @@ def train(train_dir, test_dir, val_dir):
     datagen_test = ImageDataGenerator(
         rescale=1./255)
 
+    urls, labels = train_set.getAllURLsLabels()
     train_generator = datagen_train.flow_from_urls(
-            urls=train_dir.paths,
-            labels=train_dir.labels,
+            urls=urls,
+            labels=labels,
             target_size=cfg['image_size_model'][0:2],
             color_mode='grayscale',
             batch_size=cfg['batch_size'],
             class_mode='sparse')
 
     # this is a similar generator, for validation data
+    urls, labels = test_set.getAllURLsLabels()
     test_generator = datagen_test.flow_from_urls(
-            urls=test_dir.paths,
-            labels=test_dir.labels,
+            urls=urls,
+            labels=labels,
             target_size=cfg['image_size_model'][0:2],
             color_mode='grayscale',
             batch_size=cfg['batch_size'],
             class_mode='sparse')
 
+    urls, labels = val_set.getAllURLsLabels()
     val_generator = datagen_test.flow_from_urls(
-            urls=val_dir.paths,
-            labels=val_dir.labels,
+            urls=urls,
+            labels=labels,
             target_size=cfg['image_size_model'][0:2],
             color_mode='grayscale',
             batch_size=cfg['batch_size'],
@@ -86,12 +91,12 @@ def train(train_dir, test_dir, val_dir):
     time_s = time.time()
     model.fit_generator(
             train_generator,
-            steps_per_epoch=len(train_dir.paths) // cfg['batch_size'],
+            steps_per_epoch=train_generator.n // cfg['batch_size'],
             epochs=cfg['num_epochs'],
             workers=4,
             pickle_safe=False,
             validation_data=test_generator,
-            validation_steps=len(test_dir.paths) // cfg['batch_size'])
+            validation_steps=test_generator.n // cfg['batch_size'])
 
     print("Finished training after %s minutes" %
           ((time.time() - time_s) // 60))
@@ -103,7 +108,7 @@ def train(train_dir, test_dir, val_dir):
     # Test Data
     eval_metrics = model.evaluate_generator(
                     test_generator,
-                    steps=len(test_dir.paths) // cfg['batch_size'],
+                    steps=test_generator.n // cfg['batch_size'],
                     workers=4,
                     pickle_safe=False)
 
@@ -115,7 +120,7 @@ def train(train_dir, test_dir, val_dir):
     # Validation Data
     eval_metrics = model.evaluate_generator(
                     val_generator,
-                    steps=len(val_dir.paths) // cfg['batch_size'],
+                    steps=val_generator.n // cfg['batch_size'],
                     workers=4,
                     pickle_safe=False)
 

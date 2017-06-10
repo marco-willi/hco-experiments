@@ -23,6 +23,7 @@ def proc():
     seasons = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', '10','WF1']
     season_files = dict()
     season_writers = dict()
+    blanks_dir = dict()
 
     # create season files
     for s in seasons:
@@ -33,6 +34,13 @@ def proc():
         # add header
         season_writers[s].writerow(header_new)
 
+    # write blanks
+    blanks = open(path_write + "blanks_data.csv", "w")
+    blanks_writer = csv.writer(blanks, delimiter=',',
+                                       quotechar='"',
+                                       quoting=csv.QUOTE_ALL)
+    blanks_writer.writerow(['subject_id','class','season','capture_event_id'])
+
     count = 0
     for row in datareader:
         count += 1
@@ -40,8 +48,13 @@ def proc():
             continue
         # apply filters
         if ((row[3] == 'tutorial') & (row[6] not in ('S9','10','WF1'))) or \
-           (row[6] == 'tutorial') or \
-           (row[5] in ('blank', 'blank_consensus')):
+           (row[6] == 'tutorial'):
+           continue
+        # handle blanks
+        if (row[5] in ('blank', 'blank_consensus')):
+            blanks_dir[row[2]] = {'class': 'blank',
+                                  'season': row[6],
+                                  'capture_event_id': row[3]}
             continue
         # remove additional column
         # del row[10]
@@ -54,6 +67,11 @@ def proc():
         season_files[s].close()
 
     file.close()
+
+    # write blanks to file
+    for key, value in blanks_dir.items():
+        row = [key, value['class'], value['season'], value['capture_event_id']]
+        blanks_writer.writerow(row)
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ from tools.model_helpers import model_save, model_param_loader, path_loader
 import time
 
 
-def train(train_dir, test_dir, val_dir):
+def train(train_set, test_set, val_set):
     ##################################
     # Parameters
     ##################################
@@ -34,24 +34,27 @@ def train(train_dir, test_dir, val_dir):
     print(print_separator)
     print("Saving train data ....")
     time_s = time.time()
-    train_data_loader.storeOnDisk(urls=train_dir.paths,
-                                  labels=train_dir.labels,
-                                  ids=train_dir.unique_ids,
+    urls, labels, ids = train_set.getAllURLsLabelsIDs()
+    train_data_loader.storeOnDisk(urls=urls,
+                                  labels=labels,
+                                  ids=ids,
                                   path=cfg_path['images'] + 'train',
                                   target_size=cfg['image_size_save'][0:2],
                                   chunk_size=100)
     print("Saving test data ....")
-    test_data_loader.storeOnDisk(urls=test_dir.paths,
-                                 labels=test_dir.labels,
-                                 ids=test_dir.unique_ids,
+    urls, labels, ids = test_set.getAllURLsLabelsIDs()
+    test_data_loader.storeOnDisk(urls=urls,
+                                 labels=labels,
+                                 ids=ids,
                                  path=cfg_path['images'] + 'test',
                                  target_size=cfg['image_size_save'][0:2],
                                  chunk_size=100)
 
     print("Saving val data ....")
-    val_data_loader.storeOnDisk(urls=val_dir.paths,
-                                labels=val_dir.labels,
-                                ids=val_dir.unique_ids,
+    urls, labels, ids = test_set.getAllURLsLabelsIDs()
+    val_data_loader.storeOnDisk(urls=urls,
+                                labels=labels,
+                                ids=ids,
                                 path=cfg_path['images'] + 'val',
                                 target_size=cfg['image_size_save'][0:2],
                                 chunk_size=100)
@@ -130,10 +133,10 @@ def train(train_dir, test_dir, val_dir):
     time_s = time.time()
     model.fit_generator(
             train_generator,
-            steps_per_epoch=len(train_dir.paths) // cfg['batch_size'],
+            steps_per_epoch=train_generator.n // cfg['batch_size'],
             epochs=cfg['num_epochs'],
             validation_data=test_generator,
-            validation_steps=len(test_dir.paths) // cfg['batch_size'],
+            validation_steps=test_generator.n // cfg['batch_size'],
             workers=4,
             pickle_safe=True)
 
@@ -146,7 +149,7 @@ def train(train_dir, test_dir, val_dir):
 
     model.evaluate_generator(
             test_generator,
-            steps=len(test_dir.paths) // cfg['batch_size'],
+            steps=test_generator.n // cfg['batch_size'],
             workers=4,
             pickle_safe=True)
 
