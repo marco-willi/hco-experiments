@@ -5,7 +5,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from config.config import config, cfg_path
-from tools.model_helpers import model_save, model_param_loader, path_loader
+from tools.model_helpers import model_save, model_param_loader
 import time
 
 
@@ -78,20 +78,20 @@ def train(train_set, test_set, val_set):
         rescale=1./255)
 
     train_generator = datagen_train.flow_from_directory(
-            cfg_path['scratch'] + 'train',
+            cfg_path['images'] + 'train',
             target_size=cfg['image_size_model'][0:2],  # all images will be resized
             batch_size=cfg['batch_size'],
             class_mode='binary')
 
     # this is a similar generator, for validation data
     test_generator = datagen_test.flow_from_directory(
-            cfg_path['scratch'] + 'test',
+            cfg_path['images'] + 'test',
             target_size=cfg['image_size_model'][0:2],
             batch_size=cfg['batch_size'],
             class_mode='binary')
 
     val_generator = datagen_test.flow_from_directory(
-            cfg_path['scratch'] + 'val',
+            cfg_path['images']+ 'val',
             target_size=cfg['image_size_model'][0:2],
             batch_size=cfg['batch_size'],
             class_mode='binary')
