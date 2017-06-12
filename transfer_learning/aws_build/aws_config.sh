@@ -16,3 +16,10 @@ cd ~/code/hco-experiments/transfer_learning/config/
 
 # commit docker changes
 # sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3
+
+
+# Nvidia docker
+sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
+
+# normal docker
+sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash

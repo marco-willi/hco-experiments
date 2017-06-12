@@ -13,8 +13,7 @@ def get_dryad_ss_data(retrieve=True):
     db_path = cfg_path['db']
 
 
-    url_data = 'http://datadryad.org/bitstream/handle/10255/dryad.86348/\
-    consensus_data.csv?sequence=1'
+    url_data = 'http://datadryad.org/bitstream/handle/10255/dryad.86348/consensus_data.csv?sequence=1'
 
     output_file = db_path + 'consolidated_annotations.csv'
     if retrieve:
