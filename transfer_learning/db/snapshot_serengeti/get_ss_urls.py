@@ -2,6 +2,8 @@
 import aiohttp
 import asyncio
 from contextlib import closing
+import time
+from config.config import path_cfg
 
 
 async def fetch_page(session, url):
@@ -31,7 +33,6 @@ def extract_data(pages, quality):
     return res
 
 
-def get_oroboros_api_data(ids, quality='standard', batch_size=1000):
     api_path = 'https://api.zooniverse.org/projects/serengeti/subjects/'
     url_list = list()
     for ii in ids:
@@ -51,6 +52,8 @@ def get_oroboros_api_data(ids, quality='standard', batch_size=1000):
 
     # loop over chunks
     for i in range(0, (len(cuts) - 1)):
+
+        time_s = time.time()
 
         # chunk ids
         idx = [x for x in range(cuts[i], cuts[i+1])]
@@ -72,7 +75,18 @@ def get_oroboros_api_data(ids, quality='standard', batch_size=1000):
         # save results
         all_urls = {**all_urls, **chunk_res}
 
-        print("%s / %s urls processed" % (cuts[i+1],size))
+        time_req = time.time() - time_s
+
+        print("%s / %s urls processed" % (cuts[i+1], size))
+        print("last batch required %s minutes" % (time_req // 60))
+
+        if log:
+            log_file = path_cfg['logs'] + 'oroboros_log.txt'
+            file = open(log_file,'a')
+            print("%s / %s urls processed" % (cuts[i+1], size), file=file)
+            print("last batch required %s minutes" % (time_req // 60), file=file)
+            file.close()
+
 
 
     return all_urls
