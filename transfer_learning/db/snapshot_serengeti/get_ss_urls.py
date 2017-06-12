@@ -33,6 +33,7 @@ def extract_data(pages, quality):
     return res
 
 
+def get_oroboros_api_data(ids, quality='standard', batch_size=1000, log=True):
     api_path = 'https://api.zooniverse.org/projects/serengeti/subjects/'
     url_list = list()
     for ii in ids:
