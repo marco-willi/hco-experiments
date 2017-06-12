@@ -31,25 +31,61 @@ def extract_data(pages, quality):
     return res
 
 
-def get_oroboros_api_data(ids, quality='standard'):
+def get_oroboros_api_data(ids, quality='standard', batch_size=1000):
     api_path = 'https://api.zooniverse.org/projects/serengeti/subjects/'
     url_list = list()
     for ii in ids:
         url_list.append(api_path + ii)
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    size = len(ids)
 
-    pages = get_multiple_pages(url_list, ids)
-    all_urls = extract_data(pages, quality)
+    # define chunks of images to load
+    cuts = [x for x in range(0, size, batch_size)]
+    if cuts[-1] < size:
+        cuts.append(size)
+
+    # convert chunk sizes to integers
+    cuts = [int(x) for x in cuts]
+
+    all_urls = dict()
+
+    # loop over chunks
+    for i in range(0, (len(cuts) - 1)):
+
+        # chunk ids
+        idx = [x for x in range(cuts[i], cuts[i+1])]
+
+        # store chunk urls and ids
+        chunk_urls = list()
+        chunk_ids = list()
+        for ii in idx:
+            chunk_urls.append(url_list[ii])
+            chunk_ids.append(ids[ii])
+
+        # call asyncio loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        pages = get_multiple_pages(chunk_urls, chunk_ids)
+
+        chunk_res = extract_data(pages, quality)
+
+        # save results
+        all_urls = {**all_urls, **chunk_res}
+
+        print("%s / %s urls processed" % (cuts[i+1],size))
+
+
     return all_urls
 
 
 if __name__ == '__main__':
-    subject_ids = ['ASG001gpfu', 'ASG001k4o9', 'ASG001isc1', 'ASG001hw4x']
-    data = get_oroboros_api_data(subject_ids)
-    for d in data:
-        print(d)
+    ids = ['ASG001gpfu', 'ASG001k4o9', 'ASG001isc1', 'ASG001hw4x']
+    from db.snapshot_serengeti.get_dryad_data import get_dryad_ss_data
+    dd = get_dryad_ss_data(retrieve=False)
+    ids = list(dd.keys())[0:1003]
+    data = get_oroboros_api_data(ids, batch_size=100)
+#    for d in data:
+#        print(d)
 
 #
 
