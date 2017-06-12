@@ -72,6 +72,8 @@ def main():
     # save data
     pickle.dump(subject_set, db_path + 'subject_set_ss_blanks.pkl')
 
+if __name__ == '__main__':
+    main()
 
 # blanks[list(blanks.keys())[0]]
 # dryad_data[list(dryad_data.keys())[0]]

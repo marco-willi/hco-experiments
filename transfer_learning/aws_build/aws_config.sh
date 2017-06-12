@@ -9,9 +9,10 @@ cd ~/code/hco-experiments/transfer_learning/config/
 # see specific device info
 # sudo file -s /dev/xvdba
 # sudo mkfs -t ext4 /dev/xvdba
-# sudo mkdir ~/data2
-# sudo mount /dev/xvdba ~/data2
+# sudo mkdir ~/data_hdd
+# sudo mount /dev/xvdba ~/data_hdd
 
+# sudo chmod 775 data_hdd/
 
 # commit docker changes
 # sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3
