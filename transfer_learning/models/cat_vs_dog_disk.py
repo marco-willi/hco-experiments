@@ -4,7 +4,7 @@ from tools.image_url_loader import ImageUrlLoader
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
-from config.config import config
+from config.config import config, cfg_path
 from tools.model_helpers import model_save, model_param_loader, path_loader
 import time
 
@@ -15,7 +15,6 @@ def train(train_set, test_set, val_set):
     ##################################
 
     cfg = model_param_loader(config)
-    cfg_path = path_loader(config)
 
     print_separator = "---------------------------------"
 

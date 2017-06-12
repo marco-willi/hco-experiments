@@ -5,12 +5,12 @@ cd ~/code/hco-experiments/transfer_learning/config/
 # run submodule
 # python3 -m module.submodule
 
-# mount devices (example device is xvdba)
+# mount devices (example device is xvdf)
 # see specific device info
-# sudo file -s /dev/xvdba
-# sudo mkfs -t ext4 /dev/xvdba
-# sudo mkdir ~/data_hdd
-# sudo mount /dev/xvdba ~/data_hdd
+#sudo file -s /dev/xvdf
+#sudo mkfs -t ext4 /dev/xvdf
+mkdir ~/data_hdd
+sudo mount /dev/xvdf ~/data_hdd
 
 # sudo chmod 775 data_hdd/
 
