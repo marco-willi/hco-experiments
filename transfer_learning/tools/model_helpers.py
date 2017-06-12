@@ -1,17 +1,15 @@
 import os
+from config.config import config, cfg_path
 
 
 # Function to save model
-def model_save(model, config, postfix=None, create_dir=True):
+def model_save(model, config=config, cfg_path=cfg_path, postfix=None, create_dir=True):
 
     # extract project id for further loading project specifc configs
     project_id = config['projects']['panoptes_id']
 
-    # load paths
-    cfg_paths = path_loader(config)
-
     # get path to save models
-    path_to_save = cfg_paths['save']
+    path_to_save = cfg_path['save']
 
     # define model name to save
     model_id = config[project_id]['identifier']
@@ -32,16 +30,9 @@ def model_save(model, config, postfix=None, create_dir=True):
     model.save(path_to_save + out_name + '.h5')
 
 
-# function to load path parameters
-def path_loader(config):
-    if eval(config['general']['debug']):
-        return config['paths_debug']
-    else:
-        return config['paths']
-
 
 # function to load parameters used for model training
-def model_param_loader(config):
+def model_param_loader(config=config):
     # extract project id for further loading project specifc configs
     project_id = config['projects']['panoptes_id']
 

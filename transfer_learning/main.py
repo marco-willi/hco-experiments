@@ -1,11 +1,10 @@
 # load modules
 from tools import panoptes
-from tools.imagedir import ImageDir, create_image_dir
 from sklearn.model_selection import train_test_split
 
 from config.config import config
 import importlib
-from db.generate_annotations import generate_annotations_from_panoptes
+# from db.generate_annotations import generate_annotations_from_panoptes
 from tools.subjects import SubjectSet, Subject
 
 # some tests
@@ -31,7 +30,7 @@ def prep_data():
     # Create Subject Set
     ########################
 
-    all_classes = config[project_id]['classes'].split(",")
+    all_classes = config[project_id]['classes'].replace('\n', '').split(",")
     subject_set = SubjectSet(labels=all_classes)
 
     for key, value in subs.items():

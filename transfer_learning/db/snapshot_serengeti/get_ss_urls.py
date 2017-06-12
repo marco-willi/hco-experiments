@@ -10,6 +10,7 @@ async def fetch_page(session, url):
     async with session.get(url) as response:
         return await response.json()
 
+
 def get_multiple_pages(urls, ids):
     """ Get multiple pages """
     tasks = []
