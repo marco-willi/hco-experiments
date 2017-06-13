@@ -6,13 +6,18 @@ import pandas as pd
 import json
 import time
 
-# connect to panoptes
-Panoptes.connect(username=config_credentials['Zooniverse']['username'],
-                 password=config_credentials['Zooniverse']['password'])
 
-# get my project
-project_id = int(config['projects']['panoptes_id'])
-my_project = Project.find(id=project_id)
+# connect to Panoptes and return project
+def init_panoptes(Panoptes=Panoptes, config_credentials=config_credentials):
+    # connect to panoptes
+    Panoptes.connect(username=config_credentials['Zooniverse']['username'],
+                     password=config_credentials['Zooniverse']['password'])
+
+    # get my project
+    project_id = int(config['projects']['panoptes_id'])
+    my_project = Project.find(id=project_id)
+
+    return my_project
 
 
 # function to get classification data
@@ -62,6 +67,7 @@ def download_dic(dat, path, n=-1):
     print("Required %s seconds to read %s images" % (time_diff, i))
 
 if __name__ == '__main__':
+    my_project = init_panoptes()
     # get classifications and subject links
     cls = get_classifications(my_project)
     subs = get_subject_info(my_project)

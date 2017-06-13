@@ -1,4 +1,5 @@
 # Module to build entire ss dataset for use in normal main function
+# yields subject sets
 from db.snapshot_serengeti.get_dryad_data import get_dryad_ss_data
 from db.snapshot_serengeti.get_blanks_from_data_dump import get_blanks
 from db.snapshot_serengeti.get_ss_urls import get_oroboros_api_data
@@ -25,12 +26,14 @@ def main():
     # save data
     pickle.dump(url_dict, open(db_path + 'url_dict.pkl', "wb"))
 
+    # url_dict = pickle.load(open(db_path + 'url_dict.pkl', "rb"))
+
     # add urls to dict
     for i in ids:
         data[i]['url'] = url_dict[i]
 
     # create subject_sets for ss_species
-    all_classes = config['ss_species']['classes'].split(",")
+    all_classes = config['ss_species']['classes'].replace("\n", "").split(",")
     subject_set = SubjectSet(labels=all_classes)
 
     for key, value in data.items():
@@ -51,7 +54,7 @@ def main():
                                   "wb"))
 
     # create subject_sets for ss_blank
-    all_classes = config['ss_blank']['classes'].split(",")
+    all_classes = config['ss_blank']['classes'].replace("\n", "").split(",")
     subject_set = SubjectSet(labels=all_classes)
 
     for key, value in data.items():
@@ -60,14 +63,11 @@ def main():
             cl = 'non_blank'
         else:
             cl = 'blank'
-
         subject = Subject(identifier=key,
                           label=cl,
                           meta_data=value['info'],
                           urls=value['url'],
-                          label_num=subject_set.getLabelEncoder().transform(
-                                  [cl])
-                          )
+                          label_num=subject_set.getLabelEncoder().transform([cl]))
         subject_set.addSubject(key, subject)
 
     # save data
