@@ -29,3 +29,6 @@ Files not relevant to running the main program.
 
 ### tools
 Different helper functions, e.g. fetching data.
+
+### db
+Functions to deal with different raw data formats. The functions should be able to transform raw data into subject and subject set classes as defined in the tools module in order to be processed by the main program.
