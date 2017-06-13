@@ -1,7 +1,7 @@
 # model for handwritten-digits data on Zooniverse
 from tools.image import ImageDataGenerator
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.optimizers import rmsprop
 from config.config import config
@@ -15,9 +15,6 @@ def train(train_set, test_set, val_set):
     ##################################
 
     cfg = model_param_loader(config)
-    cfg_path = path_loader(config)
-
-    print_separator = "---------------------------------"
 
     ##################################
     # Data Generator
@@ -128,8 +125,6 @@ def train(train_set, test_set, val_set):
     print("Validation Results")
     for name, value in zip(model.metrics_names, eval_metrics):
         print("%s: %s" % (name, value))
-
-
 
     ##################################
     # Save
