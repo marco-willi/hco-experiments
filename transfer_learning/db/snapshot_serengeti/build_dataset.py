@@ -23,7 +23,7 @@ def main():
     url_dict = get_oroboros_api_data(ids)
 
     # save data
-    pickle.dump(url_dict, db_path + 'url_dict.pkl')
+    pickle.dump(url_dict, open(db_path + 'url_dict.pkl', "wb"))
 
     # add urls to dict
     for i in ids:
@@ -47,7 +47,8 @@ def main():
         subject_set.addSubject(key, subject)
 
     # save data
-    pickle.dump(subject_set, db_path + 'subject_set_ss_species.pkl')
+    pickle.dump(subject_set, open(db_path + 'subject_set_ss_species.pkl',
+                                  "wb"))
 
     # create subject_sets for ss_blank
     all_classes = config['ss_blank']['classes'].split(",")
@@ -70,7 +71,8 @@ def main():
         subject_set.addSubject(key, subject)
 
     # save data
-    pickle.dump(subject_set, db_path + 'subject_set_ss_blanks.pkl')
+    pickle.dump(subject_set, open(db_path + 'subject_set_ss_blanks.pkl',
+                                  "wb"))
 
 if __name__ == '__main__':
     main()
