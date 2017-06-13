@@ -21,6 +21,9 @@ def get_subject_set():
     # retrieve data mode for current data set
     subject_mode = config[project_id]['subject_mode']
 
+    # classes
+    all_classes = config[project_id]['classes'].replace('\n', '').split(",")
+
     ########################
     # Create Subject Set
     ########################
@@ -32,7 +35,6 @@ def get_subject_set():
         # cls = panoptes.get_classifications(panoptes.my_project)
         subs = panoptes.get_subject_info(my_project)
 
-        all_classes = config[project_id]['classes'].replace('\n', '').split(",")
         subject_set = SubjectSet(labels=all_classes)
 
         for key, value in subs.items():
