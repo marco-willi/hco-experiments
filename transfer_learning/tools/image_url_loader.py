@@ -73,8 +73,9 @@ class ImageUrlLoader(object):
                     try:
                         img = Image.open(BytesIO(chunk))
                         images_dict[key] = img
-                    except IOError:
-                        print("Could not access image: %s \n" % url)
+                    except:
+                        print("Could not access image: %s with id %s \n"
+                              % (url, key))
             return await response.release()
 
         # asynchronous main loop
@@ -115,7 +116,10 @@ class ImageUrlLoader(object):
 
             # ensure correct ordering
             for i in internal_ids:
-                res.append(res_dict[i])
+                try:
+                    res.append(res_dict[i])
+                except:
+                    print("Could not append image %s" % i)
 
         # return list of image objects
         return res
@@ -209,7 +213,11 @@ class ImageUrlLoader(object):
                 if os.path.exists(path_img):
                     continue
                 # get current image
-                img = binary_images[img_id]
+                try:
+                    img = binary_images[img_id]
+                except:
+                    print("Could not access image %s - skipping..." % img_id)
+                    continue
 
                 # resize if specified
                 if target_size is not None:
@@ -222,7 +230,7 @@ class ImageUrlLoader(object):
                 # print progress
                 jj += 1
                 if jj % 500 == 0:
-                    print("%s / %s stored on disk" % (jj,size))
+                    print("%s / %s stored on disk" % (jj, size))
 
         return None
 

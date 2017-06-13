@@ -23,7 +23,7 @@ class SubjectSet(object):
     def getAllIDsLabels(self):
         ids = list()
         labels = list()
-        for k, value in self.subjects:
+        for k, value in self.subjects.items():
             ids.append(k)
             labels.append(value.getLabel())
         return ids, labels
