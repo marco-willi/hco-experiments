@@ -17,7 +17,10 @@ def main():
     blanks = get_blanks()
 
     # combine datasets
-    data = {**dryad_data, **blanks}
+    #data = {**dryad_data, **blanks}
+
+    data = dryad_data.copy()
+    data.update(blanks)
 
     # get image urls from orobouros API
     ids = list(data.keys())
