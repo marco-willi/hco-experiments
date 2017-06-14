@@ -12,7 +12,7 @@ def main():
     db_path = cfg_path['db']
 
     # get species and blank data set
-    dryad_data = get_dryad_ss_data(retrieve=True)
+    dryad_data = get_dryad_ss_data(retrieve=False)
     blanks = get_blanks()
 
     # combine datasets

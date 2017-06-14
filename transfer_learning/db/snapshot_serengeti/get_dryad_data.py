@@ -1,5 +1,5 @@
 # Module to get data stored at MSI at Dryad
-import urllib
+from urllib import request
 import csv
 import numpy as np
 from config.config import config, cfg_path
@@ -17,7 +17,7 @@ def get_dryad_ss_data(retrieve=True):
 
     output_file = db_path + 'consolidated_annotations.csv'
     if retrieve:
-        urllib.request.urlretrieve(url_data, output_file)
+        request.urlretrieve(url_data, output_file)
 
     ############################
     # Get Data From Local Drive
