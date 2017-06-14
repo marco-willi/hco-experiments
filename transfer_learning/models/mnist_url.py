@@ -4,7 +4,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.optimizers import rmsprop
-from config.config import config, cfg_path
+from config.config import config
 from tools.model_helpers import model_save, model_param_loader
 import time
 
@@ -29,22 +29,29 @@ def train(train_set, test_set, val_set):
     datagen_test = ImageDataGenerator(
         rescale=1./255)
 
-    train_generator = datagen_train.flow_from_directory(
-            cfg_path['images'] + 'train',
+    urls, labels = train_set.getAllURLsLabels()
+    train_generator = datagen_train.flow_from_urls(
+            urls=urls,
+            labels=labels,
             target_size=cfg['image_size_model'][0:2],
             color_mode='grayscale',
             batch_size=cfg['batch_size'],
             class_mode='sparse')
 
-    test_generator = datagen_test.flow_from_directory(
-            cfg_path['images'] + 'test',
+    # this is a similar generator, for validation data
+    urls, labels = test_set.getAllURLsLabels()
+    test_generator = datagen_test.flow_from_urls(
+            urls=urls,
+            labels=labels,
             target_size=cfg['image_size_model'][0:2],
             color_mode='grayscale',
             batch_size=cfg['batch_size'],
             class_mode='sparse')
 
-    val_generator = datagen_test.flow_from_directory(
-            cfg_path['images'] + 'val',
+    urls, labels = val_set.getAllURLsLabels()
+    val_generator = datagen_test.flow_from_urls(
+            urls=urls,
+            labels=labels,
             target_size=cfg['image_size_model'][0:2],
             color_mode='grayscale',
             batch_size=cfg['batch_size'],

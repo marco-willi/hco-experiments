@@ -3,9 +3,10 @@ import numpy as np
 import os
 from tools.image_url_loader import ImageUrlLoader
 import time
-
+import shutil
 
 class SubjectSet(object):
+    """ Defines a set of subjects """
     def __init__(self, labels):
         self.labels = labels
         self.subjects = dict()
@@ -14,13 +15,13 @@ class SubjectSet(object):
         self.labels_num = self.le.transform(self.labels)
 
     def addSubject(self, subject_id, subject):
-        self.subjects[subject_id] = subject
+        self.subjects[str(subject_id)] = subject
 
     def getSubject(self, subject_id):
-        return self.subjects[subject_id]
+        return self.subjects[str(subject_id)]
 
     def removeSubject(self, subject_id):
-        self.subjects.pop(subject_id, None)
+        self.subjects.pop(str(subject_id), None)
 
     def getLabelEncoder(self):
         return self.le
@@ -101,7 +102,7 @@ class SubjectSet(object):
         return urls, labels, ids, fnames
 
     def saveOnDisk(self, set_name, cfg, cfg_path):
-        """ save subjects to disk """
+        """ save all subjects to disk """
 
         # invoke bulk reading
         data_loader = ImageUrlLoader()
@@ -133,7 +134,7 @@ class SubjectSet(object):
         # update path information for all imges in in Subject set
         path = res['path']
 
-        for sub_id in ids:
+        for sub_id in set(ids).difference(failures.keys()):
             sub = self.getSubject(sub_id)
             imgs = sub.getImages()
             label = sub.getLabel()
@@ -149,7 +150,6 @@ class Subject(object):
         self.label = label
         self.meta_data = meta_data
         self.images = list()
-        self.label_num = label_num
 
         # handle urls
         if isinstance(urls, list):
@@ -189,9 +189,12 @@ class Subject(object):
     def getImages(self):
         return self.images
 
+    def overwriteLabel(self, label):
+        self.label = label
+
 
 class Image(object):
-    """ Image definition """
+    """ Defines a single image, which is part of a subject """
     def __init__(self, identifier, url=None, path=None):
         self.url = url
         self.path = path
@@ -201,6 +204,9 @@ class Image(object):
     def setPath(self, path):
         self.path = path
 
+    def getPath(self):
+        return self.path
+
     def setURL(self, url):
         self.url = url
 
@@ -209,6 +215,10 @@ class Image(object):
 
     def getFilename(self):
         return self.filename
+
+    def copyTo(self, dest_path):
+        shutil.copyfile(src=self.path + self.filename,
+                        dst=dest_path + self.filename)
 
 
 

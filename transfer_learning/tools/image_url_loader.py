@@ -169,9 +169,16 @@ class ImageUrlLoader(object):
         dict_ids = list(data_dict.keys())
         size = len(dict_ids)
 
+        # store info for return object
+        summary = dict()
+        failures_savings = dict()
+        summary['failures'] = failures_savings
+        summary['path'] = path
+
+        # return if nothing needs to be done
         if size == 0:
             print("Everything already on disk")
-            return None
+            return summary
 
         # define chunks of images to load
         cuts = [x for x in range(0, size, chunk_size)]
@@ -181,15 +188,8 @@ class ImageUrlLoader(object):
         # convert chunk sizes to integers
         cuts = [int(x) for x in cuts]
 
-        # store info for return object
-        summary = dict()
-        failures_savings = dict()
-        summary['failures'] = failures_savings
-        summary['path'] = path
-
         # initialize progress counter
         jj = 0
-        dummy = -1
 
         for i in range(0, (len(cuts) - 1)):
 
@@ -210,21 +210,9 @@ class ImageUrlLoader(object):
             img_id = 0
             for c_id, c_y in zip(chunk_ids, chunk_y):
 
-                if c_id == '5089346_0.jpeg':
-                    print("NOW DEBUG")
-
                 # define path
                 path_img = path + str(c_y) + "/" + \
                            str(c_id)
-
-
-                # TODO: REMOVE
-                dummy += 1
-                if (dummy % 500) == 0:
-                    print("Could not access image %s - skipping..." % c_id)
-                    failures_savings[c_id] = img_id
-                    continue
-
 
                 # check if exists
                 if os.path.exists(path_img):

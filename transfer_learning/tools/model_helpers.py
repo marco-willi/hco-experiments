@@ -56,5 +56,6 @@ def model_param_loader(config=config):
     cfg['data_augmentation'] = data_augmentation
     cfg['image_size_save'] = image_size_save
     cfg['image_size_model'] = image_size_model
+    cfg['random_seed'] = int(config[project_id]['random_seed'])
 
     return cfg

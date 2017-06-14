@@ -6,6 +6,8 @@ from config.config import config, cfg_path
 from sklearn.model_selection import train_test_split
 import os
 from tools.model_helpers import model_param_loader
+import shutil
+import importlib
 
 
 class Project(object):
@@ -53,10 +55,6 @@ class Project(object):
         self.subject_set.saveOnDisk(set_name='all',
                                     cfg=self.cfg, cfg_path=self.cfg_path)
 
-#        save_on_disk(self.subject_set, self.config,
-#                     self.cfg_path, 'all')
-
-
 
 class Experiment(object):
     """ Defines an experiment """
@@ -71,20 +69,21 @@ class Experiment(object):
         self.train_set = None
         self.test_set = None
         self.val_set = None
+        self.model_file = None
 
         # check input
-        if self.class_list is not None & self.class_mapper is not None:
+        if (self.class_list is not None) & (self.class_mapper is not None):
             raise Exception("Either class_mapper or class_list\
                             have to be None")
 
         # add classes
         if class_list is not None:
             self.classes = class_list
-        elif self.class_maper is not None:
+        elif self.class_mapper is not None:
             classes_all = set()
             for value in self.class_mapper.values():
                 classes_all.add(value)
-            self.classes = classes_all
+            self.classes = list(classes_all)
         self.classes.sort()
 
 
@@ -108,14 +107,20 @@ class Experiment(object):
                     ids_final.append(i)
         return ids_final, labels_final
 
-    def _preparePaths(self, tag):
+    def _preparePaths(self, tag, clear_old_files):
 
         # create directories
         root_path = cfg_path['images'] + tag
+
+        # delete old files
+        if clear_old_files:
+            if os.path.exists(root_path):
+                shutil.rmtree(root_path)
+
         # create root directory
         if not os.path.exists(root_path):
             os.mkdir(root_path)
-        # create class direcotires
+        # create class directories
         for cl in self.classes:
             if not os.path.exists(root_path + "/" + cl):
                 os.mkdir(root_path + "/" + cl)
@@ -123,18 +128,20 @@ class Experiment(object):
         return root_path
 
 
-
-    def createExpDataSet(self, link_only=True):
+    def createExpDataSet(self, link_only=True, new_split=True,
+                         clear_old_files=True):
         """ Create Test / Train / Validation Data set """
 
         # create splits
-        self.createTrainTestSplit()
+        if new_split:
+            self.createTrainTestSplit()
 
-        for tag, sub_set in zip(['train','test','val'],
+        for tag, sub_set in zip(['train', 'test', 'val'],
                                 [self.train_set, self.test_set, self.val_set]):
 
             # prepare subject set
-            root_path = self._preparePaths(tag)
+            root_path = self._preparePaths(tag, clear_old_files)
+
 
             if link_only:
                 subject_ids = sub_set.getAllIDs()
@@ -144,7 +151,7 @@ class Experiment(object):
                     label = sub.getLabel()
 
                     for img in imgs:
-                        img.createSymLink(dest_path = root_path + "/" + \
+                        img.createSymLink(dest_path = root_path + "/" +
                                           label + "/")
             else:
                 subject_ids = sub_set.getAllIDs()
@@ -154,31 +161,26 @@ class Experiment(object):
                     label = sub.getLabel()
 
                     for img in imgs:
-                        img.createSymLink(dest_path = root_path + "/" + \
-                                          label + "/")
-
-
-        # store data on disk by creating links or copy of files
-        save_on_disk_links(train_set, config, cfg_path, 'all', 'train')
-
-
-        save_on_disk(test_set, config, cfg_path, 'test')
-        save_on_disk(val_set, config, cfg_path, 'val')
-
-
-
+                        img.copyTo(dest_path = root_path + "/" +
+                                   label + "/")
 
     def createTrainTestSplit(self):
         """ create Test / Train / Validation splits """
 
         # get random seed
-        rand = self.project.config[self.project.panoptes_id]['random_seed']
+        rand = self.project.cfg['random_seed']
 
         # get all subject ids and their labels
         ids, labels = project.subject_set.getAllIDsLabels()
 
         # map labels & keep only relevant ids
-        ids, labels, all_classes = self._classMapper(ids, labels)
+        ids, labels = self._classMapper(ids, labels)
+
+        # create id to label mapper
+        class_mapper_id = dict()
+        for i, l in zip(ids, labels):
+            class_mapper_id[i] = l
+
 
         # training and test split
         id_train, id_test = train_test_split(list(ids),
@@ -192,26 +194,35 @@ class Experiment(object):
                                            random_state=int(rand))
 
         # generate new subject sets
-        train_set = SubjectSet(labels=self.classses)
-        test_set = SubjectSet(labels=self.classses)
-        val_set = SubjectSet(labels=self.classses)
+        train_set = SubjectSet(labels=self.classes)
+        test_set = SubjectSet(labels=self.classes)
+        val_set = SubjectSet(labels=self.classes)
 
         set_ids = [id_train, id_test, id_val]
         sets = [train_set, test_set, val_set]
         for si, s in zip(set_ids, sets):
             for i in si:
                 sub = project.subject_set.getSubject(i)
+                # change label
+                new_label = class_mapper_id[i]
+                sub.overwriteLabel(new_label)
                 s.addSubject(i, sub)
 
         self.train_set = train_set
         self.test_set = test_set
         self.val_set = val_set
 
+    def addModelFile(self, file):
+        """ define a model file in models submodule """
+        self.model_file = file
 
-    def addModelFile(self, name):
-        pass
     def train(self):
-        pass
+        """ train model """
+        # import model file
+        model = importlib.import_module('models.' + self.model_file)
+
+        # train model
+        model.train(self.train_set, self.test_set, self.val_set)
 
 
 
@@ -234,15 +245,49 @@ if __name__ == '__main__':
 #batch_size_big: 500
 
     project_id = config['projects']['panoptes_id']
+    classes = config[project_id]['classes'].replace("\n","").split(",")
 
     project = Project(name=config[project_id]['identifier'],
                       panoptes_id=int(project_id),
-                      classes=config[project_id]['classes'].replace("\n","").split(","),
+                      classes=classes,
                       cfg_path=cfg_path,
                       config=config)
 
     project.createSubjectSet(mode="panoptes")
     project.saveSubjectSetOnDisk()
+
+    exp = Experiment(name="mnist", project=project,
+             class_list=classes,
+             train_size=0.9)
+
+
+#    exp = Experiment(name="mnist", project=project,
+#                     #class_list=classes,
+#                     class_mapper = {'0': 'roundish',
+#                                     '1': 'straight',
+#                                     '2': 'mixed',
+#                                     '3': 'roundish',
+#                                     '4': 'straight',
+#                                     '5': 'mixed',
+#                                     '6': 'roundish',
+#                                     '7': 'straight',
+#                                     '8': 'roundish',
+#                                     '9': 'roundish'},
+#                     train_size=0.9)
+
+#    exp = Experiment(name="mnist", project=project,
+#                 #class_list=classes,
+#                 class_mapper = {'0': 'roundish',
+#                                 '1': 'straight'},
+#                 train_size=0.9)
+
+    exp.createExpDataSet(link_only=False)
+
+    exp.addModelFile(config[project_id]['model_file'])
+
+    exp.train()
+
+
 
 
 #
