@@ -9,6 +9,7 @@ from tools.save_images_on_disk import save_on_disk
 import pickle
 
 
+# Get / Create a subject set
 def get_subject_set():
 
     ########################

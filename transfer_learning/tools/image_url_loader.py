@@ -91,38 +91,166 @@ class ImageUrlLoader(object):
         loop.run_until_complete(main(loop))
         return images_dict
 
-    def getImages(self, urls):
+    def getImages(self, urls, ids):
         """ Retrieve images from list of urls """
 
         # number of urls
         size = len(urls)
 
         # prepare result list
-        res = list()
+        res = dict()
 
         # sequential retrieval
         if any((not self.parallel, size == 1)):
             # loop through urls and return
-            for url in urls:
+            for url, i in zip(urls, ids):
                 img = self._getOneImageFromURL(url)
-                res.append(img)
+                res[i] = img
         # invoke asynchronous read
         else:
             # create dummy ids
-            internal_ids = [x for x in range(0, size)]
+#            internal_ids = [x for x in range(0, size)]
 
             # invoke parallel read
-            res_dict = self._getAsyncUrls2(urls, internal_ids)
+            res = self._getAsyncUrls2(urls, ids)
 
-            # ensure correct ordering
-            for i in internal_ids:
-                try:
-                    res.append(res_dict[i])
-                except:
-                    print("Could not append image %s" % i)
+#            # ensure correct ordering
+#            for i in internal_ids:
+#                try:
+#                    res.append(res_dict[i])
+#                except:
+#                    print("Could not append image %s" % i)
 
         # return list of image objects
         return res
+
+    def storeOnDisk2(self, urls, labels, fnames, path, target_size=None,
+                     chunk_size=1000, overwrite=False, create_path=True):
+        """ store all images on disk in class specific folders """
+
+        # filenames
+        ids = fnames
+
+        # check
+        if not os.path.exists(path) & create_path:
+            os.mkdir(path)
+        else:
+            NameError("Path not Found")
+
+        # ensure / at end of path
+        if path[-1] != '/':
+            path = path + '/'
+
+        # create dictionary for convenience
+        data_dict = dict()
+        for url, label, ii in zip(urls, labels, ids):
+            data_dict[str(ii)] = [url, label]
+
+        # create class specific directories
+        existing_files = list()
+        for sub_dir in set(labels):
+            if not os.path.exists(path + str(sub_dir)):
+                os.mkdir(path + str(sub_dir))
+            # list all files
+            else:
+                f = os.listdir(path + str(sub_dir))
+                existing_files.extend(f)
+
+        # remove already existing files from re-storing operation
+        existing_files = set(existing_files)
+        dict_ids = list(data_dict.keys())
+        if not overwrite:
+            if len(existing_files) > 0:
+                for k in dict_ids:
+                    if k in existing_files:
+                        data_dict.pop(k)
+
+        # get relevant data from dictionary
+        dict_ids = list(data_dict.keys())
+        size = len(dict_ids)
+
+        if size == 0:
+            print("Everything already on disk")
+            return None
+
+        # define chunks of images to load
+        cuts = [x for x in range(0, size, chunk_size)]
+        if cuts[-1] < size:
+            cuts.append(size)
+
+        # convert chunk sizes to integers
+        cuts = [int(x) for x in cuts]
+
+        # store info for return object
+        summary = dict()
+        failures_savings = dict()
+        summary['failures'] = failures_savings
+        summary['path'] = path
+
+        # initialize progress counter
+        jj = 0
+        dummy = -1
+
+        for i in range(0, (len(cuts) - 1)):
+
+            idx = [x for x in range(cuts[i], cuts[i+1])]
+
+            chunk_ids = [dict_ids[z] for z in idx]
+            chunk_urls = list()
+            chunk_y = list()
+            for ci in chunk_ids:
+                val = data_dict[ci]
+                chunk_urls.append(val[0])
+                chunk_y.append(val[1])
+
+            # invoke asynchronous read
+            binary_images = self.getImages(chunk_urls, chunk_ids)
+
+            # store on disk
+            img_id = 0
+            for c_id, c_y in zip(chunk_ids, chunk_y):
+
+                if c_id == '5089346_0.jpeg':
+                    print("NOW DEBUG")
+
+                # define path
+                path_img = path + str(c_y) + "/" + \
+                           str(c_id)
+
+
+                # TODO: REMOVE
+                dummy += 1
+                if (dummy % 500) == 0:
+                    print("Could not access image %s - skipping..." % c_id)
+                    failures_savings[c_id] = img_id
+                    continue
+
+
+                # check if exists
+                if os.path.exists(path_img):
+                    continue
+                # get current image
+                try:
+                    img = binary_images[c_id]
+                except:
+                    print("Could not access image %s - skipping..." % c_id)
+                    failures_savings[c_id] = img_id
+                    continue
+
+                # resize if specified
+                if target_size is not None:
+                    img = img.resize(target_size)
+
+                # save to disk
+                img.save(path_img)
+                img_id += 1
+
+                # print progress
+                jj += 1
+                if jj % 500 == 0:
+                    print("%s / %s stored on disk" % (jj, size))
+
+        return summary
 
     def storeOnDisk(self, urls, labels, ids, path, target_size=None,
                     chunk_size=1000, overwrite=False, create_path=True):
