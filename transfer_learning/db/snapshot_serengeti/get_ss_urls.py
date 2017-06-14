@@ -10,7 +10,10 @@ async def fetch_page(session, url):
     """ Get one page """
     # with aiohttp.Timeout(500):
     async with session.get(url) as response:
-        return await response.json()
+        try:
+            return await response.json()
+        except:
+            IOError("Could not read url: %s" % url)
 
 
 def get_multiple_pages(urls, ids):
@@ -21,7 +24,8 @@ def get_multiple_pages(urls, ids):
         with aiohttp.ClientSession(loop=loop) as session:
             for url in urls:
                 tasks.append(fetch_page(session, url))
-            pages = loop.run_until_complete(asyncio.gather(*tasks))
+            pages = loop.run_until_complete(
+                    asyncio.gather(*tasks, return_exceptions=False))
     return pages
 
 
