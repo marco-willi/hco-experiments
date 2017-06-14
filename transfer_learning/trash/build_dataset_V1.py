@@ -11,12 +11,13 @@ def main():
     # load config
     db_path = cfg_path['db']
 
+
     # get species and blank data set
     dryad_data = get_dryad_ss_data(retrieve=True)
     blanks = get_blanks()
 
     # combine datasets
-    # data = {**dryad_data, **blanks}
+    #data = {**dryad_data, **blanks}
 
     data = dryad_data.copy()
     data.update(blanks)
@@ -35,20 +36,42 @@ def main():
         data[i]['url'] = url_dict[i]
 
     # create subject_sets for ss_species
-    all_classes = config['ss']['classes'].replace("\n", "").split(",")
+    all_classes = config['ss_species']['classes'].replace("\n", "").split(",")
     subject_set = SubjectSet(labels=all_classes)
 
     for key, value in data.items():
+        # remove blanks
+        if value['y_label'] == 'blank':
+            continue
         subject = Subject(identifier=str(key),
                           label=value['y_label'],
                           meta_data=value['info'],
                           urls=value['url'])
+                          )
         subject_set.addSubject(str(key), subject)
 
     # save data
-    pickle.dump(subject_set, open(db_path + 'subject_set.pkl',
+    pickle.dump(subject_set, open(db_path + 'subject_set_ss_species.pkl',
                                   "wb"))
 
+    # create subject_sets for ss_blank
+    all_classes = config['ss_blank']['classes'].replace("\n", "").split(",")
+    subject_set = SubjectSet(labels=all_classes)
+
+    for key, value in data.items():
+        # blanks
+        if value['y_label'] != 'blank':
+            cl = 'non_blank'
+        else:
+            cl = 'blank'
+        subject = Subject(identifier=str(key),
+                          label=cl,
+                          meta_data=value['info'],
+                          urls=value['url'])
+
+    # save data
+    pickle.dump(subject_set, open(db_path + 'subject_set_ss_blanks.pkl',
+                                  "wb"))
 
 if __name__ == '__main__':
     main()

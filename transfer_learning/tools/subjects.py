@@ -144,8 +144,7 @@ class SubjectSet(object):
 
 class Subject(object):
     """ Subject definition """
-    def __init__(self, identifier, label, meta_data=None, urls=None,
-                 label_num=None):
+    def __init__(self, identifier, label, meta_data=None, urls=None):
         self.identifier = str(identifier)
         self.label = label
         self.meta_data = meta_data
