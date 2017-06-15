@@ -38,7 +38,7 @@ def main():
         ids_to_get = ids
 
     # define chunks of urls to fetch
-    cuts = [x for x in range(0, len(ids_to_get), 1e5)]
+    cuts = [x for x in range(0, len(ids_to_get), int(1e5))]
     if cuts[-1] < len(ids_to_get):
         cuts.append(len(ids_to_get))
 
