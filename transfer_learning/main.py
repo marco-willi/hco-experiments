@@ -14,7 +14,7 @@ def main():
     project_id = config['projects']['panoptes_id']
 
     # project classes
-    project_classes = config[project_id]['classes'].replace("\n","").split(",")
+    project_classes = config[project_id]['classes'].replace("\n", "").split(",")
 
     # create Project boject
     project = Project(name=config[project_id]['identifier'],

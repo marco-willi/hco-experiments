@@ -4,9 +4,12 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.optimizers import rmsprop
+from keras.callbacks import ModelCheckpoint, LambdaCallback, CSVLogger, TensorBoard
 from config.config import config, cfg_path
 from tools.model_helpers import model_save, model_param_loader
 import time
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def train(train_set, test_set, val_set):
@@ -75,6 +78,30 @@ def train(train_set, test_set, val_set):
                   metrics=['accuracy'])
 
     ##################################
+    # Logging
+    ##################################
+
+    # save model weights after each epoch if training loss
+    # decreases
+    checkpointer = ModelCheckpoint(filepath=cfg_path['models'] +
+                                   "weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+                                   verbose=1,
+                                   save_best_only=True)
+
+    # log to csv
+    csv_logger = CSVLogger(cfg_path['logs'] + 'training.log')
+
+
+    tb_logger = TensorBoard(log_dir=cfg_path['logs'], histogram_freq=0,
+                                #batch_size=int(cfg['batch_size']),
+                                write_graph=True
+                                #write_grads=False, write_images=False,
+                                #embeddings_freq=0,
+                                #embeddings_layer_names=None,
+                                #embeddings_metadata=None
+                                )
+
+    ##################################
     # Training
     ##################################
 
@@ -86,7 +113,8 @@ def train(train_set, test_set, val_set):
             workers=4,
             pickle_safe=False,
             validation_data=test_generator,
-            validation_steps=test_generator.n // cfg['batch_size'])
+            validation_steps=test_generator.n // cfg['batch_size'],
+            callbacks=[checkpointer, csv_logger, tb_logger])
 
     print("Finished training after %s minutes" %
           ((time.time() - time_s) // 60))

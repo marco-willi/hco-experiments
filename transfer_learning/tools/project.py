@@ -37,9 +37,7 @@ class Project(object):
                 subject = Subject(identifier=key,
                                   label=value['metadata']['#label'],
                                   meta_data=value['metadata'],
-                                  urls=value['url'],
-                                  label_num=subject_set.getLabelEncoder().
-                                  transform([value['metadata']['#label']])
+                                  urls=value['url']
                                   )
                 subject_set.addSubject(key, subject)
 
@@ -108,6 +106,7 @@ class Experiment(object):
         return ids_final, labels_final
 
     def _preparePaths(self, tag, clear_old_files):
+        """ prepare paths to save training data """
 
         # create directories
         root_path = cfg_path['images'] + tag
@@ -171,7 +170,7 @@ class Experiment(object):
         rand = self.project.cfg['random_seed']
 
         # get all subject ids and their labels
-        ids, labels = project.subject_set.getAllIDsLabels()
+        ids, labels = self.project.subject_set.getAllIDsLabels()
 
         # map labels & keep only relevant ids
         ids, labels = self._classMapper(ids, labels)
@@ -202,7 +201,7 @@ class Experiment(object):
         sets = [train_set, test_set, val_set]
         for si, s in zip(set_ids, sets):
             for i in si:
-                sub = project.subject_set.getSubject(i)
+                sub = self.project.subject_set.getSubject(i)
                 # change label
                 new_label = class_mapper_id[i]
                 sub.overwriteLabel(new_label)

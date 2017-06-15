@@ -16,52 +16,6 @@ def train(train_set, test_set, val_set):
 
     cfg = model_param_loader(config)
 
-    print_separator = "---------------------------------"
-
-    ##################################
-    # Save data on disk
-    ##################################
-
-    # define loaders
-    train_data_loader = ImageUrlLoader()
-    test_data_loader = ImageUrlLoader()
-    val_data_loader = ImageUrlLoader()
-
-    # save to disk
-    print(print_separator)
-    print("Saving data on disk ....")
-    print(print_separator)
-    print("Saving train data ....")
-    time_s = time.time()
-    urls, labels, ids = train_set.getAllURLsLabelsIDs()
-    train_data_loader.storeOnDisk(urls=urls,
-                                  labels=labels,
-                                  ids=ids,
-                                  path=cfg_path['images'] + 'train',
-                                  target_size=cfg['image_size_save'][0:2],
-                                  chunk_size=100)
-    print("Saving test data ....")
-    urls, labels, ids = test_set.getAllURLsLabelsIDs()
-    test_data_loader.storeOnDisk(urls=urls,
-                                 labels=labels,
-                                 ids=ids,
-                                 path=cfg_path['images'] + 'test',
-                                 target_size=cfg['image_size_save'][0:2],
-                                 chunk_size=100)
-
-    print("Saving val data ....")
-    urls, labels, ids = test_set.getAllURLsLabelsIDs()
-    val_data_loader.storeOnDisk(urls=urls,
-                                labels=labels,
-                                ids=ids,
-                                path=cfg_path['images'] + 'val',
-                                target_size=cfg['image_size_save'][0:2],
-                                chunk_size=100)
-
-    print("Finished saving on disk after %s minutes" %
-          ((time.time() - time_s) // 60))
-
-
     ##################################
     # Data Generator
     ##################################
