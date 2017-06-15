@@ -8,6 +8,7 @@ import os
 from tools.model_helpers import model_param_loader
 import shutil
 import importlib
+from models.train import train
 
 
 class Project(object):
@@ -217,11 +218,9 @@ class Experiment(object):
 
     def train(self):
         """ train model """
-        # import model file
-        model = importlib.import_module('models.' + self.model_file)
 
         # train model
-        model.train(self.train_set, self.test_set, self.val_set)
+        train(self.train_set, self.test_set, self.val_set, self.model_file)
 
 
 

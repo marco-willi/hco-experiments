@@ -34,3 +34,17 @@ def get_async_url_bytes2(self, current_batch):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main(loop))
     return binary_images_dict
+
+
+
+
+
+
+
+def dummy():
+    return 1,2,3
+
+
+TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE,\
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT,\
+DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD = dummy()

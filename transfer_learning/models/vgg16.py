@@ -27,11 +27,25 @@ from keras.applications.imagenet_utils import decode_predictions
 from keras.applications.imagenet_utils import preprocess_input
 from keras.applications.imagenet_utils import _obtain_input_shape
 from keras.engine.topology import get_source_inputs
-
+from keras.optimizers import rmsprop
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
+def build_model(cfg):
+    mod = VGG16(input_shape=cfg['image_size_model'],
+                classes=cfg['num_classes'],
+                weights=None)
+
+    # initiate RMSprop optimizer
+    opt = rmsprop(lr=0.0001, decay=1e-6)
+
+    # Let's train the model using RMSprop
+    mod.compile(loss='sparse_categorical_crossentropy',
+                  optimizer=opt,
+                  metrics=['accuracy'])
+
+    return mod
 
 def VGG16(include_top=True, weights='imagenet',
           input_tensor=None, input_shape=None,
