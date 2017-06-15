@@ -86,7 +86,7 @@ def get_oroboros_api_data(ids, quality='standard', batch_size=1000, log=True):
         print("last batch required %s seconds" % (round(time_req,1)))
 
         if log:
-            log_file = cfg_path['logs'] + 'oroboros_log.txt'
+            log_file = cfg_path['logs'] + 'oroboros_log3.txt'
             file = open(log_file,'a')
             print("%s / %s urls processed" % (cuts[i+1], size), file=file)
             print("last batch required %s seconds" % (round(time_req,1)), file=file)

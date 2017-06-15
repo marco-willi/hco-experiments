@@ -6,6 +6,7 @@ from db.snapshot_serengeti.get_ss_urls import get_oroboros_api_data
 from tools.subjects import Subject, SubjectSet
 from config.config import config, cfg_path
 import pickle
+import os
 
 def main():
     # load config
@@ -23,10 +24,41 @@ def main():
 
     # get image urls from orobouros API
     ids = list(data.keys())
-    url_dict = get_oroboros_api_data(ids)
 
-    # save data
-    pickle.dump(url_dict, open(db_path + 'url_dict.pkl', "wb"))
+    fname = db_path + 'url_dict.pkl'
+
+    # check if file exists
+    if os.path.exists(fname):
+        url_dict = pickle.load(open(fname, "rb"))
+        ids_processed = url_dict.keys()
+
+        # remove already processed ids
+        ids_to_get = list(set(ids) - set(ids_processed))
+    else:
+        ids_to_get = ids
+
+    # define chunks of urls to fetch
+    cuts = [x for x in range(0, len(ids_to_get), 1e5)]
+    if cuts[-1] < len(ids_to_get):
+        cuts.append(len(ids_to_get))
+
+    # convert chunk sizes to integers
+    cuts = [int(x) for x in cuts]
+
+    # loop over chunks and save to disk
+    for i in range(0, (len(cuts) - 1)):
+
+        idx = [x for x in range(cuts[i], cuts[i+1])]
+        ids_chunk = [ids_to_get[z] for z in idx]
+        # read from orobouros API
+        url_dict = get_oroboros_api_data(ids_chunk)
+
+        # save data
+        if os.path.exists(fname):
+            url_dict_disc = pickle.load(open(fname, "rb"))
+            url_dict = {**url_dict, **url_dict_disc}
+
+        pickle.dump(url_dict, open(fname, "wb"))
 
     # url_dict = pickle.load(open(db_path + 'url_dict.pkl', "rb"))
 
