@@ -81,7 +81,7 @@ def main():
 
     # save data
     pickle.dump(subject_set, open(db_path + 'subject_set.pkl',
-                                  "wb"))
+                                  "wb"), protocol=4)
 
 
 if __name__ == '__main__':
