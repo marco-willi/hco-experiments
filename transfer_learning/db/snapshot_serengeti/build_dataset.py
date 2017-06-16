@@ -17,10 +17,10 @@ def main():
     blanks = get_blanks()
 
     # combine datasets
-    # data = {**dryad_data, **blanks}
+    data = {**dryad_data, **blanks}
 
-    data = dryad_data.copy()
-    data.update(blanks)
+    #data = dryad_data.copy()
+    #data.update(blanks)
 
     # get image urls from orobouros API
     ids = list(data.keys())
@@ -37,30 +37,32 @@ def main():
     else:
         ids_to_get = ids
 
-    # define chunks of urls to fetch
-    cuts = [x for x in range(0, len(ids_to_get), int(1e5))]
-    if cuts[-1] < len(ids_to_get):
-        cuts.append(len(ids_to_get))
+    # check if anything is left to load
+    if len(ids_to_get) > 0:
+        # define chunks of urls to fetch
+        cuts = [x for x in range(0, len(ids_to_get), int(1e5))]
+        if cuts[-1] < len(ids_to_get):
+            cuts.append(len(ids_to_get))
 
-    # convert chunk sizes to integers
-    cuts = [int(x) for x in cuts]
+        # convert chunk sizes to integers
+        cuts = [int(x) for x in cuts]
 
-    # loop over chunks and save to disk
-    for i in range(0, (len(cuts) - 1)):
+        # loop over chunks and save to disk
+        for i in range(0, (len(cuts) - 1)):
 
-        idx = [x for x in range(cuts[i], cuts[i+1])]
-        ids_chunk = [ids_to_get[z] for z in idx]
-        # read from orobouros API
-        url_dict = get_oroboros_api_data(ids_chunk)
+            idx = [x for x in range(cuts[i], cuts[i+1])]
+            ids_chunk = [ids_to_get[z] for z in idx]
+            # read from orobouros API
+            url_dict = get_oroboros_api_data(ids_chunk)
 
-        # save data
-        if os.path.exists(fname):
-            url_dict_disc = pickle.load(open(fname, "rb"))
-            url_dict = {**url_dict, **url_dict_disc}
+            # save data
+            if os.path.exists(fname):
+                url_dict_disc = pickle.load(open(fname, "rb"))
+                url_dict = {**url_dict, **url_dict_disc}
 
-        pickle.dump(url_dict, open(fname, "wb"))
+            pickle.dump(url_dict, open(fname, "wb"))
 
-    # url_dict = pickle.load(open(db_path + 'url_dict.pkl', "rb"))
+        url_dict = pickle.load(open(fname, "rb"))
 
     # add urls to dict
     for i in ids:
