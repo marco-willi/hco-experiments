@@ -39,13 +39,15 @@ def model_param_loader(config=config):
     batch_size = eval(config[project_id]['batch_size'])
     num_classes = int(config[project_id]['num_classes'])
     num_epochs = int(config[project_id]['num_epochs'])
-    data_augmentation = eval(config[project_id]['data_augmentation'])
+    data_augmentation = config[project_id]['data_augmentation']
 
     image_size_save = config[project_id]['image_size_save'].split(',')
     image_size_save = tuple([int(x) for x in image_size_save])
 
     image_size_model = config[project_id]['image_size_model'].split(',')
     image_size_model = tuple([int(x) for x in image_size_model])
+
+    classes = config[project_id]['classes'].replace("\n","").split(",")
 
 
     # build config dictionary for easier use in code
@@ -57,6 +59,7 @@ def model_param_loader(config=config):
     cfg['image_size_save'] = image_size_save
     cfg['image_size_model'] = image_size_model
     cfg['random_seed'] = int(config[project_id]['random_seed'])
+    cfg['classes'] = classes
 
     return cfg
 
