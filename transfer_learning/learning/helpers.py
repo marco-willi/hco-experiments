@@ -1,37 +1,53 @@
 from tools.image import ImageDataGenerator
 from config.config import config, cfg_path
 import os
-
+from keras.optimizers import rmsprop, SGD
+from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
+from keras.callbacks import LearningRateScheduler
 
 # create class mappings
-def create_class_mappings(mapping="1_on_1"):
+def create_class_mappings(mapping="1_on_1", excl_classes=None,
+                          only_these_classes=None):
     # all classes
     cfg = model_param_loader(config)
+    all_classes = cfg['classes']
+
+    if excl_classes is not None:
+        all_classes = [x for x in all_classes if x not in excl_classes]
+
+    if only_these_classes is not None:
+        all_classes = [x for x in all_classes if x in only_these_classes]
 
     # default 1 to 1 mapping
     if mapping == "1_on_1":
-        map_dict = {c:c for c in cfg['classes']}
+        map_dict = {c: c for c in all_classes}
 
-    # SS blank vs empty
-    if mapping == "ss_blank_vs_nonblank":
+    # blank vs non-blank
+    if mapping == "blank_vs_nonblank":
         map_dict = dict()
-        for c in cfg['classes']:
+        for c in all_classes:
             if c == 'blank':
                 map_dict[c] = 'blank'
             else:
                 map_dict[c] = 'non_blank'
 
+    # non blanks
     if mapping == "nonblank":
-        map_dict = {c:c for c in cfg['classes']}
+        map_dict = {c: c for c in all_classes}
         map_dict.pop('blank', None)
-
-
 
     return map_dict
 
+def create_optimizer(name="standard"):
+    if name == "standard":
+        opt = SGD(lr=0.0001, decay=0)
+    else:
+        IOError("Optimizer %s not implemented" % name)
+    return opt
+
 
 # create data generators
-def create_data_generators(data_augmentation="none"):
+def create_data_generators(cfg, data_augmentation="none"):
     """ generate input data from a generator function that applies
     random / static transformations to the input """
 
@@ -62,7 +78,6 @@ def create_data_generators(data_augmentation="none"):
     else:
         IOError("data_augmentation mode %s not implemented"
                 % data_augmentation)
-
 
     # create generators which serve images from directories for
     # test / train and validation data
@@ -95,8 +110,62 @@ def create_data_generators(data_augmentation="none"):
     return train_generator, test_generator, val_generator
 
 
+def create_callbacks(names=['checkpointer', 'csv_logger', 'tb_logger']):
+    # list of callbacks
+    callbacks = []
+
+    if 'checkpointer' in names:
+        # save model weights after each epoch if training loss decreases
+        checkpointer = ModelCheckpoint(filepath=cfg_path['models'] +
+                                       "weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+                                       verbose=1,
+                                       save_best_only=True)
+        callbacks.append(checkpointer)
+
+    if 'csv_logger' in names:
+        # log to csv
+        csv_logger = CSVLogger(cfg_path['logs'] + 'training.log')
+
+        callbacks.append(csv_logger)
+
+    if 'tb_logger' in names:
+        # Tensorboard logger
+        tb_logger = TensorBoard(log_dir=cfg_path['logs'], histogram_freq=0,
+                                #batch_size=int(cfg['batch_size']),
+                                write_graph=True
+                                #write_grads=False, write_images=False,
+                                #embeddings_freq=0,
+                                #embeddings_layer_names=None,
+                                #embeddings_metadata=None
+                                )
+
+        callbacks.append(tb_logger)
+
+    if 'ss_learning_rate':
+        # learning rate function
+        def lrnrate_dec(epoch):
+            if epoch < 18:
+                return 0.01
+            elif epoch < 29:
+                return 0.005
+            elif epoch < 43:
+                return 0.001
+            elif epoch < 52:
+                return 5e-4
+            else:
+                return 1e-4
+
+        # learning rate decay rule
+        learning_rate_decay = LearningRateScheduler(lrnrate_dec)
+
+        callbacks.append(learning_rate_decay)
+
+    return callbacks
+
+
 # Function to save model
-def model_save(model, config=config, cfg_path=cfg_path, postfix=None, create_dir=True):
+def model_save(model, config=config, cfg_path=cfg_path,
+               postfix=None, create_dir=True):
 
     # extract project id for further loading project specifc configs
     project_id = config['projects']['panoptes_id']
@@ -122,37 +191,29 @@ def model_save(model, config=config, cfg_path=cfg_path, postfix=None, create_dir
 
     model.save(path_to_save + out_name + '.h5')
 
+
 # function to load parameters used for model training
 def model_param_loader(config=config):
     # extract project id for further loading project specifc configs
     project_id = config['projects']['panoptes_id']
 
-    batch_size = eval(config[project_id]['batch_size'])
-    num_classes = int(config[project_id]['num_classes'])
-    num_epochs = int(config[project_id]['num_epochs'])
-    data_augmentation = config[project_id]['data_augmentation']
-
-    image_size_save = config[project_id]['image_size_save'].split(',')
-    image_size_save = tuple([int(x) for x in image_size_save])
-
-    image_size_model = config[project_id]['image_size_model'].split(',')
-    image_size_model = tuple([int(x) for x in image_size_model])
-
-    classes = config[project_id]['classes'].replace("\n","").split(",")
-
-
-    # build config dictionary for easier use in code
     cfg = dict()
-    cfg['batch_size'] = batch_size
-    cfg['num_classes'] = num_classes
-    cfg['num_epochs'] = num_epochs
-    cfg['data_augmentation'] = data_augmentation
-    cfg['image_size_save'] = image_size_save
-    cfg['image_size_model'] = image_size_model
-    cfg['random_seed'] = int(config[project_id]['random_seed'])
-    cfg['classes'] = classes
+
+    # load all configs
+    for key in config[project_id].keys():
+        if key in ['classes', 'callbacks']:
+            splitted = config[project_id][key].replace("\n",
+                                                       "").split(",")
+            cfg[key] = splitted
+        elif key in ['image_size_save', 'image_size_model']:
+            size = config[project_id]['image_size_save'].split(',')
+            size = tuple([int(x) for x in size])
+            cfg[key] = size
+        else:
+            try:
+                cfg[key] = eval(config[project_id][key])
+            except:
+                cfg[key] = config[project_id][key]
 
     return cfg
-
-
 

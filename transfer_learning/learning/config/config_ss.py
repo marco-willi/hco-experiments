@@ -1,7 +1,8 @@
 # Model configuration for SS model
-from models.helpers import create_data_generators
+from models.helpers import create_data_generators, create_class_mappings
 from keras.callbacks import LearningRateScheduler
 from keras.optimizers import rmsprop, SGD
+
 
 def create_callbacks(callback_list=[]):
     # learning rate function
@@ -31,5 +32,5 @@ def create_model_optimizer():
     opt = SGD(lr=0.0001, decay=0)
     return opt
 
-def get_class_mapping():
-    pass
+def get_class_mapping(cfg):
+    return create_class_mappings()

@@ -1,6 +1,9 @@
 # load modules
 from config.config import config, cfg_path
-from tools.project import Project, Experiment
+from tools.project import Project
+from tools.model import Model
+from tools.experiment import Experiment
+from learning.helpers import model_param_loader, create_class_mappings
 
 
 # Main Program
@@ -13,18 +16,20 @@ def main():
     # project id
     project_id = config['projects']['panoptes_id']
 
-    # project classes
-    project_classes = config[project_id]['classes'].replace("\n", "").split(",")
+    cfg = model_param_loader(config)
 
-    # create Project boject
-    project = Project(name=config[project_id]['identifier'],
+    # project classes
+    project_classes = cfg['classes']
+
+    # create Project object
+    project = Project(name=cfg['identifier'],
                       panoptes_id=int(project_id),
                       classes=project_classes,
                       cfg_path=cfg_path,
                       config=config)
 
     # create Subject Sets
-    project.createSubjectSet(mode=config[project_id]['subject_mode'])
+    project.createSubjectSet(mode=cfg['subject_mode'])
 
     # save all subjects on Disk
     project.saveSubjectSetOnDisk()
@@ -33,17 +38,39 @@ def main():
     # Define Experiment
     ########################
 
+    # map classes, defined in create_class_mappings function
+    class_mapper = create_class_mappings(cfg['class_mapping'])
+
+    # experiment object
     exp = Experiment(name="mnist", project=project,
-                     class_list=project_classes,
+                     class_mapper=class_mapper,
                      train_size=0.9)
 
+    # create separate directories with image data for this experiment
+    # use only links to save space
     exp.createExpDataSet(link_only=False)
 
     ########################
-    # Call Model
+    # Define Model
     ########################
 
-    exp.addModelFile(config[project_id]['model_file'])
+    # create model object
+    model = Model(train_set=exp.train_set,
+                  test_set=exp.test_set,
+                  val_set=exp.val_set,
+                  mod_file=cfg['model_file'],
+                  pre_processing=cfg['pre_processing'],
+                  config=config,
+                  cfg_path=cfg_path,
+                  callbacks=cfg['callbacks'],
+                  optimizer=cfg['optimizer'],
+                  num_classes=len(class_mapper.keys()))
+
+    ########################
+    # Train Model
+    ########################
+
+    exp.addModel(model)
 
     exp.train()
 

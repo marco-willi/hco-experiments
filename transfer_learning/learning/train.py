@@ -1,18 +1,25 @@
 # model for handwritten-digits data on Zooniverse
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
 from config.config import config, cfg_path
-from tools.model_helpers import model_save, model_param_loader
 import time
-from models.helpers import create_data_generators
+from learning.helpers import create_data_generators, create_class_mappings
+from learning.helpers import model_save, model_param_loader
 import importlib
 
 
-def train(train_set, test_set, val_set, model_file):
+def train(train_set, test_set, val_set):
     ##################################
-    # Parameters
+    # Parameters + Config
     ##################################
 
+    # general configs
     cfg = model_param_loader(config)
+
+    # load model config
+    mod_cfg = importlib.import_module('learning.config.' + cfg['model_config'])
+
+    # load model file
+    mod_file = importlib.import_module('learning.models.' + cfg['model_file'])
 
     ##################################
     # Data Generators
@@ -20,16 +27,20 @@ def train(train_set, test_set, val_set, model_file):
 
     train_generator,\
     test_generator,\
-    val_generator = create_data_generators(cfg, cfg_path,
-                                           data_augmentation=False)
+    val_generator = mod_cfg.create_pre_processing(cfg, cfg_path)
 
     ##################################
     # Model Definition
     ##################################
 
-    mod_file = importlib.import_module('models.' + model_file)
-
     model = mod_file.build_model(cfg)
+
+    opt = mod_cfg.create_model_optimizer()
+
+    model.compile(loss='sparse_categorical_crossentropy',
+                  optimizer=opt,
+                  metrics=['accuracy'])
+
 
     ##################################
     # Logging
@@ -54,6 +65,9 @@ def train(train_set, test_set, val_set, model_file):
                                 #embeddings_layer_names=None,
                                 #embeddings_metadata=None
                                 )
+
+    # add custom callbacks
+
 
     ##################################
     # Training
