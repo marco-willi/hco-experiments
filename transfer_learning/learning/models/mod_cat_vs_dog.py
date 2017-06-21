@@ -1,12 +1,12 @@
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, Activation
 from keras.layers import Conv2D, MaxPooling2D
-from keras.optimizers import rmsprop
 
-def build_model(cfg):
+
+def build_model(num_classes, image_size):
 
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), input_shape=cfg['image_size_model']))
+    model.add(Conv2D(32, (3, 3), input_shape=image_size))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -24,10 +24,6 @@ def build_model(cfg):
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
     model.add(Dense(1))
-    model.add(Activation('sigmoid'))
-
-    model.compile(loss='binary_crossentropy',
-                  optimizer='rmsprop',
-                  metrics=['accuracy'])
+    model.add(Dense(num_classes, activation='softmax'))
 
     return model
