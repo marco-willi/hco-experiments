@@ -5,6 +5,7 @@ import os
 import importlib
 from config.config import cfg_model as cfg
 from keras.models import load_model
+from datetime import datetime
 
 
 class Model(object):
@@ -30,6 +31,7 @@ class Model(object):
         self._opt = None
         self._callbacks_obj = None
         self._model = None
+        self._timestamp = datetime.now().strftime('%Y%m%d%H%m')
 
     def _loadModel(self):
         # load model file
@@ -74,7 +76,26 @@ class Model(object):
         self.val_generator=create_data_generators(self.cfg, self.pre_processing)
 
     def _getCallbacks(self):
-        self._callbacks_obj = create_callbacks(self.callbacks)
+        self._callbacks_obj = create_callbacks(self._timestamp, self.callbacks)
+
+    def _calcClassWeights(self):
+        """ calculate class weights """
+        if 'class_weight' in self.cfg:
+            if self.cfg['class_weights'] == 'none':
+                cl_w = None
+            elif self.cfg['class_weights'] == 'prop':
+                from sklearn.utils.class_weight import compute_class_weight
+                ids, labels = self.train_set.getAllIDsLabels()
+                classes = self.train_set.labels
+                cl_w1 = compute_class_weight(class_weight='balanced',
+                                             classes=classes,
+                                             y=labels)
+                # store in dictionary
+                cl_w = {c: w for c, w in zip(classes, cl_w1)}
+        else:
+            cl_w = None
+
+        return cl_w
 
     def train(self):
         """ train model """
@@ -93,10 +114,12 @@ class Model(object):
         self._loadModel()
 
         # load model
+        start_epoch = 0
         if self.cfg['load_model'] not in ('', 'None'):
             model = load_model(self.cfg_path['models'] +
                                self.cfg['load_model'] + '.hdf5')
-            print("dummy")
+
+            start_epoch = int(self.cfg['load_model'].split('_')[-2])
 
         # create new model
         else:
@@ -123,6 +146,12 @@ class Model(object):
         self._getCallbacks()
 
         ##################################
+        # Class Weights
+        ##################################
+
+        cl_w = self._calcClassWeights()
+
+        ##################################
         # Training
         ##################################
 
@@ -137,7 +166,9 @@ class Model(object):
                     validation_data=self.test_generator,
                     validation_steps=self.test_generator.n //
                     self.cfg['batch_size'],
-                    callbacks=self._callbacks_obj)
+                    callbacks=self._callbacks_obj,
+                    class_weight=cl_w,
+                    initial_epoch=start_epoch)
 
         print("Finished training after %s minutes" %
               ((time.time() - time_s) // 60))

@@ -1,9 +1,10 @@
 # load modules
 from config.config import config, cfg_path, cfg_model
 from tools.project import Project
-from tools.model import Model
 from tools.experiment import Experiment
+from tools.model import Model
 from learning.helpers import create_class_mappings
+import dill as pickle
 
 
 # Main Program
@@ -71,6 +72,17 @@ def main():
     exp.addModel(model)
 
     exp.train()
+
+    ########################
+    # Save some information
+    ########################
+
+    save_objects = {'cfg_model': cfg_model,
+                    'train_set': exp.train_set,
+                    'test_set': exp.test_set,
+                    'val_set': exp.val_set}
+
+    pickle.dump(save_objects, open(cfg_path['save'] + 'objects.pkl', "wb"))
 
 
 if __name__ == "__main__":

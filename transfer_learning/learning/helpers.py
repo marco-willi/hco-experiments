@@ -110,21 +110,38 @@ def create_data_generators(cfg, data_augmentation="none"):
     return train_generator, test_generator, val_generator
 
 
-def create_callbacks(names=['checkpointer', 'csv_logger', 'tb_logger']):
+def create_callbacks(identifier='',
+                     names=['checkpointer', 'checkpointer_best',
+                            'csv_logger', 'tb_logger']):
     # list of callbacks
     callbacks = []
+
+    # handle identifier
+    if identifier is not '':
+        identifier = identifier + '_'
 
     if 'checkpointer' in names:
         # save model weights after each epoch if training loss decreases
         checkpointer = ModelCheckpoint(filepath=cfg_path['models'] +
-                                       "weights.{epoch:02d}-{val_loss:.2f}.hdf5",
-                                       verbose=1,
+                                       identifier +
+                                       "model_{epoch:02d}_{val_loss:.2f}.hdf5",
+                                       verbose=0,
+                                       save_best_only=True)
+        callbacks.append(checkpointer)
+
+    if 'checkpointer_best' in names:
+        # save model weights after each epoch if training loss decreases
+        checkpointer = ModelCheckpoint(filepath=cfg_path['models'] +
+                                       identifier +
+                                       "model_best.hdf5",
+                                       verbose=0,
                                        save_best_only=True)
         callbacks.append(checkpointer)
 
     if 'csv_logger' in names:
         # log to csv
-        csv_logger = CSVLogger(cfg_path['logs'] + 'training.log')
+        csv_logger = CSVLogger(cfg_path['logs'] + identifier +
+                               'training.log')
 
         callbacks.append(csv_logger)
 
