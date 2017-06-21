@@ -43,4 +43,33 @@ def path_loader(config, create_project_paths=True):
 
 cfg_path = path_loader(config)
 
+
+# function to load parameters used for model training
+def model_param_loader(config=config):
+    # extract project id for further loading project specifc configs
+    project_id = config['projects']['panoptes_id']
+
+    cfg = dict()
+
+    # load all configs
+    for key in config[project_id].keys():
+        if key in ['classes', 'callbacks']:
+            splitted = config[project_id][key].replace("\n",
+                                                       "").split(",")
+            cfg[key] = splitted
+        elif key in ['image_size_save', 'image_size_model']:
+            size = config[project_id][key].split(',')
+            size = tuple([int(x) for x in size])
+            cfg[key] = size
+        else:
+            try:
+                cfg[key] = eval(config[project_id][key])
+            except:
+                cfg[key] = config[project_id][key]
+
+    return cfg
+
+
+cfg_model = model_param_loader(config)
+
 print("Config Loaded")

@@ -1,8 +1,10 @@
 from learning.helpers import create_data_generators, create_callbacks
-from learning.helpers import create_optimizer, model_param_loader
+from learning.helpers import create_optimizer
 import time
 import os
 import importlib
+from config.config import cfg_model as cfg
+from keras.models import load_model
 
 
 class Model(object):
@@ -20,7 +22,7 @@ class Model(object):
         self.config = config
         self.cfg_path = cfg_path
         self.callbacks = callbacks
-        self.cfg = model_param_loader(config)
+        self.cfg = cfg
         self.num_classes = num_classes
         self.datagen_train = None
         self.datagen_test = None
@@ -90,16 +92,26 @@ class Model(object):
         # load model
         self._loadModel()
 
-        model = self.mod_file.build_model(self.num_classes,
-                                          self.cfg['image_size_model'])
+        # load model
+        if self.cfg['load_model'] not in ('', 'None'):
+            model = load_model(self.cfg_path['models'] +
+                               self.cfg['load_model'] + '.hdf5')
+            print("dummy")
 
-        # get optimizer
-        self._loadOptimizer()
+        # create new model
+        else:
+            model = self.mod_file.build_model(self.num_classes,
+                                              self.cfg['image_size_model'])
 
-        # compile model
-        model.compile(loss='sparse_categorical_crossentropy',
-                      optimizer=self._opt,
-                      metrics=['accuracy'])
+            # get optimizer
+            self._loadOptimizer()
+
+            # compile model
+            model.compile(loss='sparse_categorical_crossentropy',
+                          optimizer=self._opt,
+                          metrics=['accuracy'])
+
+
 
         self.model = model
 

@@ -32,18 +32,10 @@ from keras.optimizers import rmsprop
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
-def build_model(cfg):
-    mod = VGG16(input_shape=cfg['image_size_model'],
-                classes=cfg['num_classes'],
+def build_model(num_classes, image_size):
+    mod = VGG16(input_shape=image_size,
+                classes=num_classes,
                 weights=None)
-
-    # initiate RMSprop optimizer
-    opt = rmsprop(lr=0.0001, decay=1e-6)
-
-    # Let's train the model using RMSprop
-    mod.compile(loss='sparse_categorical_crossentropy',
-                  optimizer=opt,
-                  metrics=['accuracy'])
 
     return mod
 

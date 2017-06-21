@@ -1,7 +1,7 @@
 from tools import panoptes
 from tools.subjects import SubjectSet, Subject
 import pickle
-from learning.helpers import model_param_loader
+from config.config import cfg_model as cfg
 
 
 class Project(object):
@@ -13,7 +13,7 @@ class Project(object):
         self.subject_set = None
         self.classes = classes
         self.cfg_path = cfg_path
-        self.cfg = model_param_loader(config)
+        self.cfg = cfg
 
     def createSubjectSet(self, mode):
         """ Function to Create a Full Subject Set """
