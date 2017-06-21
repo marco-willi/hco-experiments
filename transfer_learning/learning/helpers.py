@@ -1,5 +1,5 @@
 from tools.image import ImageDataGenerator
-from config.config import config, cfg_path
+from config.config import config, cfg_path, cfg_model
 import os
 from keras.optimizers import rmsprop, SGD
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
@@ -9,7 +9,7 @@ from keras.callbacks import LearningRateScheduler
 def create_class_mappings(mapping="1_on_1", excl_classes=None,
                           only_these_classes=None):
     # all classes
-    cfg = model_param_loader(config)
+    cfg = cfg_model
     all_classes = cfg['classes']
 
     if excl_classes is not None:
@@ -190,30 +190,3 @@ def model_save(model, config=config, cfg_path=cfg_path,
         NameError("Path not Found")
 
     model.save(path_to_save + out_name + '.h5')
-
-
-# function to load parameters used for model training
-def model_param_loader(config=config):
-    # extract project id for further loading project specifc configs
-    project_id = config['projects']['panoptes_id']
-
-    cfg = dict()
-
-    # load all configs
-    for key in config[project_id].keys():
-        if key in ['classes', 'callbacks']:
-            splitted = config[project_id][key].replace("\n",
-                                                       "").split(",")
-            cfg[key] = splitted
-        elif key in ['image_size_save', 'image_size_model']:
-            size = config[project_id]['image_size_save'].split(',')
-            size = tuple([int(x) for x in size])
-            cfg[key] = size
-        else:
-            try:
-                cfg[key] = eval(config[project_id][key])
-            except:
-                cfg[key] = config[project_id][key]
-
-    return cfg
-
