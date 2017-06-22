@@ -1,3 +1,10 @@
+"""
+Class to implement a Model object
+- defines different data sets to train a model on
+- defines callbacks for logging options
+- defines pre_processing / data augmentation during training
+- defines the model architecture
+"""
 from learning.helpers import create_data_generators, create_callbacks
 from learning.helpers import create_optimizer
 import time
@@ -14,8 +21,8 @@ class Model(object):
                  pre_processing, config, cfg_path, num_classes,
                  callbacks=['checkpointer', 'csv_logger', 'tb_logger'],
                  optimizer="standard"):
-        self.train_set = train_set
         self.test_set = test_set
+        self.train_set = train_set
         self.val_set = val_set
         self.mod_file = mod_file
         self.pre_processing = pre_processing
@@ -34,15 +41,17 @@ class Model(object):
         self._timestamp = datetime.now().strftime('%Y%m%d%H%m')
 
     def _loadModel(self):
+        """ Load model file """
         # load model file
         self.mod_file = importlib.import_module('learning.models.' +
                                                 self.mod_file)
 
     def _loadOptimizer(self):
+        """ load pre defined optimizer """
         self._opt = create_optimizer(name=self.optimizer)
 
     def _save(self, postfix=None, create_dir=True):
-
+        """ Save model object """
         # extract project id for further loading project specifc configs
         project_id = self.config['projects']['panoptes_id']
 
@@ -76,10 +85,11 @@ class Model(object):
         self.val_generator=create_data_generators(self.cfg, self.pre_processing)
 
     def _getCallbacks(self):
+        """ create pre-defined callbacks """
         self._callbacks_obj = create_callbacks(self._timestamp, self.callbacks)
 
     def _calcClassWeights(self):
-        """ calculate class weights """
+        """ calculate class weights according to pre-defined modes """
         if 'class_weight' in self.cfg:
             if self.cfg['class_weights'] == 'none':
                 cl_w = None
@@ -113,15 +123,18 @@ class Model(object):
         # load model
         self._loadModel()
 
-        # load model
+        # define starting epoch (0 for new models)
         start_epoch = 0
+
+        # load model if specified
         if self.cfg['load_model'] not in ('', 'None'):
             model = load_model(self.cfg_path['models'] +
                                self.cfg['load_model'] + '.hdf5')
 
+            # pick up learning at last epoch
             start_epoch = int(self.cfg['load_model'].split('_')[-2])
 
-        # create new model
+        # create new model and start learning from scratch
         else:
             model = self.mod_file.build_model(self.num_classes,
                                               self.cfg['image_size_model'])
@@ -134,8 +147,7 @@ class Model(object):
                           optimizer=self._opt,
                           metrics=['accuracy'])
 
-
-
+        # store model
         self.model = model
 
         ##################################
@@ -202,7 +214,7 @@ class Model(object):
             print("%s: %s" % (name, value))
 
         ##################################
-        # Save
+        # Save model to disk
         ##################################
 
         self._save()

@@ -3,17 +3,26 @@ from sklearn.model_selection import train_test_split
 import os
 import shutil
 from tools.project import Project
-from config.config import cfg_path
+from tools.model import Model
+from config.config import cfg_path, cfg_model, config
+from learning.helpers import create_class_mappings
 
 
 class Experiment(object):
-    """ Defines an experiment """
+    """ Defines an experiment which is defined by its project, class mapping
+        and a model"""
+
     def __init__(self, name, project, class_list=None, class_mapper=None,
                  train_size=0.9):
+        # experiment name
         self.name = name
+        # a project object
         self.project = project
+        # proportion of training size
         self.train_size = train_size
+        # a list of classes to use (better use class mapping)
         self.class_list = class_list
+        # a class mapping (preferred option)
         self.class_mapper = class_mapper
         self.classes = None
         self.train_set = None
@@ -80,7 +89,8 @@ class Experiment(object):
 
     def createExpDataSet(self, link_only=True, new_split=True,
                          clear_old_files=True):
-        """ Create Test / Train / Validation Data set """
+        """ Create Test / Train / Validation Data set, if link_only is True
+            only symbolik links are created, no actual data is copied """
 
         # create splits
         if new_split:
@@ -189,9 +199,9 @@ if __name__ == '__main__':
 #batch_size_big: 500
 
     project_id = config['projects']['panoptes_id']
-    classes = config[project_id]['classes'].replace("\n","").split(",")
+    classes = cfg_model['classes']
 
-    project = Project(name=config[project_id]['identifier'],
+    project = Project(name=cfg_model['identifier'],
                       panoptes_id=int(project_id),
                       classes=classes,
                       cfg_path=cfg_path,
@@ -201,8 +211,8 @@ if __name__ == '__main__':
     project.saveSubjectSetOnDisk()
 
     exp = Experiment(name="mnist", project=project,
-             class_list=classes,
-             train_size=0.9)
+                     class_list=classes,
+                     train_size=0.9)
 
 
 #    exp = Experiment(name="mnist", project=project,
@@ -227,9 +237,24 @@ if __name__ == '__main__':
 
     exp.createExpDataSet(link_only=False)
 
-    exp.addModelFile(config[project_id]['model_file'])
+    class_mapper = create_class_mappings(cfg_model['class_mapping'])
+
+    # create model object
+    model = Model(train_set=exp.train_set,
+                  test_set=exp.test_set,
+                  val_set=exp.val_set,
+                  mod_file=cfg_model['model_file'],
+                  pre_processing=cfg_model['pre_processing'],
+                  config=config,
+                  cfg_path=cfg_path,
+                  callbacks=cfg_model['callbacks'],
+                  optimizer=cfg_model['optimizer'],
+                  num_classes=len(class_mapper.keys()))
+
+    exp.addModel(model)
 
     exp.train()
+
 
 
 

@@ -40,6 +40,14 @@ WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/downlo
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.5/inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
 
+def build_model(num_classes, image_size):
+    mod = InceptionV3(input_shape=image_size,
+                      classes=num_classes,
+                      weights=None)
+
+    return mod
+
+
 def conv2d_bn(x,
               filters,
               num_row,

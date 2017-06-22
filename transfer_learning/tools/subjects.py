@@ -1,9 +1,17 @@
+"""
+Classes to implement SubjectSets, Subjects and Images
+- A SubjectSet is a collection of Subjects which typically are either
+  the full subject set of a project, a training-, test- or validation set.
+- A Subject is defined by a unique identifier, by a label and by a set
+  of images.
+- An Image belongs to a Subject, and has an URL and possibly a location on disk
+"""
 from sklearn.preprocessing import LabelEncoder
-import numpy as np
 import os
 from tools.image_url_loader import ImageUrlLoader
 import time
 import shutil
+
 
 class SubjectSet(object):
     """ Defines a set of subjects """

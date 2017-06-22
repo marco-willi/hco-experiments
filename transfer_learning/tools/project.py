@@ -1,3 +1,9 @@
+"""
+Class to implement a Project
+- defines a set of images and their classes to train a model from
+- typically this would be a single Zooniverse project but can also be
+  a collection of several projects
+"""
 from tools import panoptes
 from tools.subjects import SubjectSet, Subject
 import pickle
