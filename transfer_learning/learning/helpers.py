@@ -12,7 +12,7 @@ import os
 from keras.optimizers import rmsprop, SGD
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
 from keras.callbacks import LearningRateScheduler, EarlyStopping
-from kears.callbacks import ReduceLROnPlateau
+from kears.callbacks import ReduceLROnPlateau, RemoteMonitor
 
 
 # create class mappings
@@ -176,6 +176,14 @@ def create_callbacks(identifier='',
                                 )
 
         callbacks.append(tb_logger)
+
+    if 'remote_logger' in names:
+        # Remote Logger
+        rem_logger = RemoteMonitor(root='http://localhost:9000',
+                                   path='/publish/epoch/end/',
+                                   field='data',
+                                   headers=None)
+        callbacks.append(rem_logger)
 
     if 'early_stopping' in names:
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=0,
