@@ -5,6 +5,6 @@ RUN apt-get install -y python-pip python-dev build-essential
 COPY . /app
 WORKDIR /app
 RUN pip install --upgrade pip
-RUN pip install flask gevent
+RUN pip install flask gevent urllib
 ENTRYPOINT ["python"]
 CMD ["api.py"]

@@ -1,6 +1,7 @@
 #!/bin/bash
 cd ~/
-git clone https://github.com/fchollet/hualos.git
+sudo rm -r ~/hualos
+git clone https://github.com/marco-willi/hualos.git
 cd ~/hualos
 
 # build docker file

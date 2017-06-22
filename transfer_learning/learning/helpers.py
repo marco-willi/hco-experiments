@@ -183,8 +183,8 @@ def create_callbacks(identifier='',
 
         # get ip
         ip_call = run(['curl', 'checkip.amazonaws.com'], stdout=PIPE)
-        ip = ip_call.stdout.decode("utf-8").strip("\n")
-        ip_ec2 = 'ec2-' + ip + '.compute-1.amazonaws.com'
+        ip = ip_call.stdout.decode("utf-8").strip("\n").replace('.', '-')
+        ip_ec2 = 'http://ec2-' + ip + '.compute-1.amazonaws.com'
 
         rem_logger = RemoteMonitor(root=ip_ec2 + ':8080',
                                    path='/publish/epoch/end/',
