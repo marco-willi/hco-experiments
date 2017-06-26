@@ -14,28 +14,6 @@ import random
 from db.data_prep_functions import *
 
 
-##########################
-## Parameters
-##########################
-#
-#link_cl = 'https://zooniverse.slack.com/files/adam/F5YQGD5ML/elephant-expedition-classifications.csv.zip'
-#link_sub = 'https://zooniverse.slack.com/files/adam/F5Y3FHA13/elephant-expedition-subjects.csv.zip'
-#
-##########################
-## Get Data & Save
-## manual step
-##########################
-#
-#cfg_path['db']
-#
-## save classifications
-#create_path(cfg_path['db'])
-#path_to_file = get_url(link_cl, cfg_path['db'] + 'classifications.zip')
-#
-#
-## save subject data
-#create_path(cfg_path['db'] + 'subjects')
-#path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
 
 
 #########################
@@ -44,24 +22,25 @@ from db.data_prep_functions import *
 
 subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
 
+cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
+cls.head
+
 ###############################
 # Process Classification Data
 ###############################
 
-cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
-cls.head
-
 # filter on workflow: Spot and count rainforest animals
-cls = cls[cls.workflow_name == 'Spot and count rainforest animals']
+cls = cls[cls.workflow_name == 'Initial Workflow']
 
 # filter classifications without a choice
+cls[cls.annotations.str.contains('choice')].shape
 cls = cls[cls.annotations.str.contains('choice')]
 
 # filter classifications without most recent workflow_version
 work_v = cls.groupby(['workflow_version']).size()
 most_recent_wf = work_v.index[-1]
+cls[cls.workflow_version == most_recent_wf].shape
 cls = cls[cls.workflow_version == most_recent_wf]
-
 
 # loop through all classifications and fill subject dictionary
 subs_res = dict()
@@ -98,7 +77,6 @@ for i in range(0, cls.shape[0]):
     subs_res[current_c['subject_ids']]['retirement_reason'] = ret_res
 
 subs_res[list(subs_res.keys())[0]]
-
 
 # generate plurality algorithm result
 subs_res_final = dict()
@@ -220,6 +198,7 @@ for k, v in labels_all.items():
 file.close()
 file2.close()
 
+
 # create SubjectSet
 subject_set = SubjectSet(labels=list(labels_all.keys()))
 
@@ -233,7 +212,7 @@ for key, value in subs_all_data.items():
     subject_set.addSubject(str(key), subject)
 
 # save to disk
-pickle.dump(subject_set, open(cfg_path['db'] + 'subject_set2.pkl',
+pickle.dump(subject_set, open(cfg_path['db'] + 'subject_set.pkl',
                               "wb"), protocol=4)
 
 # checks

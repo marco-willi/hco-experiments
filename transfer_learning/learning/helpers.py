@@ -24,6 +24,9 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
     cfg = cfg_model
     all_classes = cfg['classes']
 
+    # blank classes
+    blank_classes = ['blank', 'NOTHINGHERE']
+
     if excl_classes is not None:
         all_classes = [x for x in all_classes if x not in excl_classes]
 
@@ -38,7 +41,7 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
     elif mapping == "blank_vs_nonblank":
         map_dict = dict()
         for c in all_classes:
-            if c == 'blank':
+            if c in blank_classes:
                 map_dict[c] = 'blank'
             else:
                 map_dict[c] = 'non_blank'
@@ -46,7 +49,8 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
     # non blanks
     elif mapping == "nonblank":
         map_dict = {c: c for c in all_classes}
-        map_dict.pop('blank', None)
+        for bl in blank_classes:
+            map_dict.pop(bl, None)
 
     else:
         NotImplementedError("Mapping %s not implemented" % mapping)

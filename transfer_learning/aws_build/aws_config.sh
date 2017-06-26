@@ -18,6 +18,12 @@ sudo mount /dev/xvdf ~/data_hdd
 # commit docker changes
 # sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3
 
+# connect to aws instance from lucifer
+ssh -i ~/keys/zv_test_key.pem ubuntu@ec2-34-207-210-160.compute-1.amazonaws.com
+
+# transfer files from lucifer to aws instance
+ scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/ss/subject_set.pkl ubuntu@ec2-34-207-210-160.compute-1.amazonaws.com:~
+
 
 # Nvidia docker
 sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
