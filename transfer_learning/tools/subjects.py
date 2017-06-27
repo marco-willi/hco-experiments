@@ -121,11 +121,12 @@ class SubjectSet(object):
         time_s = time.time()
         urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
         res = data_loader.storeOnDisk(urls=urls,
-                                       labels=labels,
-                                       fnames=fnames,
-                                       path=cfg_path['images'] + set_name,
-                                       target_size=cfg['image_size_save'][0:2],
-                                       chunk_size=100)
+                                      labels=labels,
+                                      fnames=fnames,
+                                      path=cfg_path['images'] + set_name,
+                                      target_size=cfg['image_size_save'][0:2],
+                                      chunk_size=100,
+                                      zooniverse_imgproc=False)
 
         print("Finished saving on disk after %s minutes" %
               ((time.time() - time_s) // 60))

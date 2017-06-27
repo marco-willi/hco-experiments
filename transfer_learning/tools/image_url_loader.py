@@ -143,7 +143,9 @@ class ImageUrlLoader(object):
         return res
 
     def storeOnDisk(self, urls, labels, fnames, path, target_size=None,
-                     chunk_size=1000, overwrite=False, create_path=True):
+                     chunk_size=1000, overwrite=False, create_path=True,
+                     zooniverse_imgproc=False
+                     ):
         """ store all images on disk in class specific folders """
 
         # filenames
@@ -223,7 +225,7 @@ class ImageUrlLoader(object):
 
             # invoke asynchronous read
             binary_images = self.getImages(chunk_urls, chunk_ids,
-                                           zooniverse_imgproc=True,
+                                           zooniverse_imgproc=zooniverse_imgproc,
                                            target_size=target_size)
 
             # store on disk
