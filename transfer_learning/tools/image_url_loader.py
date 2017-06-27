@@ -76,6 +76,17 @@ class ImageUrlLoader(object):
                     except:
                         print("Could not access image: %s with id %s \n"
                               % (url, key))
+                        success = False
+                        while not success:
+                            print("Trying again")
+                            time.sleep(0.1)
+                            try:
+                                img = Image.open(BytesIO(chunk))
+                                images_dict[key] = img
+                                success = True
+                            except:
+                                print("Failed Attempt")
+
             return await response.release()
 
         # asynchronous main loop
@@ -91,7 +102,7 @@ class ImageUrlLoader(object):
         loop.run_until_complete(main(loop))
         return images_dict
 
-    def getImages(self, urls, ids):
+    def getImages(self, urls, ids, zooniverse_imgproc=False, target_size=None):
         """ Retrieve images from list of urls """
 
         # number of urls
@@ -99,6 +110,13 @@ class ImageUrlLoader(object):
 
         # prepare result list
         res = dict()
+
+        # if to use the zooniverse imgproc server to pre-process images
+        if (zooniverse_imgproc) & (target_size is not None):
+            imgproc_url = "https://imgproc.zooniverse.org/resize?o=!&w=%s&h=%s&u=" % (target_size[0], target_size[1])
+
+            for i in range(0, size):
+                urls[i] = imgproc_url + urls[i].replace('https://', '')
 
         # sequential retrieval
         if any((not self.parallel, size == 1)):
@@ -124,7 +142,7 @@ class ImageUrlLoader(object):
         # return list of image objects
         return res
 
-    def storeOnDisk2(self, urls, labels, fnames, path, target_size=None,
+    def storeOnDisk(self, urls, labels, fnames, path, target_size=None,
                      chunk_size=1000, overwrite=False, create_path=True):
         """ store all images on disk in class specific folders """
 
@@ -204,7 +222,9 @@ class ImageUrlLoader(object):
                 chunk_y.append(val[1])
 
             # invoke asynchronous read
-            binary_images = self.getImages(chunk_urls, chunk_ids)
+            binary_images = self.getImages(chunk_urls, chunk_ids,
+                                           zooniverse_imgproc=True,
+                                           target_size=target_size)
 
             # store on disk
             img_id = 0
@@ -239,116 +259,6 @@ class ImageUrlLoader(object):
                     print("%s / %s stored on disk" % (jj, size))
 
         return summary
-
-    def storeOnDisk(self, urls, labels, ids, path, target_size=None,
-                    chunk_size=1000, overwrite=False, create_path=True):
-        """ store all images on disk in class specific folders """
-
-        # generate artificial ids because of duplicates
-        ids_input = ids
-        ids_new = [x for x in range(0, len(ids))]
-        ids = [str(old) + '_' + str(new) for old,
-               new in zip(ids_input, ids_new)]
-
-        # check
-        if not os.path.exists(path) & create_path:
-            os.mkdir(path)
-        else:
-            NameError("Path not Found")
-
-        # ensure / at end of path
-        if path[-1] != '/':
-            path = path + '/'
-
-        # create dictionary for convenience
-        data_dict = dict()
-        for url, label, ii in zip(urls, labels, ids):
-            data_dict[str(ii)] = [url, label]
-
-        # create class specific directories
-        existing_files = list()
-        for sub_dir in set(labels):
-            if not os.path.exists(path + str(sub_dir)):
-                os.mkdir(path + str(sub_dir))
-            # list all files
-            else:
-                f = [n.split(".")[0] for n in os.listdir(path + str(sub_dir))]
-                existing_files.extend(f)
-
-        # remove already existing files from re-storing operation
-        existing_files = set(existing_files)
-        dict_ids = list(data_dict.keys())
-        if not overwrite:
-            if len(existing_files) > 0:
-                for k in dict_ids:
-                    if k in existing_files:
-                        data_dict.pop(k)
-
-        # get relevant data from dictionary
-        dict_ids = list(data_dict.keys())
-        size = len(dict_ids)
-
-        if size == 0:
-            print("Everything already on disk")
-            return None
-
-        # define chunks of images to load
-        cuts = [x for x in range(0, size, chunk_size)]
-        if cuts[-1] < size:
-            cuts.append(size)
-
-        # convert chunk sizes to integers
-        cuts = [int(x) for x in cuts]
-
-        # initialize progress counter
-        jj = 0
-
-        for i in range(0, (len(cuts) - 1)):
-
-            idx = [x for x in range(cuts[i], cuts[i+1])]
-
-            chunk_ids = [dict_ids[z] for z in idx]
-            chunk_urls = list()
-            chunk_y = list()
-            for ci in chunk_ids:
-                val = data_dict[ci]
-                chunk_urls.append(val[0])
-                chunk_y.append(val[1])
-
-            # invoke asynchronous read
-            binary_images = self.getImages(chunk_urls)
-
-            # store on disk
-            img_id = 0
-            for c_id, c_y in zip(chunk_ids, chunk_y):
-                # define path
-                path_img = path + str(c_y) + "/" + \
-                           str(c_id) + ".jpeg"
-
-                # check if exists
-                if os.path.exists(path_img):
-                    continue
-                # get current image
-                try:
-                    img = binary_images[img_id]
-                except:
-                    print("Could not access image %s - skipping..." % img_id)
-                    continue
-
-                # resize if specified
-                if target_size is not None:
-                    img = img.resize(target_size)
-
-                # save to disk
-                img.save(path_img)
-                img_id += 1
-
-                # print progress
-                jj += 1
-                if jj % 500 == 0:
-                    print("%s / %s stored on disk" % (jj, size))
-
-        return None
 
 if __name__ == "__main__":
     from main import prep_data

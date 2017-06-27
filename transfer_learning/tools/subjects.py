@@ -120,7 +120,7 @@ class SubjectSet(object):
         print("Saving %s data ...." % set_name)
         time_s = time.time()
         urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
-        res = data_loader.storeOnDisk2(urls=urls,
+        res = data_loader.storeOnDisk(urls=urls,
                                        labels=labels,
                                        fnames=fnames,
                                        path=cfg_path['images'] + set_name,
