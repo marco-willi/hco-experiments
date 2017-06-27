@@ -8,8 +8,7 @@ The goal of this project is to train machine classifiers for the identification 
 
 To run a model one needs:
 * a Zooniverse account and access to a Zooniverse project (collaborator role or project owner)
-  or
-* Zooniverse data dumps for a project (subject and classification data)
+  or Zooniverse data dumps for a project (subject and classification data)
 * a project with image data for classification tasks
 * a way to generate labels for the images
 * (ideally) access to a GPU server
