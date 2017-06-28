@@ -230,6 +230,9 @@ class ImageUrlLoader(object):
 
             # store on disk
             img_id = 0
+
+            # timer
+            time_b = time.time()
             for c_id, c_y in zip(chunk_ids, chunk_y):
 
                 # define path
@@ -258,7 +261,9 @@ class ImageUrlLoader(object):
                 # print progress
                 jj += 1
                 if jj % 500 == 0:
-                    print("%s / %s stored on disk" % (jj, size))
+                    tm = round(time.time() - time_b, 0)
+                    print("%s / %s stored on disk, took %s s" % (jj, size, tm))
+                    time_b = time.time()
 
         return summary
 
