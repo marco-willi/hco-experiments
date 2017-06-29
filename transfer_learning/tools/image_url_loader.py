@@ -81,6 +81,7 @@ class ImageUrlLoader(object):
                             print("Trying again")
                             time.sleep(0.1)
                             try:
+                                chunk = await response.content.read()
                                 img = Image.open(BytesIO(chunk))
                                 images_dict[key] = img
                                 success = True
@@ -151,6 +152,9 @@ class ImageUrlLoader(object):
         # filenames
         ids = fnames
 
+        # number of urls
+        size_total = len(urls)
+
         # check
         if not os.path.exists(path) & create_path:
             os.mkdir(path)
@@ -200,6 +204,9 @@ class ImageUrlLoader(object):
             print("Everything already on disk")
             return summary
 
+        if size >0:
+            print("Already on disk: %s" % (size_total - size))
+
         # define chunks of images to load
         cuts = [x for x in range(0, size, chunk_size)]
         if cuts[-1] < size:
@@ -210,6 +217,7 @@ class ImageUrlLoader(object):
 
         # initialize progress counter
         jj = 0
+        time_begin = time.time()
 
         for i in range(0, (len(cuts) - 1)):
 
@@ -261,8 +269,11 @@ class ImageUrlLoader(object):
                 # print progress
                 jj += 1
                 if jj % 500 == 0:
-                    tm = round(time.time() - time_b, 0)
-                    print("%s / %s stored on disk, took %s s" % (jj, size, tm))
+                    tm_now = time.time()
+                    tm = round(tm_now - time_b, 0)
+                    tm_total = round((tm_now - time_begin) // 60, 1)
+                    print("%s / %s stored on disk, took %s s (Total: %s min)"
+                          % (jj+size, size_total, tm, tm_total))
                     time_b = time.time()
 
         return summary

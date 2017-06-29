@@ -22,7 +22,7 @@ def main():
 
     # create Project object
     project = Project(name=cfg_model['identifier'],
-                      panoptes_id=int(project_id),
+                      panoptes_id=project_id,
                       classes=project_classes,
                       cfg_path=cfg_path,
                       config=config)
