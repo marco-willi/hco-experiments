@@ -77,7 +77,8 @@ class ImageUrlLoader(object):
                         print("Could not access image: %s with id %s \n"
                               % (url, key))
                         success = False
-                        while not success:
+                        counter = 0
+                        while (not success) and (counter < 10):
                             print("Trying again")
                             time.sleep(0.1)
                             try:
@@ -86,7 +87,9 @@ class ImageUrlLoader(object):
                                 images_dict[key] = img
                                 success = True
                             except:
-                                print("Failed Attempt")
+                                counter += 1
+                                print("Failed Attempt %s / %s" % (counter, 10))
+
 
             return await response.release()
 
@@ -273,7 +276,7 @@ class ImageUrlLoader(object):
                     tm = round(tm_now - time_b, 0)
                     tm_total = round((tm_now - time_begin) // 60, 1)
                     print("%s / %s stored on disk, took %s s (Total: %s min)"
-                          % (jj+size, size_total, tm, tm_total))
+                          % (jj+size_total-size, size_total, tm, tm_total))
                     time_b = time.time()
 
         return summary
