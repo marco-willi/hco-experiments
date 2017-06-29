@@ -113,7 +113,7 @@ class ImageUrlLoader(object):
         images_dict = dict()
 
         # prepare list for fails
-        failures = {'urls': list(), 'ids': list()]
+        failures = {'urls': list(), 'ids': list()}
 
         # define asynchronous functions
         async def download_coroutine(session, key, url):
@@ -195,7 +195,7 @@ class ImageUrlLoader(object):
 
             # try to read failed images
             counter = 0
-            while (len(failures['urls']) > 0) and counter > 10:
+            while (len(failures['urls']) > 0) and counter < 10:
                 res2, failures = self._getAsyncUrls3(urls, ids)
 
                 # combine results
@@ -217,12 +217,12 @@ class ImageUrlLoader(object):
         return res
 
     def storeOnDisk(self, urls, labels, fnames, path, target_size=None,
-                     chunk_size=1000, overwrite=False, create_path=True,
-                     zooniverse_imgproc=False
+                    chunk_size=1000, overwrite=False, create_path=True,
+                    zooniverse_imgproc=False
                      ):
         """ store all images on disk in class specific folders """
 
-        # filenames
+        # filenames as identifiers
         ids = fnames
 
         # number of urls
