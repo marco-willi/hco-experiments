@@ -20,6 +20,12 @@ mkdir data
 # launch tensorflow-gpu docker
 sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
 
+# install python packages
+pip install dill requests panoptes_client pillow aiohttp keras
+
+# save changes
+# sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3
+
 
 
 

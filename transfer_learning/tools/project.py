@@ -8,6 +8,7 @@ from tools import panoptes
 from tools.subjects import SubjectSet, Subject
 import pickle
 from config.config import cfg_model as cfg
+import time
 
 
 class Project(object):
@@ -50,7 +51,17 @@ class Project(object):
     def saveSubjectSetOnDisk(self):
         """ Save all Subjects in class specific folders """
 
-        self.subject_set.saveOnDisk(set_name='all',
-                                    cfg=self.cfg, cfg_path=self.cfg_path)
+        # to retry saving in case of connection errors while fetching urls
+        counter = 1
+        success = False
+        while (not success) & (counter < 10):
+            try:
+                self.subject_set.saveOnDisk(set_name='all',
+                                            cfg=self.cfg, cfg_path=self.cfg_path)
+                success = True
+            except:
+                counter += 1
+                print("Failed to Save Subjects on Disk")
+                print("Starting attempt %s / %s" % (counter, 10))
 
 
