@@ -30,3 +30,6 @@ sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-p
 
 # normal docker
 sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
+
+# no gpu docker
+sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-py3 bash

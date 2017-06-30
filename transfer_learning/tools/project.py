@@ -8,7 +8,7 @@ from tools import panoptes
 from tools.subjects import SubjectSet, Subject
 import pickle
 from config.config import cfg_model as cfg
-import time
+from config.config import logging
 
 
 class Project(object):
@@ -59,9 +59,13 @@ class Project(object):
                 self.subject_set.saveOnDisk(set_name='all',
                                             cfg=self.cfg, cfg_path=self.cfg_path)
                 success = True
-            except:
+            except Exception as e:
+                # log exception
+                logging.exception("saveSubjectSetOnDisk failed")
                 counter += 1
                 print("Failed to Save Subjects on Disk")
                 print("Starting attempt %s / %s" % (counter, 10))
+        if not success:
+            IOError("Could not save subject set on disk")
 
 

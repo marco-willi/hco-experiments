@@ -7,6 +7,9 @@ import asyncio
 import async_timeout
 import time
 import os
+from config.config import logging
+from datetime import datetime
+from tools.helpers import second_to_str
 
 
 # Class to get images from URLs
@@ -41,7 +44,9 @@ class ImageUrlLoader(object):
                     try:
                         img = Image.open(BytesIO(chunk))
                         images_dict[key] = img
-                    except IOError:
+                    except Exception as e:
+                        # log exception
+                        logging.warn("Could not access image: %s \n" % url)
                         print("Could not access image: %s \n" % url)
             return await response.release()
 
@@ -127,11 +132,14 @@ class ImageUrlLoader(object):
                         img = Image.open(BytesIO(chunk))
                         images_dict[key] = img
                     except:
+                        logging.warn("Could not access image: %s with id %s"
+                              % (url, key))
                         print("Could not access image: %s with id %s \n"
                               % (url, key))
                         success = False
                         counter = 0
-                        while (not success) and (counter < 3):
+                        n_attempts = 3
+                        while (not success) and (counter < n_attempts):
                             print("Trying again")
                             time.sleep(0.1)
                             try:
@@ -141,12 +149,18 @@ class ImageUrlLoader(object):
                                 success = True
                             except:
                                 counter += 1
-                                print("Failed Attempt %s / %s" % (counter, 10))
+                                print("Failed Attempt %s / %s"
+                                      % (counter, n_attempts))
+                                logging.warn("Failed Attempt %s / %s"
+                                             % (counter, n_attempts))
                         # add to failures list
                         if not success:
                             failures['urls'].append(url)
                             failures['ids'].append(key)
-
+                            # log failures
+                            for u, i in zip(failures['urls'], failures['ids']):
+                                logging.warn("Failed to access id: %s on\
+                                             url: %s" % (i, u))
 
             return await response.release()
 
@@ -219,7 +233,7 @@ class ImageUrlLoader(object):
     def storeOnDisk(self, urls, labels, fnames, path, target_size=None,
                     chunk_size=1000, overwrite=False, create_path=True,
                     zooniverse_imgproc=False
-                     ):
+                    ):
         """ store all images on disk in class specific folders """
 
         # filenames as identifiers
@@ -277,7 +291,7 @@ class ImageUrlLoader(object):
             print("Everything already on disk")
             return summary
 
-        if size >0:
+        if size > 0:
             print("Already on disk: %s" % (size_total - size))
 
         # define chunks of images to load
@@ -291,6 +305,7 @@ class ImageUrlLoader(object):
         # initialize progress counter
         jj = 0
         time_begin = time.time()
+        time_b = time.time()
 
         for i in range(0, (len(cuts) - 1)):
 
@@ -312,8 +327,7 @@ class ImageUrlLoader(object):
             # store on disk
             img_id = 0
 
-            # timer
-            time_b = time.time()
+
             for c_id, c_y in zip(chunk_ids, chunk_y):
 
                 # define path
@@ -327,6 +341,8 @@ class ImageUrlLoader(object):
                 try:
                     img = binary_images[c_id]
                 except:
+                    logging.warn("Could not access image %s - skipping..."
+                                 % c_id)
                     print("Could not access image %s - skipping..." % c_id)
                     failures_savings[c_id] = img_id
                     continue
@@ -339,13 +355,15 @@ class ImageUrlLoader(object):
                 img.save(path_img)
                 img_id += 1
 
-                # print progress
+                # count processed images
                 jj += 1
-                if jj % 500 == 0:
+
+                # print progress
+                if (jj % 500) == 0:
                     tm_now = time.time()
                     tm = round(tm_now - time_b, 0)
-                    tm_total = round((tm_now - time_begin) // 60, 1)
-                    print("%s / %s stored on disk, took %s s (Total: %s min)"
+                    tm_total = second_to_str(time.time() - time_begin)
+                    print("%s / %s stored on disk, took %s s (Total: %s)"
                           % (jj+size_total-size, size_total, tm, tm_total))
                     time_b = time.time()
 

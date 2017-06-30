@@ -1,6 +1,8 @@
 # import modules
 import configparser
 import os
+import logging
+from datetime import datetime
 
 path_cfg = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                         'config.ini')
@@ -73,3 +75,20 @@ def model_param_loader(config=config):
 cfg_model = model_param_loader(config)
 
 print("Config Loaded")
+
+
+##############################
+# Logging
+##############################
+
+# initialize logging file
+ts = datetime.now().strftime('%Y%m%d%H%m')
+logging.basicConfig(filename=cfg_path['logs'] + ts + '_run.log',
+                    filemode = "w",
+                    level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s')
+
+
+
+
+
