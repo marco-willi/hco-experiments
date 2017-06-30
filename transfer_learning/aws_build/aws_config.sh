@@ -33,3 +33,9 @@ sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
 
 # no gpu docker
 sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-py3 bash
+
+# add swap space
+#cd /var/tmp
+#dd if=/dev/zero of=swapfile1 bs=10240 count=1048576
+#/sbin/mkswap -c -v1 /var/tmp/swapfile1
+#sudo /sbin/swapon /var/tmp/swapfile1

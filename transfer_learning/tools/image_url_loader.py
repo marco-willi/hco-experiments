@@ -175,6 +175,79 @@ class ImageUrlLoader(object):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(main(loop))
+
+        return images_dict, failures
+
+    def _getAsyncUrls4(self, urls, ids):
+        """ Load multiple urls in a parallel way, catch failed attempts """
+
+        # prepare result dictionary
+        images_dict = dict()
+
+        # prepare list for fails
+        failures = {'urls': list(), 'ids': list()}
+
+        # define asynchronous functions
+        async def download_coroutine(semaphore, session, key, url):
+            # with async_timeout.timeout(180):
+            async with semaphore:
+                async with session.get(url) as response:
+                    while True:
+                        chunk = await response.content.read()
+                        if not chunk:
+                            break
+                        try:
+                            img = Image.open(BytesIO(chunk))
+                            images_dict[key] = img
+                        except:
+                            logging.warn("Could not access image: %s with id %s"
+                                  % (url, key))
+                            print("Could not access image: %s with id %s \n"
+                                  % (url, key))
+                            success = False
+                            counter = 0
+                            n_attempts = 3
+                            while (not success) and (counter < n_attempts):
+                                print("Trying again")
+                                time.sleep(0.1)
+                                try:
+                                    chunk = await response.content.read()
+                                    img = Image.open(BytesIO(chunk))
+                                    images_dict[key] = img
+                                    success = True
+                                except:
+                                    counter += 1
+                                    print("Failed Attempt %s / %s"
+                                          % (counter, n_attempts))
+                                    logging.warn("Failed Attempt %s / %s"
+                                                 % (counter, n_attempts))
+                            # add to failures list
+                            if not success:
+                                failures['urls'].append(url)
+                                failures['ids'].append(key)
+                                # log failures
+                                for u, i in zip(failures['urls'], failures['ids']):
+                                    logging.warn("Failed to access id: %s on\
+                                                 url: %s" % (i, u))
+
+                return await response.release()
+
+        # asynchronous main loop
+        async def main(loop):
+            async with aiohttp.ClientSession(loop=loop) as session:
+
+                # new: instantiate a semaphore before calling our coroutines
+                semaphore = asyncio.BoundedSemaphore(1000)
+
+                tasks = [download_coroutine(semaphore, session, key, url) for
+                         key, url in zip(ids, urls)]
+                await asyncio.gather(*tasks)
+
+        # crate new event loop to work in multithreaded environment
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main(loop))
+
         return images_dict, failures
 
     def getImages(self, urls, ids, zooniverse_imgproc=False, target_size=None):
@@ -205,7 +278,7 @@ class ImageUrlLoader(object):
 #            internal_ids = [x for x in range(0, size)]
 
             # invoke parallel read
-            res, failures = self._getAsyncUrls3(urls, ids)
+            res, failures = self._getAsyncUrls4(urls, ids)
 
             # try to read failed images
             counter = 0
