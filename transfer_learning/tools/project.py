@@ -54,7 +54,8 @@ class Project(object):
         # to retry saving in case of connection errors while fetching urls
         counter = 1
         success = False
-        while (not success) & (counter < 10):
+        n_trials = 99
+        while (not success) & (counter < n_trials):
             try:
                 self.subject_set.saveOnDisk(set_name='all',
                                             cfg=self.cfg, cfg_path=self.cfg_path)
@@ -64,7 +65,7 @@ class Project(object):
                 logging.exception("saveSubjectSetOnDisk failed")
                 counter += 1
                 print("Failed to Save Subjects on Disk")
-                print("Starting attempt %s / %s" % (counter, 10))
+                print("Starting attempt %s / %s" % (counter, n_trials))
         if not success:
             IOError("Could not save subject set on disk")
 
