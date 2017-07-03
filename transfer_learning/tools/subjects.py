@@ -119,6 +119,7 @@ class SubjectSet(object):
         # save to disk
         print("------------------------------------------")
         print("Saving %s data ...." % set_name)
+        logging.info("Saving %s data ...." % set_name)
         time_s = time.time()
         urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
         res = data_loader.storeOnDisk(urls=urls,
@@ -132,6 +133,8 @@ class SubjectSet(object):
         print("Finished saving on disk after %s minutes" %
               ((time.time() - time_s) // 60))
         print("------------------------------------------")
+        logging.info("Finished saving on disk after %s minutes" %
+                     ((time.time() - time_s) // 60))
 
         # remove unsuccessful savings
         failures = res['failures']

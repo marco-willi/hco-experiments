@@ -479,6 +479,10 @@ class ImageUrlLoader(object):
                     print("%s / %s stored on disk, took %s s (Total: %s)"
                           % (jj+size_total-size, size_total, tm, tm_total))
                     time_b = time.time()
+                    logging.info("%s / %s stored on disk\
+                                  , took %s s (Total: %s)"
+                                  % (jj+size_total-size, size_total,
+                                     tm, tm_total))
 
         return summary
 

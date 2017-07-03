@@ -44,7 +44,9 @@ class Project(object):
 
         if mode == 'disk':
             file = self.cfg_path['db'] + 'subject_set.pkl'
+            logging.info("Loading %s" % file)
             subject_set = pickle.load(open(file, 'rb'))
+            logging.info("Finished Loading %s" % file)
 
         self.subject_set = subject_set
 
