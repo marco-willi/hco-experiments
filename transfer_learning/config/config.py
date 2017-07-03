@@ -3,6 +3,7 @@ import configparser
 import os
 import logging
 from datetime import datetime
+import sys
 
 path_cfg = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                         'config.ini')
@@ -16,6 +17,12 @@ config_credentials.read(path_cred)
 config = configparser.ConfigParser()
 config.read(path_cfg)
 
+# identify platform and set behavior of creating links or file copies
+platform = sys.platform
+if platform == 'win32':
+    config['general']['link_only'] = '0'
+else:
+    config['general']['link_only'] = '1'
 
 # function to load path parameters
 def path_loader(config, create_project_paths=True):
@@ -87,6 +94,8 @@ logging.basicConfig(filename=cfg_path['logs'] + ts + '_run.log',
                     filemode = "w",
                     level=logging.DEBUG)
 logging.basicConfig(format='%(asctime)s %(message)s')
+
+
 
 
 

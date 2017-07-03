@@ -47,7 +47,7 @@ def main():
 
     # create separate directories with image data for this experiment
     # use only links to save space
-    exp.createExpDataSet(link_only=False)
+    exp.createExpDataSet(link_only=bool(eval(config['general']['link_only'])))
 
     ########################
     # Define Model

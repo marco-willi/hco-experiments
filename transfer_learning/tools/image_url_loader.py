@@ -1,3 +1,9 @@
+"""
+Class that implements function to load images from urls
+- uses asyncio to load images asyncronously
+- exception handling regarding non-retrievable urls
+"""
+
 # import modules
 from PIL import Image
 import requests
@@ -377,8 +383,10 @@ class ImageUrlLoader(object):
                 os.mkdir(path + str(sub_dir))
             # list all files
             else:
+                logging.info("Listing Files of %s" % path + str(sub_dir))
                 f = os.listdir(path + str(sub_dir))
                 existing_files.extend(f)
+                logging.info("Fnished Listing %s" % path + str(sub_dir))
 
         # remove already existing files from re-storing operation
         existing_files = set(existing_files)
@@ -402,10 +410,12 @@ class ImageUrlLoader(object):
         # return if nothing needs to be done
         if size == 0:
             print("Everything already on disk")
+            logging.info("Everything already on disk")
             return summary
 
         if size > 0:
             print("Already on disk: %s" % (size_total - size))
+            logging.info("Already on disk: %s" % (size_total - size))
 
         # define chunks of images to load
         cuts = [x for x in range(0, size, chunk_size)]
