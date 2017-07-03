@@ -54,10 +54,10 @@ class Project(object):
         """ Save all Subjects in class specific folders """
 
         # to retry saving in case of connection errors while fetching urls
-        counter = 1
+        counter = 0
         success = False
-        n_trials = 99
-        while (not success) & (counter < n_trials):
+        n_trials = 1
+        while ((not success) & (counter < n_trials)):
             try:
                 self.subject_set.saveOnDisk(set_name='all',
                                             cfg=self.cfg, cfg_path=self.cfg_path)

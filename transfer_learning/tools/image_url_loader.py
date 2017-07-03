@@ -213,7 +213,7 @@ class ImageUrlLoader(object):
                             success = False
                             counter = 0
                             n_attempts = 0
-                            while (not success) and (counter < n_attempts):
+                            while ((not success) and (counter < n_attempts)):
                                 print("Trying again")
                                 time.sleep(0.1)
                                 try:

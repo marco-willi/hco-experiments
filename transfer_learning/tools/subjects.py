@@ -147,7 +147,7 @@ class SubjectSet(object):
             logging.warn("Removing filed subject id: %s \n" % sub_id)
 
         logging.warn("Removing %s of %s subjects" % (len(failures.keys()),
-                                                     len(self.getAllIDs) +
+                                                     len(self.getAllIDs()) +
                                                      len(failures.keys())))
 
         # update path information for all imges in in Subject set
