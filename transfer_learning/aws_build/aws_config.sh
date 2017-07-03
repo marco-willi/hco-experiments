@@ -33,6 +33,7 @@ sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
 
 # no gpu docker
 sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-py3 bash
+pip install dill requests panoptes_client pillow aiohttp keras
 
 # add swap space
 #cd /var/tmp

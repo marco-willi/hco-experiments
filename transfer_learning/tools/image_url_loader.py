@@ -206,7 +206,7 @@ class ImageUrlLoader(object):
                                   % (url, key))
                             success = False
                             counter = 0
-                            n_attempts = 3
+                            n_attempts = 0
                             while (not success) and (counter < n_attempts):
                                 print("Trying again")
                                 time.sleep(0.1)
@@ -246,6 +246,46 @@ class ImageUrlLoader(object):
         # crate new event loop to work in multithreaded environment
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        loop.run_until_complete(main(loop))
+
+        return images_dict, failures
+
+    def _getAsyncUrls5(self, urls, ids):
+        """ Load multiple urls in a parallel way, catch failed attempts """
+
+        # prepare result dictionary
+        images_dict = dict()
+
+        # prepare list for fails
+        failures = {'urls': list(), 'ids': list()}
+
+        # define asynchronous functions
+        async def download_coroutine(session, key, url):
+            with async_timeout.timeout(180):
+                async with session.get(url) as response:
+                    res = {'img': None, 'url': url, 'id': key}
+                    while True:
+                        chunk = await response.content.read()
+                        if not chunk:
+                            break
+                        try:
+                            img = Image.open(BytesIO(chunk))
+                            res['img'] = img
+                        except:
+                            print("Could not access image: %s with id %s \n"
+                                  % (url, key))
+                return res
+
+        # asynchronous main loop
+        async def main(loop):
+            async with aiohttp.ClientSession(loop=loop) as session:
+
+                tasks = [download_coroutine(session, key, url) for
+                         key, url in zip(ids, urls)]
+                await asyncio.gather(*tasks)
+
+        # crate new event loop to work in multithreaded environment
+        loop = asyncio.get_event_loop()
         loop.run_until_complete(main(loop))
 
         return images_dict, failures

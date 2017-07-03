@@ -11,6 +11,7 @@ import os
 from tools.image_url_loader import ImageUrlLoader
 import time
 import shutil
+from config.config import logging
 
 
 class SubjectSet(object):
@@ -139,11 +140,17 @@ class SubjectSet(object):
         for key in failures.keys():
             sub_id = key.split('_')[0]
             self.removeSubject(sub_id)
+            # log warning
+            logging.warn("Removing filed subject id: %s \n" % sub_id)
+
+        logging.warn("Removing %s of %s subjects" % (len(failures.keys()),
+                                                     len(self.getAllIDs) +
+                                                     len(failures.keys())))
 
         # update path information for all imges in in Subject set
         path = res['path']
 
-        for sub_id in set(ids).difference(failures.keys()):
+        for sub_id in self.getAllIDs():
             sub = self.getSubject(sub_id)
             imgs = sub.getImages()
             label = sub.getLabel()
