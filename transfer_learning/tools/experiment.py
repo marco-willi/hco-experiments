@@ -6,6 +6,7 @@ from tools.project import Project
 from tools.model import Model
 from config.config import cfg_path, cfg_model, config
 from learning.helpers import create_class_mappings
+from config.config import logging
 
 
 class Experiment(object):
@@ -100,10 +101,12 @@ class Experiment(object):
                                 [self.train_set, self.test_set, self.val_set]):
 
             # prepare subject set
+            logging.info("Preparing Paths for train/test/val")
             root_path = self._preparePaths(tag, clear_old_files)
 
 
             if link_only:
+                logging.info("Creating link only files")
                 subject_ids = sub_set.getAllIDs()
                 for s_i in subject_ids:
                     sub = sub_set.getSubject(s_i)
@@ -115,6 +118,7 @@ class Experiment(object):
                                           label + "/")
             else:
                 subject_ids = sub_set.getAllIDs()
+                logging.info("Creating hard copy files")
                 for s_i in subject_ids:
                     sub = sub_set.getSubject(s_i)
                     imgs = sub.getImages()
