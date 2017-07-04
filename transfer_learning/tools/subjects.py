@@ -12,7 +12,6 @@ from tools.image_url_loader import ImageUrlLoader
 import time
 import shutil
 from config.config import logging
-import csv
 import json
 
 

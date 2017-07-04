@@ -87,7 +87,6 @@ class Experiment(object):
 
         return root_path
 
-
     def createExpDataSet(self, link_only=True, new_split=True,
                          clear_old_files=True):
         """ Create Test / Train / Validation Data set, if link_only is True
@@ -103,7 +102,6 @@ class Experiment(object):
             # prepare subject set
             logging.info("Preparing Paths for train/test/val")
             root_path = self._preparePaths(tag, clear_old_files)
-
 
             if link_only:
                 logging.info("Creating link only files")
@@ -185,22 +183,6 @@ class Experiment(object):
 
 
 if __name__ == '__main__':
-
-#    [4715]
-#subject_mode: panoptes
-#image_storage: disk
-##model_file: cat_vs_dog_url
-#model_file: cat_vs_dog_disk
-#identifier: cat_vs_dog
-#classes: cat,dog
-#random_seed: 3345
-#image_size_save: 200,200,3
-#image_size_model: 150,150,3
-#num_epochs: 5
-#num_classes: 2
-#batch_size: 128
-#data_augmentation: False
-#batch_size_big: 500
 
     project_id = config['projects']['panoptes_id']
     classes = cfg_model['classes']
