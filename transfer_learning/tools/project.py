@@ -22,6 +22,14 @@ class Project(object):
         self.cfg_path = cfg_path
         self.cfg = cfg
 
+    def loadSubjectSet(self):
+        """ Load Subject Set from Disk """
+        # create empty subject set
+        self.subject_set = SubjectSet(labels=self.classes)
+
+        # load subject data from json file
+        self.subject_set.load(self.cfg_path['db'] + 'subject_set.json')
+
     def createSubjectSet(self, mode):
         """ Function to Create a Full Subject Set """
 
@@ -59,8 +67,9 @@ class Project(object):
         n_trials = 1
         while ((not success) & (counter < n_trials)):
             try:
-                self.subject_set.saveOnDisk(set_name='all',
-                                            cfg=self.cfg, cfg_path=self.cfg_path)
+                self.subject_set.saveImagesOnDisk(set_name='all',
+                                                  cfg=self.cfg,
+                                                  cfg_path=self.cfg_path)
                 success = True
             except Exception as e:
                 # log exception
@@ -71,4 +80,5 @@ class Project(object):
         if not success:
             IOError("Could not save subject set on disk")
 
-
+        # save subject set on disk
+        self.subject_set.save(self.cfg_path['db'] + 'subject_set.json')

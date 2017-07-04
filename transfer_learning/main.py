@@ -33,6 +33,7 @@ def main():
     # save all subjects on Disk
     project.saveSubjectSetOnDisk()
 
+
     ########################
     # Define Experiment
     ########################
@@ -87,9 +88,3 @@ def main():
 
 if __name__ == "__main__":
         main()
-
-
-
-
-
-

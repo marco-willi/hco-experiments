@@ -12,6 +12,8 @@ from tools.image_url_loader import ImageUrlLoader
 import time
 import shutil
 from config.config import logging
+import csv
+import json
 
 
 class SubjectSet(object):
@@ -110,7 +112,35 @@ class SubjectSet(object):
                 fnames.append(fname)
         return urls, labels, ids, fnames
 
-    def saveOnDisk(self, set_name, cfg, cfg_path):
+    def printLabelDistribution(self):
+        """ print distribution of labels to stdout """
+        # get all labels
+        ids, labels = self.getAllIDsLabels()
+
+        # count labels
+        res = dict()
+        for lab in labels:
+            if lab not in res.keys():
+                res[lab] = 1
+            else:
+                res[lab] += 1
+
+        # sort labels
+        res_sort = sorted(res.items(), key=lambda x: x[1], reverse=True)
+
+        for r in res_sort:
+            print("%s: %s" % (r[0], r[1]))
+
+    def getSubjectsWithoutAllImages(self):
+        """ return subject ids without all images on disk """
+        res = list()
+        for s in self.getAllIDs():
+            sub = self.getSubject(s)
+            if not sub.checkImageFiles():
+                res.append(s)
+        return res
+
+    def saveImagesOnDisk(self, set_name, cfg, cfg_path):
         """ save all subjects to disk """
 
         # invoke bulk reading
@@ -157,8 +187,61 @@ class SubjectSet(object):
             sub = self.getSubject(sub_id)
             imgs = sub.getImages()
             label = sub.getLabel()
-            for img in imgs:
-                img.setPath(path + label + "/")
+            for img in imgs.values():
+                try:
+                    img.setPath(path + label + "/")
+                except:
+                    print("lalala")
+
+    def save(self, path):
+        """ save subject set to disk """
+        # # save id, label, urls, fnames
+        # urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
+        #
+        # # save to file
+        # file = open(path, 'w', newline='')
+        # file_writer = csv.writer(file)
+        # for u, l, i, f in zip(urls, labels, ids, fnames):
+        #     file_writer.writerow([i, l, u, f])
+
+        # save as json
+        ids = self.getAllIDs()
+        res = dict()
+
+        # loop through subjects and create dict
+        for i in ids:
+            s = self.getSubject(i)
+            sub_d = {'label': s.getLabel(),
+                     'urls': s.getURLs(),
+                     'fnames': s.getFileNames(),
+                     'file_paths': s.getFilePaths(),
+                     'img_ids': list(s.getImages().keys()),
+                     'meta_data': s.getMetaData()}
+            res[i] = sub_d
+
+        with open(path, 'w') as fp:
+            json.dump(res, fp)
+
+        print("SubjectSet saved to %s" % path)
+
+    def load(self, path):
+        """ re-create subject set from csv / save operation """
+        # open file
+        file = open(path, 'r')
+        res = json.load(file)
+
+        for k, v in res.items():
+            # create subject
+            s = Subject(identifier=k, label=v['label'],
+                        meta_data=v['meta_data'], urls=v['urls'])
+            imgs = s.getImages()
+
+            for img, p in zip(list(imgs.keys()), v['file_paths']):
+                imgs[img].setPath(p)
+
+            self.addSubject(k, s)
+
+        print("SubjectSet %s Loaded" % path)
 
 
 class Subject(object):
@@ -167,7 +250,7 @@ class Subject(object):
         self.identifier = str(identifier)
         self.label = label
         self.meta_data = meta_data
-        self.images = list()
+        self.images = dict()
 
         # handle urls
         if isinstance(urls, list):
@@ -184,7 +267,7 @@ class Subject(object):
                 idd = self.identifier + '_' + str(i)
                 img = Image(identifier=idd,
                             url=self.urls[i])
-                self.images.append(img)
+                self.images[idd] = img
 
     def getLabel(self):
         return self.label
@@ -192,16 +275,25 @@ class Subject(object):
     def getURLs(self):
         return self.urls
 
+    def getImage(self, fname):
+        return self.iamges[fname]
+
     def _setURLs(self, urls):
         self.urls = [x[::-1] for x in sorted([x[::-1] for x in urls])]
 
     def setMetaData(self, meta_data):
         self.meta_data = meta_data
 
+    def getFilePaths(self):
+        paths = list()
+        for v in self.images.values():
+            paths.append(v.getPath())
+        return paths
+
     def getFileNames(self):
         fnames = list()
-        for img in self.images:
-            fnames.append(img.getFilename())
+        for v in self.images.values():
+            fnames.append(v.getFilename())
         return fnames
 
     def getImages(self):
@@ -209,6 +301,16 @@ class Subject(object):
 
     def overwriteLabel(self, label):
         self.label = label
+
+    def checkImageFiles(self):
+        """ Check if all images are stored on disk """
+        for img in self.getImages().values():
+            if not img.checkFileExistence():
+                return False
+        return True
+
+    def getMetaData(self):
+        return self.meta_data
 
 
 class Image(object):
@@ -238,5 +340,11 @@ class Image(object):
         shutil.copyfile(src=self.path + self.filename,
                         dst=dest_path + self.filename)
 
+    def checkFileExistence(self):
+        """ Check if image file exists """
+        path = self.getPath()
 
-
+        if path is None:
+            return False
+        else:
+            return os.path.isfile(path)

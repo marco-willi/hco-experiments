@@ -9,7 +9,7 @@ Implementation of different Options / Parameters for model definitions
 from tools.image import ImageDataGenerator
 from config.config import config, cfg_path, cfg_model
 import os
-from keras.optimizers import rmsprop, SGD
+from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
 from keras.callbacks import LearningRateScheduler, EarlyStopping
 from keras.callbacks import ReduceLROnPlateau, RemoteMonitor
@@ -51,6 +51,9 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
         map_dict = {c: c for c in all_classes}
         for bl in blank_classes:
             map_dict.pop(bl, None)
+
+    elif mapping == "ss_26":
+        pass
 
     else:
         NotImplementedError("Mapping %s not implemented" % mapping)
@@ -172,12 +175,12 @@ def create_callbacks(identifier='',
     if 'tb_logger' in names:
         # Tensorboard logger
         tb_logger = TensorBoard(log_dir=cfg_path['logs'], histogram_freq=0,
-                                #batch_size=int(cfg['batch_size']),
+                                # batch_size=int(cfg['batch_size']),
                                 write_graph=True
-                                #write_grads=False, write_images=False,
-                                #embeddings_freq=0,
-                                #embeddings_layer_names=None,
-                                #embeddings_metadata=None
+                                # write_grads=False, write_images=False,
+                                # embeddings_freq=0,
+                                # embeddings_layer_names=None,
+                                # embeddings_metadata=None
                                 )
 
         callbacks.append(tb_logger)

@@ -80,8 +80,9 @@ def main():
         subject_set.addSubject(str(key), subject)
 
     # save data
-    pickle.dump(subject_set, open(db_path + 'subject_set.pkl',
-                                  "wb"), protocol=4)
+    subject_set.save(db_path + 'subject_set.json')
+    # pickle.dump(subject_set, open(db_path + 'subject_set.pkl',
+    #                               "wb"), protocol=4)
 
 
 if __name__ == '__main__':
@@ -90,4 +91,3 @@ if __name__ == '__main__':
 # blanks[list(blanks.keys())[0]]
 # dryad_data[list(dryad_data.keys())[0]]
 # data[list(data.keys())[0]]
-

@@ -113,8 +113,8 @@ class Experiment(object):
                     imgs = sub.getImages()
                     label = sub.getLabel()
 
-                    for img in imgs:
-                        img.createSymLink(dest_path = root_path + "/" +
+                    for img in imgs.values():
+                        img.createSymLink(dest_path=root_path + "/" +
                                           label + "/")
             else:
                 subject_ids = sub_set.getAllIDs()
@@ -124,8 +124,8 @@ class Experiment(object):
                     imgs = sub.getImages()
                     label = sub.getLabel()
 
-                    for img in imgs:
-                        img.copyTo(dest_path = root_path + "/" +
+                    for img in imgs.values():
+                        img.copyTo(dest_path=root_path + "/" +
                                    label + "/")
 
     def createTrainTestSplit(self):
@@ -275,4 +275,3 @@ if __name__ == '__main__':
 #
 #    exp = Experiment(name="cats_vs_dogs_V1", project=project,
 #                     classes="all")
-
