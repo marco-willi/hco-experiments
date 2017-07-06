@@ -5,6 +5,7 @@ import time
 from learning.helpers import create_data_generators, create_class_mappings
 from learning.helpers import model_save, model_param_loader
 import importlib
+from config.config import logging
 
 
 def train(train_set, test_set, val_set):

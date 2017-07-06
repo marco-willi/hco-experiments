@@ -10,7 +10,7 @@ from learning.helpers import create_optimizer
 import time
 import os
 import importlib
-from config.config import cfg_model as cfg
+from config.config import cfg_model as cfg, logging
 from keras.models import load_model
 from datetime import datetime
 
@@ -75,14 +75,15 @@ class Model(object):
             NameError("Path not Found")
 
         self.model.save(path_to_save + out_name + '.h5')
+        logging.info("Saved model %s" % (path_to_save + out_name + '.h5'))
 
     def _dataGens(self):
         """ generate input data from a generator function that applies
         random / static transformations to the input """
 
-        self.train_generator,\
-        self.test_generator,\
-        self.val_generator=create_data_generators(self.cfg, self.pre_processing)
+        self.train_generator, self.test_generator,\
+            self.val_generator = create_data_generators(self.cfg,
+                                                        self.pre_processing)
 
     def _getCallbacks(self):
         """ create pre-defined callbacks """
