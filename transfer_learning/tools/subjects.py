@@ -127,8 +127,11 @@ class SubjectSet(object):
         # sort labels
         res_sort = sorted(res.items(), key=lambda x: x[1], reverse=True)
 
+        print("Label Distribution")
+        logging.info("Label distribution")
         for r in res_sort:
             print("%s: %s" % (r[0], r[1]))
+            logging.info("%s: %s" % (r[0], r[1]))
 
     def getSubjectsWithoutAllImages(self):
         """ return subject ids without all images on disk """

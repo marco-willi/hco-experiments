@@ -2,7 +2,7 @@
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
 from config.config import config, cfg_path
 import time
-from learning.helpers import create_data_generators, create_class_mappings
+from learning.helpers import create_data_generators
 from learning.helpers import model_save, model_param_loader
 import importlib
 from config.config import logging
@@ -12,6 +12,8 @@ def train(train_set, test_set, val_set):
     ##################################
     # Parameters + Config
     ##################################
+
+    logging.info("Loading Parameters and Config")
 
     # general configs
     cfg = model_param_loader(config)
@@ -26,13 +28,16 @@ def train(train_set, test_set, val_set):
     # Data Generators
     ##################################
 
-    train_generator,\
-    test_generator,\
-    val_generator = mod_cfg.create_pre_processing(cfg, cfg_path)
+    logging.info("Creating Pre-Processing / Data Generators")
+
+    train_generator, test_generator,\
+        val_generator = mod_cfg.create_pre_processing(cfg, cfg_path)
 
     ##################################
     # Model Definition
     ##################################
+
+    logging.info("Loading and compiling model")
 
     model = mod_file.build_model(cfg)
 
@@ -42,10 +47,11 @@ def train(train_set, test_set, val_set):
                   optimizer=opt,
                   metrics=['accuracy'])
 
-
     ##################################
     # Logging
     ##################################
+
+    logging.info("Creating Logging modules")
 
     # save model weights after each epoch if training loss
     # decreases
@@ -59,12 +65,12 @@ def train(train_set, test_set, val_set):
 
     # Tensorboard logger
     tb_logger = TensorBoard(log_dir=cfg_path['logs'], histogram_freq=0,
-                                #batch_size=int(cfg['batch_size']),
+                                # batch_size=int(cfg['batch_size']),
                                 write_graph=True
-                                #write_grads=False, write_images=False,
-                                #embeddings_freq=0,
-                                #embeddings_layer_names=None,
-                                #embeddings_metadata=None
+                                # write_grads=False, write_images=False,
+                                # embeddings_freq=0,
+                                # embeddings_layer_names=None,
+                                # embeddings_metadata=None
                                 )
 
     # add custom callbacks

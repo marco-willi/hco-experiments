@@ -65,7 +65,7 @@ class Project(object):
         # to retry saving in case of connection errors while fetching urls
         counter = 0
         success = False
-        n_trials = 10
+        n_trials = 4
         while ((not success) & (counter < n_trials)):
             try:
                 self.subject_set.saveImagesOnDisk(set_name='all',
@@ -90,3 +90,6 @@ class Project(object):
                                   'subject_set_used.json')
             logging.info("Saved %s to disk" % (self.cfg_path['db'] +
                          'subject_set_used.json'))
+
+            # print label distribution
+            self.subject_set.printLabelDistribution()
