@@ -241,10 +241,6 @@ if __name__ == '__main__':
 
     exp.train()
 
-
-
-
-
 #
 #    project = Project(name="cats_vs_dogs", panoptes_id=4715,
 #                      classes=['cat','dog'],

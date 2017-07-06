@@ -8,6 +8,7 @@ from config.config import config, cfg_path
 import pickle
 import os
 
+
 def main():
     # load config
     db_path = cfg_path['db']
