@@ -66,6 +66,7 @@ def download_dic(dat, path, n=-1):
     time_diff = round(time_end - time_start, 2)
     print("Required %s seconds to read %s images" % (time_diff, i))
 
+
 if __name__ == '__main__':
     my_project = init_panoptes()
     # get classifications and subject links
@@ -77,6 +78,3 @@ if __name__ == '__main__':
 
     # download images from dictionary
     download_dic(dat=subs, path=path_images, n=10)
-
-
-

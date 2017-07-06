@@ -354,8 +354,9 @@ class Image(object):
     def checkFileExistence(self):
         """ Check if image file exists """
         path = self.getPath()
+        fname = self.getFilename()
 
         if path is None:
             return False
         else:
-            return os.path.isfile(path)
+            return os.path.isfile(path + fname)

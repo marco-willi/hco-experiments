@@ -14,7 +14,6 @@ import async_timeout
 import time
 import os
 from config.config import logging
-from datetime import datetime
 from tools.helpers import second_to_str
 
 
@@ -139,7 +138,7 @@ class ImageUrlLoader(object):
                         images_dict[key] = img
                     except:
                         logging.warn("Could not access image: %s with id %s"
-                              % (url, key))
+                                     % (url, key))
                         print("Could not access image: %s with id %s \n"
                               % (url, key))
                         success = False
@@ -207,7 +206,7 @@ class ImageUrlLoader(object):
                             images_dict[key] = img
                         except:
                             logging.warn("Could not access image: %s with id %s"
-                                  % (url, key))
+                                         % (url, key))
                             print("Could not access image: %s with id %s \n"
                                   % (url, key))
                             success = False
@@ -232,7 +231,8 @@ class ImageUrlLoader(object):
                                 failures['urls'].append(url)
                                 failures['ids'].append(key)
                                 # log failures
-                                for u, i in zip(failures['urls'], failures['ids']):
+                                for u, i in zip(failures['urls'],
+                                                failures['ids']):
                                     logging.warn("Failed to access id: %s on\
                                                  url: %s" % (i, u))
 
@@ -329,7 +329,7 @@ class ImageUrlLoader(object):
             # try to read failed images
             counter = 0
             while (len(failures['urls']) > 0) and counter < 10:
-                res2, failures = self._getAsyncUrls3(urls, ids)
+                res2, failures = self._getAsyncUrls4(urls, ids)
 
                 # combine results
                 if len(res.keys()) > 0:
