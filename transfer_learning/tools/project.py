@@ -6,7 +6,6 @@ Class to implement a Project
 """
 from tools import panoptes
 from tools.subjects import SubjectSet, Subject
-import pickle
 from config.config import cfg_model as cfg
 from config.config import logging
 
@@ -22,13 +21,13 @@ class Project(object):
         self.cfg_path = cfg_path
         self.cfg = cfg
 
-    def loadSubjectSet(self):
+    def loadSubjectSet(self, file):
         """ Load Subject Set from Disk """
         # create empty subject set
         self.subject_set = SubjectSet(labels=self.classes)
 
         # load subject data from json file
-        self.subject_set.load(self.cfg_path['db'] + 'subject_set.json')
+        self.subject_set.load(file)
 
     def createSubjectSet(self, mode):
         """ Function to Create a Full Subject Set """
@@ -50,21 +49,23 @@ class Project(object):
                                   )
                 subject_set.addSubject(key, subject)
 
+            # save subject set on disk
+            subject_set.save(self.cfg_path['db'] + 'subject_set.json')
+
+        # load from disk
         if mode == 'disk':
-            file = self.cfg_path['db'] + 'subject_set.pkl'
+            file = self.cfg_path['db'] + 'subject_set.json'
             logging.info("Loading %s" % file)
-            subject_set = pickle.load(open(file, 'rb'))
+            self.loadSubjectSet(file)
             logging.info("Finished Loading %s" % file)
 
-        self.subject_set = subject_set
-
     def saveSubjectSetOnDisk(self):
-        """ Save all Subjects in class specific folders """
+        """ Save all Subjects / images in class specific folders """
 
         # to retry saving in case of connection errors while fetching urls
         counter = 0
         success = False
-        n_trials = 1
+        n_trials = 10
         while ((not success) & (counter < n_trials)):
             try:
                 self.subject_set.saveImagesOnDisk(set_name='all',
@@ -79,6 +80,13 @@ class Project(object):
                 print("Starting attempt %s / %s" % (counter, n_trials))
         if not success:
             IOError("Could not save subject set on disk")
+        else:
+            # remove unsuccessfully processed subjects
+            self.subject_set.removeSubjectsWithoutAllImages()
 
-        # save subject set on disk
-        self.subject_set.save(self.cfg_path['db'] + 'subject_set.json')
+            # save subject set containing only successfully processed
+            # subjects to disk
+            self.subject_set.save(path=self.cfg_path['db'] +
+                                  'subject_set_used.json')
+            logging.info("Saved %s to disk" % (self.cfg_path['db'] +
+                         'subject_set_used.json'))

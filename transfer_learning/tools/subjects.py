@@ -139,6 +139,13 @@ class SubjectSet(object):
                 res.append(s)
         return res
 
+    def removeSubjectsWithoutAllImages(self):
+        """ Remove all subjects that don't have all images on disk """
+        failed = self.getSubjectsWithoutAllImages()
+
+        for sub in failed:
+            self.removeSubject(sub)
+
     def saveImagesOnDisk(self, set_name, cfg, cfg_path):
         """ save all subjects to disk """
 
@@ -193,21 +200,12 @@ class SubjectSet(object):
                     print("lalala")
 
     def save(self, path):
-        """ save subject set to disk """
-        # # save id, label, urls, fnames
-        # urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
-        #
-        # # save to file
-        # file = open(path, 'w', newline='')
-        # file_writer = csv.writer(file)
-        # for u, l, i, f in zip(urls, labels, ids, fnames):
-        #     file_writer.writerow([i, l, u, f])
-
-        # save as json
+        """ save subject set to disk as json file """
+        # get all ids and prepare dictionary
         ids = self.getAllIDs()
         res = dict()
 
-        # loop through subjects and create dict
+        # loop through subjects and create dict for each subject
         for i in ids:
             s = self.getSubject(i)
             sub_d = {'label': s.getLabel(),
@@ -218,10 +216,12 @@ class SubjectSet(object):
                      'meta_data': s.getMetaData()}
             res[i] = sub_d
 
+        # write to json file
         with open(path, 'w') as fp:
             json.dump(res, fp)
 
         print("SubjectSet saved to %s" % path)
+        logging.info("SubjectSet saved to %s" % path)
 
     def load(self, path):
         """ re-create subject set from csv / save operation """
@@ -241,6 +241,7 @@ class SubjectSet(object):
             self.addSubject(k, s)
 
         print("SubjectSet %s Loaded" % path)
+        logging.info("SubjectSet %s Loaded" % path)
 
 
 class Subject(object):
@@ -296,9 +297,11 @@ class Subject(object):
         return fnames
 
     def getImages(self):
+        """ get all images """
         return self.images
 
-    def overwriteLabel(self, label):
+    def setLabel(self, label):
+        """ Set label """
         self.label = label
 
     def checkImageFiles(self):
@@ -321,21 +324,27 @@ class Image(object):
         self.filename = identifier + ".jpeg"
 
     def setPath(self, path):
+        """ set path (directory) of image """
         self.path = path
 
     def getPath(self):
+        """ returns path """
         return self.path
 
     def setURL(self, url):
+        """ set URL of image """
         self.url = url
 
     def createSymLink(self, dest_path):
+        """ creates symbolic link on dest_path """
         os.symlink(self.path + self.filename, dest_path + self.filename)
 
     def getFilename(self):
+        """ returns file name including image postfix """
         return self.filename
 
     def copyTo(self, dest_path):
+        """ copy image to """
         shutil.copyfile(src=self.path + self.filename,
                         dst=dest_path + self.filename)
 
