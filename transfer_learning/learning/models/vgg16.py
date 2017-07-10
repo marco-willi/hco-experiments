@@ -27,10 +27,10 @@ from keras.applications.imagenet_utils import decode_predictions
 from keras.applications.imagenet_utils import preprocess_input
 from keras.applications.imagenet_utils import _obtain_input_shape
 from keras.engine.topology import get_source_inputs
-from keras.optimizers import rmsprop
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5'
+
 
 def build_model(num_classes, image_size):
     mod = VGG16(input_shape=image_size,
@@ -38,6 +38,7 @@ def build_model(num_classes, image_size):
                 weights=None)
 
     return mod
+
 
 def VGG16(include_top=True, weights='imagenet',
           input_tensor=None, input_shape=None,
