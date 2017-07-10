@@ -115,6 +115,7 @@ class Model(object):
         # Data Generators
         ##################################
 
+        logging.info("Creating Data Generators")
         self._dataGens()
 
         ##################################
@@ -122,13 +123,14 @@ class Model(object):
         ##################################
 
         # load model
+        logging.info("Loading Model")
         self._loadModel()
 
         # define starting epoch (0 for new models)
         start_epoch = 0
 
         # load model if specified
-        if self.cfg['load_model'] not in ('', 'None'):
+        if self.cfg['load_model'] not in ('', 'None', None):
             model = load_model(self.cfg_path['models'] +
                                self.cfg['load_model'] + '.hdf5')
 
@@ -155,6 +157,8 @@ class Model(object):
         # Logging
         ##################################
 
+        logging.info("Creating Callbacks")
+
         # create callbacks
         self._getCallbacks()
 
@@ -162,12 +166,14 @@ class Model(object):
         # Class Weights
         ##################################
 
+        logging.info("Calculating Class Weights")
         cl_w = self._calcClassWeights()
 
         ##################################
         # Training
         ##################################
 
+        logging.info("Starting Training")
         time_s = time.time()
         self.model.fit_generator(
                     self.train_generator,
