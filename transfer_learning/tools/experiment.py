@@ -109,17 +109,21 @@ class Experiment(object):
         if new_split:
             self.createTrainTestSplit()
 
+        logging.debug("Starting to prepare experiment datasets")
         for tag, sub_set in zip(['train', 'test', 'val'],
                                 [self.train_set, self.test_set, self.val_set]):
 
             # prepare subject set
-            logging.info("Preparing Paths for train/test/val")
+            logging.debug("Preparing Paths for %s" % tag)
             root_path = self._preparePaths(tag, clear_old_files)
 
             if link_only:
                 logging.info("Creating link only files")
                 subject_ids = sub_set.getAllIDs()
-                for s_i in subject_ids:
+                for s_i, c in zip(subject_ids, range(0, len(subject_ids))):
+                    if (c % 10000) == 0:
+                        logging.debug("Link %s / %s created" %
+                                      (c, len(subject_ids)))
                     sub = sub_set.getSubject(s_i)
                     imgs = sub.getImages()
                     label = sub.getLabel()
