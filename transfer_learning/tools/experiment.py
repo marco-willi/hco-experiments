@@ -92,6 +92,17 @@ class Experiment(object):
         if not os.path.exists(root_path):
             logging.debug("Creating %s" % root_path)
             os.mkdir(root_path)
+
+        # delete all non-relevant class directories
+        if not clear_old_files:
+            all_class_dirs = os.listdir(root_path)
+            delete_dirs = set(all_class_dirs) - set(self.classes)
+            if len(delete_dirs) > 0:
+                for d in delete_dirs:
+                    logging.debug("Removing directory %s" %
+                                  (root_path + "/" + d))
+                    shutil.rmtree(root_path + "/" + d)
+
         # create class directories
         for cl in self.classes:
             if not os.path.exists(root_path + "/" + cl):
@@ -117,9 +128,51 @@ class Experiment(object):
             logging.debug("Preparing Paths for %s" % tag)
             root_path = self._preparePaths(tag, clear_old_files)
 
+            # get all relevant subject ids
+            subject_ids = sub_set.getAllIDs()
+
+            # check if some already exist and keep them
+            if not clear_old_files:
+                # get all files already on disk
+                all_classes = os.listdir(root_path)
+
+                # store information of existing files in dictionary
+                existing_dict = dict()
+                for cl in all_classes:
+                    existing_files = os.listdir(root_path + "/" + cl + "/")
+                    for ex in existing_files:
+                        existing_id = ex.split('_')[0]
+                        if existing_id not in existing_dict:
+                            existing_dict[existing_id] = {'cl': cl,
+                                                          'files': list()}
+                        existing_dict[existing_id]['files'].append(ex)
+
+                if len(existing_dict.keys()) == 0:
+                    logging.debug("No files exist in %s directory" % tag)
+                    break
+                else:
+                    logging.debug("%s files already exist in %s directory" %
+                                  (len(existing_dict.keys()), tag))
+                    # relevant subject ids that are not already on disk
+                    subject_ids_relev = set(subject_ids) - existing_dict.keys()
+
+                    # existing files that have to be removed
+                    to_be_removed = existing_dict.keys() - set(subject_ids)
+
+                    # remove files
+                    for r in to_be_removed:
+                        files_to_remove = existing_dict[r]['files']
+                        class_to_be_removed = existing_dict[r]['cl']
+                        for fr in files_to_remove:
+                            os.remove(root_path + "/" + class_to_be_removed +
+                                      "/" + fr)
+
+                    # only keep subject ids that are not already on disk
+                    subject_ids = list(subject_ids_relev)
+
             if link_only:
                 logging.info("Creating link only files")
-                subject_ids = sub_set.getAllIDs()
+
                 for s_i, c in zip(subject_ids, range(0, len(subject_ids))):
                     if (c % 10000) == 0:
                         logging.debug("Link %s / %s created" %
@@ -132,7 +185,6 @@ class Experiment(object):
                         img.createSymLink(dest_path=root_path + "/" +
                                           label + "/")
             else:
-                subject_ids = sub_set.getAllIDs()
                 logging.info("Creating hard copy files")
                 for s_i in subject_ids:
                     sub = sub_set.getSubject(s_i)
