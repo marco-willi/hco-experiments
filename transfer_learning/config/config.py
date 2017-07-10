@@ -101,5 +101,5 @@ print("Config Loaded")
 ts = datetime.now().strftime('%Y%m%d%H%m')
 logging.basicConfig(filename=cfg_path['logs'] + ts + '_run.log',
                     filemode="w",
-                    level=logging.DEBUG)
-logging.basicConfig(format='%(asctime)s %(message)s')
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(message)s')

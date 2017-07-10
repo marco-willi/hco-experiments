@@ -302,7 +302,12 @@ class Experiment(object):
 
     def train(self):
         """ train model """
-        self.model.train()
+        try:
+            self.model.train()
+        except Exception as e:
+            # log exception
+            logging.exception("model training failed")
+            raise Exception
 
 
 if __name__ == '__main__':
