@@ -51,6 +51,7 @@ class Project(object):
 
             # save subject set on disk
             subject_set.save(self.cfg_path['db'] + 'subject_set.json')
+            self.subject_set = subject_set
 
         # load from disk
         if mode == 'disk':

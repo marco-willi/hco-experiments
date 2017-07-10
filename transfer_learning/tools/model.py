@@ -218,4 +218,4 @@ class Model(object):
         # Save model to disk
         ##################################
 
-        self._save()
+        self._save(postfix=self._timestamp)

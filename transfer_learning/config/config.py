@@ -24,6 +24,7 @@ if platform == 'win32':
 else:
     config['general']['link_only'] = '1'
 
+
 # function to load path parameters
 def path_loader(config, create_project_paths=True):
 
@@ -53,6 +54,22 @@ def path_loader(config, create_project_paths=True):
 cfg_path = path_loader(config)
 
 
+def _extract_configs(key, value):
+    """ Extract configs to dictionary """
+    if key in ['classes', 'callbacks']:
+        splitted = value.replace("\n", "").split(",")
+        return splitted
+    elif key in ['image_size_save', 'image_size_model']:
+        size = value.split(',')
+        size = tuple([int(x) for x in size])
+        return size
+    else:
+        try:
+            return eval(value)
+        except:
+            return value
+
+
 # function to load parameters used for model training
 def model_param_loader(config=config):
     # extract project id for further loading project specifc configs
@@ -60,21 +77,13 @@ def model_param_loader(config=config):
 
     cfg = dict()
 
-    # load all configs
-    for key in config[project_id].keys():
-        if key in ['classes', 'callbacks']:
-            splitted = config[project_id][key].replace("\n",
-                                                       "").split(",")
-            cfg[key] = splitted
-        elif key in ['image_size_save', 'image_size_model']:
-            size = config[project_id][key].split(',')
-            size = tuple([int(x) for x in size])
-            cfg[key] = size
-        else:
-            try:
-                cfg[key] = eval(config[project_id][key])
-            except:
-                cfg[key] = config[project_id][key]
+    # load general configs
+    for key, value in config['general'].items():
+        cfg[key] = _extract_configs(key, value)
+
+    # load specific configs and override general if required
+    for key, value in config[project_id].items():
+        cfg[key] = _extract_configs(key, value)
 
     return cfg
 
@@ -91,13 +100,6 @@ print("Config Loaded")
 # initialize logging file
 ts = datetime.now().strftime('%Y%m%d%H%m')
 logging.basicConfig(filename=cfg_path['logs'] + ts + '_run.log',
-                    filemode = "w",
+                    filemode="w",
                     level=logging.DEBUG)
 logging.basicConfig(format='%(asctime)s %(message)s')
-
-
-
-
-
-
-

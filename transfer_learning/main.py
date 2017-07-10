@@ -43,7 +43,9 @@ def main():
     # experiment object
     exp = Experiment(name="mnist", project=project,
                      class_mapper=class_mapper,
-                     train_size=0.9)
+                     train_size=cfg_model['train_size'],
+                     equal_class_sizes=bool(cfg_model['balanced_classes']),
+                     random_state=cfg_model['random_seed'])
 
     # create separate directories with image data for this experiment
     # use only links to save space

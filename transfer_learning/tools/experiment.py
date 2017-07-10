@@ -7,6 +7,7 @@ from tools.model import Model
 from config.config import cfg_path, cfg_model, config
 from learning.helpers import create_class_mappings
 from config.config import logging
+import random
 
 
 class Experiment(object):
@@ -14,7 +15,7 @@ class Experiment(object):
         and a model"""
 
     def __init__(self, name, project, class_list=None, class_mapper=None,
-                 train_size=0.9):
+                 train_size=0.9, equal_class_sizes=False, random_state=123):
         # experiment name
         self.name = name
         # a project object
@@ -25,6 +26,10 @@ class Experiment(object):
         self.class_list = class_list
         # a class mapping (preferred option)
         self.class_mapper = class_mapper
+        # random state if required
+        self.random_state = random_state
+        # class sizes
+        self.equal_class_sizes = equal_class_sizes
         self.classes = None
         self.train_set = None
         self.test_set = None
@@ -126,17 +131,58 @@ class Experiment(object):
                         img.copyTo(dest_path=root_path + "/" +
                                    label + "/")
 
+    def _balancedSampling(self, ids, labels):
+        """ downsample larger classes to match size of smallest class """
+        # count labels
+        label_count = dict()
+        for l in labels:
+            if l not in label_count:
+                label_count[l] = 1
+            else:
+                label_count[l] += 1
+
+        # build class mapper
+        class_map = dict()
+        for i, l in zip(ids, labels):
+            if l not in class_map:
+                class_map[l] = list()
+            class_map[l].append(i)
+
+        # smallest class size
+        smallest = min(list(label_count.values()))
+
+        # randomly select ids of larger classes
+        ids_final = list()
+        labels_final = list()
+
+        for l, i in class_map.items():
+            # sample classes
+            if len(i) > smallest:
+                random.seed(self.random_state)
+                i_sampled = random.sample(population=i, k=smallest)
+            else:
+                i_sampled = i
+            # add to output
+            ids_final.extend(i_sampled)
+            labels_final.extend([l for x in range(0, len(i_sampled))])
+
+        return ids_final, labels_final
+
     def createTrainTestSplit(self):
         """ create Test / Train / Validation splits """
 
         # get random seed
-        rand = self.project.cfg['random_seed']
+        rand = self.random_state
 
         # get all subject ids and their labels
         ids, labels = self.project.subject_set.getAllIDsLabels()
 
         # map labels & keep only relevant ids
         ids, labels = self._classMapper(ids, labels)
+
+        # if equal class sizes, cut larger classes to size of smallest
+        if self.equal_class_sizes:
+            ids, labels = self._balancedSampling(ids, labels)
 
         # create id to label mapper
         class_mapper_id = dict()
@@ -150,8 +196,10 @@ class Experiment(object):
                                              random_state=int(rand))
 
         # validation split
+        labels_val = [class_mapper_id[x] for x in id_test]
         id_test, id_val = train_test_split(id_test,
                                            train_size=0.5,
+                                           stratify=labels_val,
                                            random_state=int(rand))
 
         # generate new subject sets
@@ -172,6 +220,13 @@ class Experiment(object):
         self.train_set = train_set
         self.test_set = test_set
         self.val_set = val_set
+
+        # print label distribution
+        for s, l in zip([self.train_set, self.test_set, self.val_set],
+                        ['train', 'test', 'val']):
+            print("Label Distribution %s" % l)
+            logging.info("Label Distribution %s" % l)
+            s.printLabelDistribution()
 
     def addModel(self, model):
         """ add a model to the experiment """
