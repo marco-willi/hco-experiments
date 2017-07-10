@@ -8,6 +8,7 @@ from tools import panoptes
 from tools.subjects import SubjectSet, Subject
 from config.config import cfg_model as cfg
 from config.config import logging
+import os
 
 
 class Project(object):
@@ -59,6 +60,18 @@ class Project(object):
             logging.info("Loading %s" % file)
             self.loadSubjectSet(file)
             logging.info("Finished Loading %s" % file)
+
+        if mode == 'disk_used':
+            file = self.cfg_path['db'] + 'subject_set_used.json'
+            if os.path.isfile(file):
+                logging.info("Loading %s" % file)
+                self.loadSubjectSet(file)
+                logging.info("Finished Loading %s" % file)
+            else:
+                file = self.cfg_path['db'] + 'subject_set.json'
+                logging.info("Loading %s" % file)
+                self.loadSubjectSet(file)
+                logging.info("Finished Loading %s" % file)
 
     def saveSubjectSetOnDisk(self):
         """ Save all Subjects / images in class specific folders """

@@ -44,6 +44,7 @@ def main():
     exp = Experiment(name="mnist", project=project,
                      class_mapper=class_mapper,
                      train_size=cfg_model['train_size'],
+                     test_size=cfg_model['test_size'],
                      equal_class_sizes=bool(cfg_model['balanced_classes']),
                      random_state=cfg_model['random_seed'])
 

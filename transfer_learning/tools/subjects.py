@@ -183,7 +183,7 @@ class SubjectSet(object):
             sub_id = key.split('_')[0]
             self.removeSubject(sub_id)
             # log warning
-            logging.warn("Removing filed subject id: %s \n" % sub_id)
+            logging.warn("Removing failed subject id: %s \n" % sub_id)
 
         logging.warn("Removing %s of %s subjects" % (len(failures.keys()),
                                                      len(self.getAllIDs()) +

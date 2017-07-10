@@ -15,13 +15,15 @@ class Experiment(object):
         and a model"""
 
     def __init__(self, name, project, class_list=None, class_mapper=None,
-                 train_size=0.9, equal_class_sizes=False, random_state=123):
+                 train_size=0.9, test_size=None, equal_class_sizes=False,
+                 random_state=123):
         # experiment name
         self.name = name
         # a project object
         self.project = project
         # proportion of training size
         self.train_size = train_size
+        self.test_size = test_size
         # a list of classes to use (better use class mapping)
         self.class_list = class_list
         # a class mapping (preferred option)
@@ -133,6 +135,9 @@ class Experiment(object):
 
     def _balancedSampling(self, ids, labels):
         """ downsample larger classes to match size of smallest class """
+
+        logging.info("Balanced class sampling ...")
+
         # count labels
         label_count = dict()
         for l in labels:
@@ -192,6 +197,7 @@ class Experiment(object):
         # training and test split
         id_train, id_test = train_test_split(list(ids),
                                              train_size=self.train_size,
+                                             test_size=self.test_size,
                                              stratify=labels,
                                              random_state=int(rand))
 
