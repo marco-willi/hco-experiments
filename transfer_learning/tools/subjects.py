@@ -130,8 +130,13 @@ class SubjectSet(object):
         print("Label Distribution")
         logging.info("Label distribution")
         for r in res_sort:
-            print("%s: %s" % (r[0], r[1]))
-            logging.info("%s: %s" % (r[0], r[1]))
+            print("{:10s} {:7d} / {:7d} {:.2%}".format(r[0], r[1], len(ids),
+                                                       int(r[1])/len(ids)))
+
+            logging.info("{:10s} {:7d} / {:7d} {:.2%}".format(r[0],
+                                                              r[1], len(ids),
+                                                              int(r[1])/
+                                                              len(ids)))
 
     def getSubjectsWithoutAllImages(self):
         """ return subject ids without all images on disk """
@@ -245,6 +250,7 @@ class SubjectSet(object):
 
         print("SubjectSet %s Loaded" % path)
         logging.info("SubjectSet %s Loaded" % path)
+        logging.info("Contains %s subjects" % len(self.subjects.keys()))
 
 
 class Subject(object):

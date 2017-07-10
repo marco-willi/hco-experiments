@@ -71,6 +71,9 @@ class Experiment(object):
                     new_label = self.class_mapper[label]
                     labels_final.append(new_label)
                     ids_final.append(i)
+        logging.debug("ClassMapper contains %s ids and %s labels" %
+                      (len(ids_final), len(labels_final)))
+
         return ids_final, labels_final
 
     def _preparePaths(self, tag, clear_old_files):
