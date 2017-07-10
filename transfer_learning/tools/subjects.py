@@ -135,7 +135,7 @@ class SubjectSet(object):
 
             logging.info("{:10s} {:7d} / {:7d} {:.2%}".format(r[0],
                                                               r[1], len(ids),
-                                                              int(r[1])/
+                                                              int(r[1]) /
                                                               len(ids)))
 
     def getSubjectsWithoutAllImages(self):

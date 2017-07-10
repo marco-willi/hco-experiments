@@ -85,14 +85,17 @@ class Experiment(object):
         # delete old files
         if clear_old_files:
             if os.path.exists(root_path):
+                logging.debug("Deleting %s" % root_path)
                 shutil.rmtree(root_path)
 
         # create root directory
         if not os.path.exists(root_path):
+            logging.debug("Creating %s" % root_path)
             os.mkdir(root_path)
         # create class directories
         for cl in self.classes:
             if not os.path.exists(root_path + "/" + cl):
+                logging.debug("Creating %s" % (root_path + "/" + cl))
                 os.mkdir(root_path + "/" + cl)
 
         return root_path
