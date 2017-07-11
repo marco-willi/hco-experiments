@@ -21,7 +21,7 @@ def main():
     project_classes = cfg_model['classes']
 
     # create Project object
-    project = Project(name=cfg_model['identifier'],
+    project = Project(name=str(project_id),
                       panoptes_id=project_id,
                       classes=project_classes,
                       cfg_path=cfg_path,
@@ -41,7 +41,7 @@ def main():
     class_mapper = create_class_mappings(cfg_model['class_mapping'])
 
     # experiment object
-    exp = Experiment(name="mnist", project=project,
+    exp = Experiment(name=cfg_model['experiment_id'], project=project,
                      class_mapper=class_mapper,
                      train_size=cfg_model['train_size'],
                      test_size=cfg_model['test_size'],
@@ -51,7 +51,8 @@ def main():
     # create separate directories with image data for this experiment
     # use only links to save space
     exp.createExpDataSet(link_only=bool(eval(config['general']['link_only'])),
-                         clear_old_files=False)
+                         clear_old_files=False,
+                         splits=cfg_model['experiment_data'])
 
     ########################
     # Define Model

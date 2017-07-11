@@ -59,7 +59,7 @@ class Model(object):
         path_to_save = self.cfg_path['save']
 
         # define model name to save
-        model_id = self.config[project_id]['identifier']
+        model_id = self.config[project_id]['experiment_id']
 
         path_to_save = path_to_save.replace("//", "/")
 
@@ -77,17 +77,23 @@ class Model(object):
         self.model.save(path_to_save + out_name + '.h5')
         logging.info("Saved model %s" % (path_to_save + out_name + '.h5'))
 
-    def _dataGens(self):
+    def _dataGens(self, target_shape):
         """ generate input data from a generator function that applies
         random / static transformations to the input """
 
         self.train_generator, self.test_generator,\
             self.val_generator = create_data_generators(self.cfg,
-                                                        self.pre_processing)
+                                                        target_shape,
+                                                        self.pre_processing
+                                                        )
 
     def _getCallbacks(self):
         """ create pre-defined callbacks """
-        self._callbacks_obj = create_callbacks(self._timestamp, self.callbacks)
+        project_id = self.config['projects']['panoptes_id']
+        model_id = self.config[project_id]['experiment_id']
+        self._callbacks_obj = create_callbacks(model_id + '_' +
+                                               self._timestamp,
+                                               self.callbacks)
 
     def _calcClassWeights(self):
         """ calculate class weights according to pre-defined modes """
@@ -112,19 +118,13 @@ class Model(object):
         """ train model """
 
         ##################################
-        # Data Generators
-        ##################################
-
-        logging.info("Creating Data Generators")
-        self._dataGens()
-
-        ##################################
         # Model Definition
         ##################################
 
         # load model
         logging.info("Loading Model")
         self._loadModel()
+        model_dict = self.mod_file.build_model(self.num_classes)
 
         # define starting epoch (0 for new models)
         start_epoch = 0
@@ -139,8 +139,7 @@ class Model(object):
 
         # create new model and start learning from scratch
         else:
-            model = self.mod_file.build_model(self.num_classes,
-                                              self.cfg['image_size_model'])
+            model = model_dict['model']
 
             # get optimizer
             self._loadOptimizer()
@@ -152,6 +151,13 @@ class Model(object):
 
         # store model
         self.model = model
+
+        ##################################
+        # Data Generators
+        ##################################
+
+        logging.info("Creating Data Generators")
+        self._dataGens(target_shape=model_dict['input_shape'])
 
         ##################################
         # Logging

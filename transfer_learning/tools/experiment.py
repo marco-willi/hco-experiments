@@ -111,14 +111,56 @@ class Experiment(object):
 
         return root_path
 
-    def createExpDataSet(self, link_only=True, new_split=True,
+    def save(self):
+        """ Save test/train/val datasets to disk """
+        # check whether they are defined or not
+        if any(x is None for x in [self.test_set, self.train_set,
+                                   self.val_set]):
+            raise IOError("test, train, val sets are None")
+
+        # save subject sets on disk
+        for s, n in zip([self.test_set, self.train_set, self.val_set],
+                        ['test', 'train', 'val']):
+            path = self.project.cfg_path['db'] + n + '_subject_set_' +\
+                   self.name + '.json'
+
+            s.save(path)
+
+    def load(self):
+        """ Load test/tain/val datasets from disk """
+
+        # create subject sets
+        self.train_set = SubjectSet(labels=self.classes)
+        self.test_set = SubjectSet(labels=self.classes)
+        self.val_set = SubjectSet(labels=self.classes)
+
+        # load subject sets from disk
+        for s, n in zip([self.test_set, self.train_set, self.val_set],
+                        ['test', 'train', 'val']):
+            path = self.project.cfg_path['db'] + n + '_subject_set_' +\
+                   self.name + '.json'
+            # abort if one file is missing and raise exception
+            if not os.path.isfile(path):
+                raise FileExistsError("File %s does not exist" % path)
+            s.load(path)
+
+    def createExpDataSet(self, link_only=True,
+                         splits="new",
                          clear_old_files=True):
         """ Create Test / Train / Validation Data set, if link_only is True
             only symbolik links are created, no actual data is copied """
 
-        # create splits
-        if new_split:
-            self.createTrainTestSplit()
+        # create new splits
+        if splits == 'new':
+            self.createTrainTestSplit(save_to_disk=True)
+        elif splits == 'disk':
+            # if files are there load them from disk, else create new
+            try:
+                self.load()
+            except:
+                self.createTrainTestSplit(save_to_disk=True)
+        else:
+            raise NotImplementedError
 
         logging.debug("Starting to prepare experiment datasets")
         for tag, sub_set in zip(['train', 'test', 'val'],
@@ -149,7 +191,6 @@ class Experiment(object):
 
                 if len(existing_dict.keys()) == 0:
                     logging.debug("No files exist in %s directory" % tag)
-                    break
                 else:
                     logging.debug("%s files already exist in %s directory" %
                                   (len(existing_dict.keys()), tag))
@@ -235,7 +276,7 @@ class Experiment(object):
 
         return ids_final, labels_final
 
-    def createTrainTestSplit(self):
+    def createTrainTestSplit(self, save_to_disk=False):
         """ create Test / Train / Validation splits """
 
         # get random seed
@@ -289,6 +330,10 @@ class Experiment(object):
         self.test_set = test_set
         self.val_set = val_set
 
+        # save subject sets on disk
+        if save_to_disk:
+            self.save()
+
         # print label distribution
         for s, l in zip([self.train_set, self.test_set, self.val_set],
                         ['train', 'test', 'val']):
@@ -315,7 +360,7 @@ if __name__ == '__main__':
     project_id = config['projects']['panoptes_id']
     classes = cfg_model['classes']
 
-    project = Project(name=cfg_model['identifier'],
+    project = Project(name=str(project_id),
                       panoptes_id=int(project_id),
                       classes=classes,
                       cfg_path=cfg_path,

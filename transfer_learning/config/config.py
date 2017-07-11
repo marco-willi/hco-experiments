@@ -85,6 +85,11 @@ def model_param_loader(config=config):
     for key, value in config[project_id].items():
         cfg[key] = _extract_configs(key, value)
 
+    # load experiment config if available
+    if 'experiment_id' in config[project_id].keys():
+        for key, value in config[config[project_id]['experiment_id']].items():
+            cfg[key] = _extract_configs(key, value)
+
     return cfg
 
 

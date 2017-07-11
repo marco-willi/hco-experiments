@@ -53,7 +53,11 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
             map_dict.pop(bl, None)
 
     elif mapping == "ss_26":
-        pass
+        raise NotImplementedError
+
+    elif mapping == 'ss_zebra_elephant':
+        map_dict = {'elephant': 'elephant',
+                    'zebra': 'zebra'}
 
     else:
         NotImplementedError("Mapping %s not implemented" % mapping)
@@ -71,7 +75,7 @@ def create_optimizer(name="standard"):
 
 
 # create data generators
-def create_data_generators(cfg, data_augmentation="none"):
+def create_data_generators(cfg, target_shape, data_augmentation="none"):
     """ generate input data from a generator function that applies
     random / static transformations to the input """
 
@@ -104,7 +108,7 @@ def create_data_generators(cfg, data_augmentation="none"):
                             % data_augmentation)
 
     # handle color mode
-    if cfg['image_size_model'][2] == 1:
+    if target_shape[2] == 1:
         color_mode = 'grayscale'
     else:
         color_mode = 'rgb'
@@ -113,21 +117,21 @@ def create_data_generators(cfg, data_augmentation="none"):
     # test / train and validation data
     train_generator = datagen_train.flow_from_directory(
             cfg_path['images'] + 'train',
-            target_size=cfg['image_size_model'][0:2],
+            target_size=target_shape[0:2],
             color_mode=color_mode,
             batch_size=cfg['batch_size'],
             class_mode='sparse')
 
     test_generator = datagen_test.flow_from_directory(
             cfg_path['images'] + 'test',
-            target_size=cfg['image_size_model'][0:2],
+            target_size=target_shape[0:2],
             color_mode=color_mode,
             batch_size=cfg['batch_size'],
             class_mode='sparse')
 
     val_generator = datagen_test.flow_from_directory(
             cfg_path['images'] + 'val',
-            target_size=cfg['image_size_model'][0:2],
+            target_size=target_shape[0:2],
             color_mode=color_mode,
             batch_size=cfg['batch_size'],
             class_mode='sparse')
@@ -244,7 +248,7 @@ def model_save(model, config=config, cfg_path=cfg_path,
     path_to_save = cfg_path['save']
 
     # define model name to save
-    model_id = config[project_id]['identifier']
+    model_id = config[project_id]['experiment_id']
 
     path_to_save = path_to_save.replace("//", "/")
 
