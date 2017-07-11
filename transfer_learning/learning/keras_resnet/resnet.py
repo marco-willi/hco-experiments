@@ -200,6 +200,9 @@ class ResnetBuilder(object):
         if len(input_shape) != 3:
             raise Exception("Input shape should be a tuple (nb_channels, nb_rows, nb_cols)")
 
+        # re-arrange input shape
+        input_shape = tuple([input_shape[2], input_shape[0], input_shape[1]])
+
         # Permute dimension order if necessary
         if K.image_dim_ordering() == 'tf':
             input_shape = (input_shape[1], input_shape[2], input_shape[0])
