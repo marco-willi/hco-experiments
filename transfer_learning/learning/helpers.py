@@ -9,7 +9,7 @@ Implementation of different Options / Parameters for model definitions
 from tools.image import ImageDataGenerator
 from config.config import config, cfg_path, cfg_model
 import os
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adagrad, RMSprop
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
 from keras.callbacks import LearningRateScheduler, EarlyStopping
 from keras.callbacks import ReduceLROnPlateau, RemoteMonitor
@@ -69,6 +69,12 @@ def create_optimizer(name="standard"):
     """ Creates optimizers according to pre-defined options """
     if name == "standard":
         opt = SGD(lr=0.0001, decay=0)
+    elif name == "sgd_ss":
+        opt = SGD(lr=0.01, momentum=0.9, decay=5e-4)
+    elif name == "rmsprop":
+        opt = RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+    elif name == "adagrad":
+        opt = Adagrad(lr=0.01, epsilon=1e-08, decay=0.0)
     else:
         NotImplementedError("Optimizer %s not implemented" % name)
     return opt
