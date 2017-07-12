@@ -73,9 +73,16 @@ class Project(object):
                 self.loadSubjectSet(file)
                 logging.info("Finished Loading %s" % file)
 
-    def saveSubjectSetOnDisk(self):
+    def saveSubjectSetOnDisk(self, overwrite=True):
         """ Save all Subjects / images in class specific folders """
 
+        # check if subject set is already on disk
+        if not overwrite:
+            file_path = self.cfg_path['db'] + 'subject_set_used.json'
+            if os.path.isfile(path=file_path):
+                logging.debug("Subjec %s found, not gonna overwrite" %
+                              file_path)
+                return None
         # to retry saving in case of connection errors while fetching urls
         counter = 0
         success = False
