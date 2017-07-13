@@ -24,7 +24,7 @@ if platform == 'win32':
     config['general']['multi_processing'] = '0'
 else:
     config['general']['link_only'] = '1'
-    config['general']['multi_processing'] = '1'
+    config['general']['multi_processing'] = '0'
 
 
 # function to load path parameters

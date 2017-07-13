@@ -225,7 +225,7 @@ class Model(object):
                         self.test_generator,
                         steps=self.test_generator.n // self.cfg['batch_size'],
                         workers=4,
-                        pickle_safe=False)
+                        use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
         print("Test Results")
