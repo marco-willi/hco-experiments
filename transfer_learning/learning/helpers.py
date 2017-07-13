@@ -7,7 +7,7 @@ Implementation of different Options / Parameters for model definitions
 - model_save
 """
 from tools.image import ImageDataGenerator
-from config.config import config, cfg_path, cfg_model
+from config.config import config, cfg_path, cfg_model, logging
 import os
 from keras.optimizers import SGD, Adagrad, RMSprop
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
@@ -207,6 +207,9 @@ def create_callbacks(identifier='',
                                    path='/publish/epoch/end/',
                                    field='data',
                                    headers=None)
+        # print / log server
+        logging.info("Initializing Remote logger at: %s" % (ip_ec2 + ':8080'))
+        print("Initializing Remote logger at: %s" % (ip_ec2 + ':8080'))
         callbacks.append(rem_logger)
 
     if 'early_stopping' in names:
