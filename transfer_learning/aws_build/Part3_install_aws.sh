@@ -17,26 +17,17 @@ cd ~/
 mkdir code
 mkdir data
 
+# get tensorflow (only if you want to build it yourself)
+# git clone https://github.com/tensorflow/tensorflow.git ~/code/tensorflow
+
 # launch tensorflow-gpu docker
 sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
 
-# install python packages
+# launch locally build tensorflow-gpu docker
+# sudo nvidia-docker run -it -v ~/:/host root/tensorflow:latest-devel-gpu-py3 bash
+
+# install python packages (missing in official tensorflow docker)
 pip install dill requests panoptes_client pillow aiohttp keras
 
 # save changes
 # sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

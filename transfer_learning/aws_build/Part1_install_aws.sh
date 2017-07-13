@@ -9,6 +9,7 @@ sudo apt-get install -y build-essential git python-pip libfreetype6-dev
  libblas-dev liblapack-dev libatlas-base-dev python-dev python-pydot
  linux-headers-generic linux-image-extra-virtual unzip python-numpy
  swig python-pandas python-sklearn unzip wget pkg-config zip g++ zlib1g-dev
+ screen emacs24
 
 # install docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
