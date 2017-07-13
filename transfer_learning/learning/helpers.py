@@ -6,7 +6,8 @@ Implementation of different Options / Parameters for model definitions
 - create_callbacks
 - model_save
 """
-from tools.image import ImageDataGenerator
+# from tools.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator
 from config.config import config, cfg_path, cfg_model, logging
 import os
 from keras.optimizers import SGD, Adagrad, RMSprop

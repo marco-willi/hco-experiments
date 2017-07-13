@@ -210,7 +210,7 @@ class Model(object):
                     self.cfg['batch_size'],
                     callbacks=self._callbacks_obj,
                     class_weight=cl_w,
-                    use_multiprocessing=False,
+                    use_multiprocessing=bool(self.cfg['multi_processing']),
                     initial_epoch=start_epoch)
 
         print("Finished training after %s minutes" %
@@ -237,7 +237,7 @@ class Model(object):
                         self.val_generator,
                         steps=self.val_generator.n // self.cfg['batch_size'],
                         workers=4,
-                        use_multiprocessing=False)
+                        use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
         print("Validation Results")

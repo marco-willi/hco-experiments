@@ -21,8 +21,10 @@ config.read(path_cfg)
 platform = sys.platform
 if platform == 'win32':
     config['general']['link_only'] = '0'
+    config['general']['multi_processing'] = '0'
 else:
     config['general']['link_only'] = '1'
+    config['general']['multi_processing'] = '1'
 
 
 # function to load path parameters
