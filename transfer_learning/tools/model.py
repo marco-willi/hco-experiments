@@ -13,6 +13,7 @@ import importlib
 from config.config import cfg_model as cfg, logging
 from keras.models import load_model
 from datetime import datetime
+from tools.helpers import get_most_rescent_file_with_string
 
 
 class Model(object):
@@ -43,11 +44,13 @@ class Model(object):
     def _loadModel(self):
         """ Load model file """
         # load model file
+        logging.info("Loading model file: %s" % self.mod_file)
         self.mod_file = importlib.import_module('learning.models.' +
                                                 self.mod_file)
 
     def _loadOptimizer(self):
         """ load pre defined optimizer """
+        logging.info("Loading optimizer %s" % self.optimizer)
         self._opt = create_optimizer(name=self.optimizer)
 
     def _save(self, postfix=None, create_dir=True):
@@ -131,11 +134,23 @@ class Model(object):
 
         # load model if specified
         if self.cfg['load_model'] not in ('', 'None', None):
-            model = load_model(self.cfg_path['models'] +
-                               self.cfg['load_model'] + '.hdf5')
+
+            # load latest model
+            if self.cfg['load_model'] == 'latest':
+                model_file = get_most_rescent_file_with_string(
+                    dirpath=self.cfg_path['models'],
+                    in_str=self.cfg['experiment_id'],
+                    excl_str='best')
+
+            # load specified model
+            else:
+                model_file = self.cfg_path['models'] +\
+                             self.cfg['load_model'] + '.hdf5'
+
+            model = load_model(model_file)
 
             # pick up learning at last epoch
-            start_epoch = int(self.cfg['load_model'].split('_')[-2])
+            start_epoch = int(model_file.split('/')[-1].split('_')[-2])
 
         # create new model and start learning from scratch
         else:

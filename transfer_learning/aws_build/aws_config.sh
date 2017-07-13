@@ -28,6 +28,9 @@ scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/ss/subject_set.pkl ubuntu@ec2-54-92-
 # Nvidia docker
 sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
 
+# Local Nvidia docker
+sudo nvidia-docker run -it -v ~/:/host root/tensorflow:latest-devel-gpu-py3 bash
+
 # normal docker
 sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
 
@@ -40,3 +43,6 @@ pip install dill requests panoptes_client pillow aiohttp keras
 #dd if=/dev/zero of=swapfile1 bs=10240 count=1048576
 #/sbin/mkswap -c -v1 /var/tmp/swapfile1
 #sudo /sbin/swapon /var/tmp/swapfile1
+
+# Monitor GPU utilization
+# nvidia-smi -l 1

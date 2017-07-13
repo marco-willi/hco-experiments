@@ -112,7 +112,7 @@ class SubjectSet(object):
         return urls, labels, ids, fnames
 
     def printLabelDistribution(self):
-        """ print distribution of labels to stdout """
+        """ print distribution of labels to stdout / logging module """
         # get all labels
         ids, labels = self.getAllIDsLabels()
 
@@ -248,9 +248,11 @@ class SubjectSet(object):
 
             self.addSubject(k, s)
 
+        # Log / Print Information
         print("SubjectSet %s Loaded" % path)
         logging.info("SubjectSet %s Loaded" % path)
         logging.info("Contains %s subjects" % len(self.subjects.keys()))
+        self.printLabelDistribution()
 
 
 class Subject(object):

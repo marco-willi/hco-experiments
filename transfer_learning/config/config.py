@@ -104,7 +104,17 @@ print("Config Loaded")
 
 # initialize logging file
 ts = datetime.now().strftime('%Y%m%d%H%m')
-logging.basicConfig(filename=cfg_path['logs'] + ts + '_run.log',
+if 'experiment_id' in cfg_model:
+    exp_id = cfg_model['experiment_id'] + '_'
+else:
+    exp_id = ''
+
+logging.basicConfig(filename=cfg_path['logs'] + exp_id + ts + '_run.log',
                     filemode="w",
                     level=logging.DEBUG,
-                    format='%(asctime)s %(message)s')
+                    format='%(asctime)s - %(funcName)s - %(levelname)s:' +
+                           '%(message)s')
+
+# log the parameters
+logging.info("Path Parameters: %s" % cfg_path)
+logging.info("Model Parameters: %s" % cfg_model)
