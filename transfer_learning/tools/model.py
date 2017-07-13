@@ -204,7 +204,7 @@ class Model(object):
                     steps_per_epoch=self.train_generator.n //
                     self.cfg['batch_size'],
                     epochs=self.cfg['num_epochs'],
-                    workers=4,
+                    workers=10,
                     validation_data=self.test_generator,
                     validation_steps=self.test_generator.n //
                     self.cfg['batch_size'],
@@ -224,7 +224,7 @@ class Model(object):
         eval_metrics = model.evaluate_generator(
                         self.test_generator,
                         steps=self.test_generator.n // self.cfg['batch_size'],
-                        workers=4,
+                        workers=10,
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
@@ -236,7 +236,7 @@ class Model(object):
         eval_metrics = self.model.evaluate_generator(
                         self.val_generator,
                         steps=self.val_generator.n // self.cfg['batch_size'],
-                        workers=4,
+                        workers=10,
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation

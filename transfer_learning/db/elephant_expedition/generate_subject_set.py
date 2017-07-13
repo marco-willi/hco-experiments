@@ -108,7 +108,7 @@ for k, v in subs_res.items():
     blank_classes = ['nothing_here', 'VEGETATIONNOANIMAL', 'NOTHINGHERE']
 
     # check retirement reason
-    if v['retirement_reason'] in ['Not Retired','classification_count', None]:
+    if v['retirement_reason'] in ['Not Retired', 'classification_count', None]:
         label = 'not_retired'
     else:
         label = v['retirement_reason']
@@ -141,8 +141,6 @@ for k, v in subs_res.items():
             label_final[i] = 'HUMAN'
         elif label_final[i] in blank_classes:
             label_final[i] = 'blank'
-
-
 
     subs_res_final[k] = {'ret_label': label,
                          'plur_label': label_plur,
@@ -244,4 +242,3 @@ urls, labels, ids = subject_set.getAllURLsLabelsIDs()
 for i in range(0, 50):
     ii = random.randint(0, len(urls))
     print("%s is a %s on: %s" % (ids[ii], labels[ii], urls[ii]))
-
