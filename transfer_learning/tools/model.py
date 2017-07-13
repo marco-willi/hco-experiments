@@ -147,10 +147,13 @@ class Model(object):
                 model_file = self.cfg_path['models'] +\
                              self.cfg['load_model'] + '.hdf5'
 
+            logging.info("Loading model from disk: %s" % model_file)
             model = load_model(model_file)
 
             # pick up learning at last epoch
-            start_epoch = int(model_file.split('/')[-1].split('_')[-2])
+            start_epoch = int(model_file.split('/')[-1].split('_')[-2]) + 1
+
+            logging.info("Pick up training from epoch %s" % start_epoch)
 
         # create new model and start learning from scratch
         else:
@@ -202,12 +205,12 @@ class Model(object):
                     self.cfg['batch_size'],
                     epochs=self.cfg['num_epochs'],
                     workers=4,
-                    pickle_safe=False,
                     validation_data=self.test_generator,
                     validation_steps=self.test_generator.n //
                     self.cfg['batch_size'],
                     callbacks=self._callbacks_obj,
                     class_weight=cl_w,
+                    use_multiprocessing=False,
                     initial_epoch=start_epoch)
 
         print("Finished training after %s minutes" %
@@ -234,7 +237,7 @@ class Model(object):
                         self.val_generator,
                         steps=self.val_generator.n // self.cfg['batch_size'],
                         workers=4,
-                        pickle_safe=False)
+                        use_multiprocessing=False)
 
         # print evaluation
         print("Validation Results")
