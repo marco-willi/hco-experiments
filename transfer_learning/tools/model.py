@@ -3,7 +3,8 @@ Class to implement a Model object
 - defines different data sets to train a model on
 - defines callbacks for logging options
 - defines pre_processing / data augmentation during training
-- defines the model architecture
+- loads the model infrastructure
+- invokes model training functions from Keras
 """
 from learning.helpers import create_data_generators, create_callbacks
 from learning.helpers import create_optimizer

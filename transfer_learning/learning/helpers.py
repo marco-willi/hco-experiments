@@ -13,8 +13,10 @@ import os
 from keras.optimizers import SGD, Adagrad, RMSprop
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
 from keras.callbacks import LearningRateScheduler, EarlyStopping
-from keras.callbacks import ReduceLROnPlateau, RemoteMonitor
+from keras.callbacks import ReduceLROnPlateau, RemoteMonitor, Callback
 from subprocess import run, PIPE
+from keras import backend as K
+import numpy as np
 
 
 # create class mappings
@@ -86,6 +88,23 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
     """ generate input data from a generator function that applies
     random / static transformations to the input """
 
+    # handle color mode
+    if target_shape[2] == 1:
+        color_mode = 'grayscale'
+    else:
+        color_mode = 'rgb'
+
+    # raw data generator required for calculating image statistics
+    # on 2000 images
+    datagen_raw = ImageDataGenerator(rescale=1./255)
+    raw_generator = datagen_raw.flow_from_directory(
+            cfg_path['images'] + 'train',
+            target_size=target_shape[0:2],
+            color_mode=color_mode,
+            batch_size=2000,
+            class_mode='sparse',
+            seed=cfg_model['random_seed'])
+
     # no data augmentation
     if data_augmentation == "none":
         # data augmentation / preprocessing for train data
@@ -99,26 +118,22 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
         # data augmentation / preprocessing for train data
         datagen_train = ImageDataGenerator(
             rescale=1./255,
-            samplewise_center=True,
-            samplewise_std_normalization=True,
+            # samplewise_center=True,
+            # samplewise_std_normalization=True,
+            featurewise_center=True,
+            featurewise_std_normalization=True,
             horizontal_flip=True,
             zoom_range=[0.9, 1])
         # augmentation / preprocessing for test / validation data
         datagen_test = ImageDataGenerator(
             rescale=1./255,
-            samplewise_center=True,
-            samplewise_std_normalization=True)
+            featurewise_center=True,
+            featurewise_std_normalization=True)
 
     # Not implemented data augmentation exception
     else:
         NotImplementedError("data_augmentation mode %s not implemented"
                             % data_augmentation)
-
-    # handle color mode
-    if target_shape[2] == 1:
-        color_mode = 'grayscale'
-    else:
-        color_mode = 'rgb'
 
     # create generators which serve images from directories for
     # test / train and validation data
@@ -127,21 +142,41 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
             target_size=target_shape[0:2],
             color_mode=color_mode,
             batch_size=cfg['batch_size'],
-            class_mode='sparse')
+            class_mode='sparse',
+            seed=cfg_model['random_seed'])
 
     test_generator = datagen_test.flow_from_directory(
             cfg_path['images'] + 'test',
             target_size=target_shape[0:2],
             color_mode=color_mode,
             batch_size=cfg['batch_size'],
-            class_mode='sparse')
+            class_mode='sparse',
+            seed=cfg_model['random_seed'])
 
     val_generator = datagen_test.flow_from_directory(
             cfg_path['images'] + 'val',
             target_size=target_shape[0:2],
             color_mode=color_mode,
             batch_size=cfg['batch_size'],
-            class_mode='sparse')
+            class_mode='sparse',
+            seed=cfg_model['random_seed'])
+
+    # fit data generators if required
+    if any([datagen_train.featurewise_center,
+            datagen_train.featurewise_std_normalization,
+            datagen_train.zca_whitening]):
+
+        # get random batch of raw training data
+        x, y = raw_generator.next()
+
+        # fit statistics from same batch of training data on the
+        # data generators
+        for gen in (datagen_train, datagen_test):
+            gen.fit(x, seed=cfg_model['random_seed'])
+            if any([gen.featurewise_center,
+                    gen.featurewise_std_normalization]):
+                logging.info("Featurewise center, means: %s" % gen.mean)
+                logging.info("Featurewise center, std: %s" % gen.std)
 
     return train_generator, test_generator, val_generator
 
@@ -213,6 +248,10 @@ def create_callbacks(identifier='',
         print("Initializing Remote logger at: %s" % (ip_ec2 + ':8080'))
         callbacks.append(rem_logger)
 
+    if 'log_disk' in names:
+        logging_cb = LoggingCallback(logging=logging)
+        callbacks.append(logging_cb)
+
     if 'early_stopping' in names:
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=0,
                                        patience=3, verbose=0, mode='auto')
@@ -229,18 +268,43 @@ def create_callbacks(identifier='',
         # learning rate adjustment scheme according to epoch number
         def lrnrate_dec(epoch):
             if epoch < 18:
-                return 0.01
+                res = 0.01
             elif epoch < 29:
-                return 0.005
+                res = 0.005
             elif epoch < 43:
-                return 0.001
+                res = 0.001
             elif epoch < 52:
-                return 5e-4
+                res = 5e-4
             else:
-                return 1e-4
+                res = 1e-4
+
+            logging.info("Setting learning rate to: %s" % res)
+            return res
 
         # learning rate decay rule
         learning_rate_decay = LearningRateScheduler(lrnrate_dec)
+
+        callbacks.append(learning_rate_decay)
+
+    if 'ss_decay':
+        # learning rate adjustment scheme according to epoch number
+        def decay_dec(epoch):
+            if epoch < 18:
+                res = 5e-4
+            elif epoch < 29:
+                res = 5e-4
+            elif epoch < 43:
+                res = 0
+            elif epoch < 52:
+                res = 0
+            else:
+                res = 0
+
+            logging.info("Setting learning rate decay to: %s" % res)
+            return res
+
+        # learning rate decay rule
+        learning_rate_decay = LRDecayScheduler(decay_dec)
 
         callbacks.append(learning_rate_decay)
 
@@ -274,3 +338,39 @@ def model_save(model, config=config, cfg_path=cfg_path,
         NameError("Path not Found")
 
     model.save(path_to_save + out_name + '.h5')
+
+
+class LRDecayScheduler(Callback):
+    """Learning rate decay scheduler.
+    # Arguments
+        schedule: a function that takes an epoch index as input
+            (integer, indexed from 0) and returns a new
+            learning rate decay as output (float).
+    """
+
+    def __init__(self, schedule):
+        super(LRDecayScheduler, self).__init__()
+        self.schedule = schedule
+
+    def on_epoch_begin(self, epoch, logs=None):
+        if not hasattr(self.model.optimizer, 'decay'):
+            raise ValueError('Optimizer must have a "decay" attribute.')
+        decay = self.schedule(epoch) * 1.0
+        if not isinstance(decay, (float, np.float32, np.float64)):
+            raise ValueError('The output of the "schedule" function '
+                             'should be float.')
+
+        K.set_value(self.model.optimizer.decay, decay)
+
+
+class LoggingCallback(Callback):
+    """Callback that logs message at end of epoch.
+    """
+    def __init__(self, logging):
+        Callback.__init__(self)
+        self.logging = logging
+
+    def on_epoch_end(self, epoch, logs={}):
+        msg = "{Epoch: %i} %s" % (epoch, ", ".join(
+              "%s: %f" % (k, v) for k, v in logs.items()))
+        self.logging.info(msg)

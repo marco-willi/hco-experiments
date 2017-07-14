@@ -1,3 +1,13 @@
+"""
+Functions to access data via Panoptes api
+- init_panoptes
+    connect to panoptes and return project object
+- get_classifications
+    gets classifications of a project
+- get_subject_info
+    gets subjects of a project
+- download_dic
+"""
 # import modules
 from panoptes_client import Project, Panoptes
 from config.config import config, config_credentials

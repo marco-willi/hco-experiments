@@ -17,6 +17,7 @@ sudo mount /dev/xvdf ~/data_hdd
 
 # commit docker changes
 # sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3
+# sudo docker commit docker_id root/tensorflow:latest-devel-gpu-py3
 
 # connect to aws instance from lucifer
 ssh -i ~/keys/zv_test_key.pem ubuntu@ec2-34-207-210-160.compute-1.amazonaws.com
