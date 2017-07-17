@@ -96,6 +96,7 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
 
     # raw data generator required for calculating image statistics
     # on 2000 images
+    logging.info("Initializing raw generator")
     datagen_raw = ImageDataGenerator(rescale=1./255)
     raw_generator = datagen_raw.flow_from_directory(
             cfg_path['images'] + 'train',
@@ -137,6 +138,7 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
 
     # create generators which serve images from directories for
     # test / train and validation data
+    logging.info("Initializing train generator")
     train_generator = datagen_train.flow_from_directory(
             cfg_path['images'] + 'train',
             target_size=target_shape[0:2],
@@ -145,6 +147,7 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
             class_mode='sparse',
             seed=cfg_model['random_seed'])
 
+    logging.info("Initializing test generator")
     test_generator = datagen_test.flow_from_directory(
             cfg_path['images'] + 'test',
             target_size=target_shape[0:2],
@@ -153,6 +156,7 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
             class_mode='sparse',
             seed=cfg_model['random_seed'])
 
+    logging.info("Initializing val generator")
     val_generator = datagen_test.flow_from_directory(
             cfg_path['images'] + 'val',
             target_size=target_shape[0:2],

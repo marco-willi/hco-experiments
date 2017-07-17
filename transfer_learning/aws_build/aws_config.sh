@@ -46,3 +46,6 @@ pip install dill requests panoptes_client pillow aiohttp keras
 
 # Monitor GPU utilization
 # nvidia-smi -l 1
+
+# dettach from docker without closing it
+# ctrl+ p ctrl + q
