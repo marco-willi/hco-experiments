@@ -17,6 +17,7 @@ from keras.callbacks import ReduceLROnPlateau, RemoteMonitor, Callback
 from subprocess import run, PIPE
 from keras import backend as K
 import numpy as np
+from tools.double_iterator import DoubleIterator
 
 
 # create class mappings
@@ -138,12 +139,17 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
 
     # create generators which serve images from directories for
     # test / train and validation data
+    if False:
+        batch_size = cfg['batch_size'] * 10
+    else:
+        batch_size = cfg['batch_size']
+
     logging.info("Initializing train generator")
     train_generator = datagen_train.flow_from_directory(
             cfg_path['images'] + 'train',
             target_size=target_shape[0:2],
             color_mode=color_mode,
-            batch_size=cfg['batch_size'],
+            batch_size=batch_size,
             class_mode='sparse',
             seed=cfg_model['random_seed'])
 
@@ -152,7 +158,7 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
             cfg_path['images'] + 'test',
             target_size=target_shape[0:2],
             color_mode=color_mode,
-            batch_size=cfg['batch_size'],
+            batch_size=batch_size,
             class_mode='sparse',
             seed=cfg_model['random_seed'])
 
@@ -161,7 +167,7 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
             cfg_path['images'] + 'val',
             target_size=target_shape[0:2],
             color_mode=color_mode,
-            batch_size=cfg['batch_size'],
+            batch_size=batch_size,
             class_mode='sparse',
             seed=cfg_model['random_seed'])
 
@@ -181,6 +187,15 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
                     gen.featurewise_std_normalization]):
                 logging.info("Featurewise center, means: %s" % gen.mean)
                 logging.info("Featurewise center, std: %s" % gen.std)
+
+    if False:
+        res = ()
+        for gen in (train_generator, test_generator, val_generator):
+            big = DoubleIterator(gen, batch_size=cfg['batch_size'],
+                                 seed=cfg_model['random_seed'])
+            res = res + (big, )
+        print("Returning DoubleIterator")
+        return res
 
     return train_generator, test_generator, val_generator
 
