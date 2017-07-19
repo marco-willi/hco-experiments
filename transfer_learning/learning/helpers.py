@@ -139,8 +139,8 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
 
     # create generators which serve images from directories for
     # test / train and validation data
-    if False:
-        batch_size = cfg['batch_size'] * 10
+    if cfg_model['image_iterator'] == 'double_iterator':
+        batch_size = cfg['batch_size'] * 100
     else:
         batch_size = cfg['batch_size']
 
@@ -188,13 +188,13 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
                 logging.info("Featurewise center, means: %s" % gen.mean)
                 logging.info("Featurewise center, std: %s" % gen.std)
 
-    if False:
+    if cfg_model['image_iterator'] == 'double_iterator':
         res = ()
         for gen in (train_generator, test_generator, val_generator):
             big = DoubleIterator(gen, batch_size=cfg['batch_size'],
                                  seed=cfg_model['random_seed'])
             res = res + (big, )
-        print("Returning DoubleIterator")
+        logging.info("Initialized DoubleIterator")
         return res
 
     return train_generator, test_generator, val_generator
