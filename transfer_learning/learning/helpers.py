@@ -56,6 +56,13 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
         for bl in blank_classes:
             map_dict.pop(bl, None)
 
+    elif mapping == "ss_nonblank":
+        excl_classes = ['bat', 'cattle', 'steenbok']
+        all_classes = [x for x in all_classes if x not in excl_classes]
+        map_dict = {c: c for c in all_classes}
+        for bl in blank_classes:
+            map_dict.pop(bl, None)
+
     elif mapping == "ss_26":
         raise NotImplementedError
 
