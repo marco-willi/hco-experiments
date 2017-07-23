@@ -77,6 +77,12 @@ if __name__ == '__main__':
 
     tt = DoubleIterator(train_generator, 32)
 
+    batch_x, batch_y = tt.next()
+    batch_x2, batch_y2 = tt.next()
+    import numpy as np
+    np.array_equal(batch_x, batch_x2)
+    batch_x.shape
+
     3200 // 32
     import time
 

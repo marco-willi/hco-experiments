@@ -147,7 +147,7 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
     # create generators which serve images from directories for
     # test / train and validation data
     if cfg_model['image_iterator'] == 'double_iterator':
-        batch_size = cfg['batch_size'] * 100
+        batch_size = cfg['batch_size'] * 50
     else:
         batch_size = cfg['batch_size']
 

@@ -166,7 +166,8 @@ class Model(object):
             # compile model
             model.compile(loss='sparse_categorical_crossentropy',
                           optimizer=self._opt,
-                          metrics=['accuracy'])
+                          metrics=['accuracy',
+                                   'sparse_top_k_categorical_accuracy'])
 
         # store model
         self.model = model
