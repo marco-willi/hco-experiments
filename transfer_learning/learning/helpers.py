@@ -63,8 +63,24 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
         for bl in blank_classes:
             map_dict.pop(bl, None)
 
+    # Snapshot Serengeti Top 26
     elif mapping == "ss_26":
-        raise NotImplementedError
+        # top 26 species
+        ss_26 = ['wildebeest', 'zebra', 'gazelleThomsons', 'buffalo',
+                 'hartebeest', 'elephant', 'human', 'impala',
+                 'gazelleGrants', 'giraffe', 'warthog', 'guineaFowl',
+                 'hyenaSpotted', 'otherBird', 'eland', 'lionFemale',
+                 'hippopotamus', 'reedbuck', 'topi', 'baboon', 'dikDik',
+                 'cheetah', 'secretaryBird', 'lionMale', 'serval',
+                 'ostrich']
+        # group others to Others category
+        ss_other = [x for x in all_classes
+                    if ((x not in ss_26) and (x not in blank_classes))]
+        map_26 = {c: c for c in ss_26}
+        map_other = {c: 'others' for c in ss_other}
+
+        # combine top 26 and others category
+        map_dict = {**map_26, **map_other}
 
     elif mapping == 'ss_zebra_elephant':
         map_dict = {'elephant': 'elephant',
