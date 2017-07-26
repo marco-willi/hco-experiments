@@ -74,8 +74,13 @@ def main():
     # Train Model
     ########################
 
+    # add model to experiment
     exp.addModel(model)
 
+    # prepare / initialize model
+    exp.prep_model()
+
+    # train model
     exp.train()
 
     ########################

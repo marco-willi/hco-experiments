@@ -69,7 +69,10 @@ class Predictor(object):
                                     'y_pred', 'p', 'link', 'model'))
 
         for i in range(0, len(file_names)):
-            subject_id = file_names[i].split('\\')[1].split('_')[0]
+            if '\\' in file_names[i]:
+                subject_id = file_names[i].split('\\')[1].split('_')[0]
+            else:
+                subject_id = file_names[i].split('/')[1].split('_')[0]
             image_id = file_names[i].split('_')[1].split('.')[0]
             p = max_pred[i]
             y_pred = class_mapper[id_max[i]]
@@ -97,6 +100,7 @@ class Predictor(object):
                 shuffle=False)
 
         # predict whole set
+        logging.info("Predicting images in path")
         preds = self.model.predict_generator(
             generator,
             steps=(generator.n // 256) + 1,
@@ -104,6 +108,7 @@ class Predictor(object):
             use_multiprocessing=bool(self.cfg_model['multi_processing']))
 
         # consolidate output
+        logging.info("Creating Result DF")
         res = self._create_result_df(preds, generator.filenames,
                                      generator.classes,
                                      generator.class_indices,

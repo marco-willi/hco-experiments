@@ -17,7 +17,6 @@ from datetime import datetime
 from tools.helpers import get_most_rescent_file_with_string
 from tools.predictor import Predictor
 import dill as pickle
-import pandas as pd
 
 
 class Model(object):
@@ -43,6 +42,8 @@ class Model(object):
         self._opt = None
         self._callbacks_obj = None
         self._model = None
+        self.model_dict = None
+        self.start_epoch = 0
         self._timestamp = datetime.now().strftime('%Y%m%d%H%m')
 
         project_id = self.config['projects']['panoptes_id']
@@ -140,8 +141,8 @@ class Model(object):
             res.to_csv(self.cfg_path['save'] + self._id + '_preds_' +
                        name + '.csv', index=False)
 
-    def train(self):
-        """ train model """
+    def prep_model(self):
+        """ prepare model """
 
         ##################################
         # Model Definition
@@ -150,10 +151,10 @@ class Model(object):
         # load model
         logging.info("Loading Model")
         self._loadModel()
-        model_dict = self.mod_file.build_model(self.num_classes)
+        self.model_dict = self.mod_file.build_model(self.num_classes)
 
         # define starting epoch (0 for new models)
-        start_epoch = 0
+        self.start_epoch = 0
 
         # load model if specified
         if self.cfg['load_model'] not in ('', 'None', None):
@@ -180,7 +181,7 @@ class Model(object):
 
         # create new model and start learning from scratch
         else:
-            model = model_dict['model']
+            model = self.model_dict['model']
 
             # get optimizer
             self._loadOptimizer()
@@ -194,12 +195,15 @@ class Model(object):
         # store model
         self.model = model
 
+    def train(self):
+        """ train model """
+
         ##################################
         # Data Generators
         ##################################
 
         logging.info("Creating Data Generators")
-        self._dataGens(target_shape=model_dict['input_shape'])
+        self._dataGens(target_shape=self.model_dict['input_shape'])
 
         # save evaluation data generator for predictions
         pickle.dump(self.test_generator.image_data_generator,
@@ -240,7 +244,7 @@ class Model(object):
                     callbacks=self._callbacks_obj,
                     class_weight=cl_w,
                     use_multiprocessing=bool(self.cfg['multi_processing']),
-                    initial_epoch=start_epoch)
+                    initial_epoch=self.start_epoch)
 
         print("Finished training after %s minutes" %
               ((time.time() - time_s) // 60))
@@ -252,7 +256,7 @@ class Model(object):
         logging.info("Starting Evaluation on Test set")
 
         # Test Data
-        eval_metrics = model.evaluate_generator(
+        eval_metrics = self.model.evaluate_generator(
                         self.test_generator,
                         steps=self.test_generator.n // self.cfg['batch_size'],
                         workers=10,

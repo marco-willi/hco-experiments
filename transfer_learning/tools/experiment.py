@@ -345,6 +345,15 @@ class Experiment(object):
         """ add a model to the experiment """
         self.model = model
 
+    def prep_model(self):
+        """ prepare model """
+        try:
+            self.model.prep_model()
+        except Exception as e:
+            # log exception
+            logging.exception("model preparation failed")
+            raise Exception
+            
     def train(self):
         """ train model """
         try:
