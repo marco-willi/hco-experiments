@@ -249,32 +249,40 @@ class Model(object):
         # Evaluation
         ##################################
 
+        logging.info("Starting Evaluation on Test set")
+
         # Test Data
         eval_metrics = model.evaluate_generator(
                         self.test_generator,
                         steps=self.test_generator.n // self.cfg['batch_size'],
-                        workers=1,
+                        workers=10,
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
         print("Test Results")
+        logging.info("Test Results")
         for name, value in zip(self.model.metrics_names, eval_metrics):
             print("%s: %s" % (name, value))
+            logging.info("%s: %s" % (name, value))
 
+        logging.info("Starting Evaluation on Validation set")
         # Validation Data
         eval_metrics = self.model.evaluate_generator(
                         self.val_generator,
                         steps=self.val_generator.n // self.cfg['batch_size'],
-                        workers=1,
+                        workers=10,
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
         print("Validation Results")
+        logging.info("Validation Results")
         for name, value in zip(self.model.metrics_names, eval_metrics):
             print("%s: %s" % (name, value))
+            logging.info("%s: %s" % (name, value))
 
         ##################################
         # Save model to disk
         ##################################
 
+        logging.info("Save model to disk")
         self._save(postfix=self._timestamp)
