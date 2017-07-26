@@ -195,9 +195,6 @@ class Model(object):
         # store model
         self.model = model
 
-    def train(self):
-        """ train model """
-
         ##################################
         # Data Generators
         ##################################
@@ -210,6 +207,9 @@ class Model(object):
                     open(self.cfg_path['models'] + self._id + '_generator.pkl',
                          "wb"))
 
+    def train(self):
+        """ train model """
+        
         ##################################
         # Logging
         ##################################
