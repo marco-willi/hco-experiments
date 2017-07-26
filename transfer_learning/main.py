@@ -79,6 +79,12 @@ def main():
     exp.train()
 
     ########################
+    # Evaluate Model
+    ########################
+
+    exp.evaluate()
+
+    ########################
     # Save some information
     ########################
 

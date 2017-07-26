@@ -15,6 +15,9 @@ from config.config import cfg_model as cfg, logging
 from keras.models import load_model
 from datetime import datetime
 from tools.helpers import get_most_rescent_file_with_string
+from tools.predictor import Predictor
+import dill as pickle
+import pandas as pd
 
 
 class Model(object):
@@ -41,6 +44,10 @@ class Model(object):
         self._callbacks_obj = None
         self._model = None
         self._timestamp = datetime.now().strftime('%Y%m%d%H%m')
+
+        project_id = self.config['projects']['panoptes_id']
+        self._model_id = self.config[project_id]['experiment_id']
+        self._id = self._model_id + '_' + self._timestamp
 
     def _loadModel(self):
         """ Load model file """
@@ -118,6 +125,21 @@ class Model(object):
 
         return cl_w
 
+    def evaluate(self):
+        """ prepare to train/predict with model & save to disk """
+
+        for name in ['test', 'val']:
+            predictor = Predictor(
+                model=self.model,
+                pre_processing=self.test_generator.image_data_generator,
+                cfg_model=self.cfg,
+                cfg_path=self.cfg_path)
+
+            res = predictor.predict_path(self.cfg_path['images'] + name)
+
+            res.to_csv(self.cfg_path['save'] + self._id + '_preds_' +
+                       name + '.csv', index=False)
+
     def train(self):
         """ train model """
 
@@ -179,6 +201,11 @@ class Model(object):
         logging.info("Creating Data Generators")
         self._dataGens(target_shape=model_dict['input_shape'])
 
+        # save evaluation data generator for predictions
+        pickle.dump(self.test_generator.image_data_generator,
+                    open(self.cfg_path['models'] + self._id + '_generator.pkl',
+                         "wb"))
+
         ##################################
         # Logging
         ##################################
@@ -226,7 +253,7 @@ class Model(object):
         eval_metrics = model.evaluate_generator(
                         self.test_generator,
                         steps=self.test_generator.n // self.cfg['batch_size'],
-                        workers=10,
+                        workers=1,
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
@@ -238,7 +265,7 @@ class Model(object):
         eval_metrics = self.model.evaluate_generator(
                         self.val_generator,
                         steps=self.val_generator.n // self.cfg['batch_size'],
-                        workers=10,
+                        workers=1,
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation

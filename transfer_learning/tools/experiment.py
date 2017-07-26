@@ -354,6 +354,11 @@ class Experiment(object):
             logging.exception("model training failed")
             raise Exception
 
+    def evaluate(self):
+        """ evaluate model """
+        logging.info("evaluating model")
+        self.model.evaluate()
+
 
 if __name__ == '__main__':
 
