@@ -70,10 +70,11 @@ class Predictor(object):
 
         for i in range(0, len(file_names)):
             if '\\' in file_names[i]:
-                subject_id = file_names[i].split('\\')[1].split('_')[0]
+                fname = file_names[i].split('\\')[1]
             else:
-                subject_id = file_names[i].split('/')[1].split('_')[0]
-            image_id = file_names[i].split('_')[1].split('.')[0]
+                fname = file_names[i].split('/')[1]
+            subject_id = fname.split('_')[0]
+            image_id = fname.split('_')[1].split('.')[0]
             p = max_pred[i]
             y_pred = class_mapper[id_max[i]]
             if image_links == '':
