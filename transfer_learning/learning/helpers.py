@@ -95,7 +95,7 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
 def create_optimizer(name="standard"):
     """ Creates optimizers according to pre-defined options """
     if name == "standard":
-        opt = SGD(lr=0.0001, decay=0)
+        opt = SGD(lr=0.01, momentum=0.9, decay=0)
     elif name == "sgd_ss":
         opt = SGD(lr=0.01, momentum=0.9, decay=5e-4)
     elif name == "rmsprop":
@@ -236,12 +236,12 @@ def create_callbacks(identifier='',
 
     # add different callbacks if they are specified
     if 'checkpointer' in names:
-        # save model weights after each epoch if training loss decreases
+        # save model weights after each epoch
         checkpointer = ModelCheckpoint(filepath=cfg_path['models'] +
                                        identifier +
                                        "model_{epoch:02d}_{val_loss:.2f}.hdf5",
                                        verbose=0,
-                                       save_best_only=True)
+                                       save_best_only=False)
         callbacks.append(checkpointer)
 
     if 'checkpointer_best' in names:
@@ -301,7 +301,7 @@ def create_callbacks(identifier='',
 
     if 'reduce_lr_on_plateau' in names:
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,
-                                      patience=5, verbose=0,
+                                      patience=2, verbose=0,
                                       mode='auto', epsilon=0.0001,
                                       cooldown=0, min_lr=0.0001)
         callbacks.append(reduce_lr)
