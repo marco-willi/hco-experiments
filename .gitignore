@@ -1,3 +1,6 @@
 transfer_learning/config/credentials.ini
 transfer_learning/.spyproject/*
 *.pyc
+.Rproj.user
+*.Rproj
+*.Rhistory
