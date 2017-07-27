@@ -63,6 +63,7 @@ class Predictor(object):
 
         # map class names and indices
         class_mapper = {v: k for k, v in class_indices.items()}
+        n_classes = len(class_mapper.keys())
 
         # create result dictionary
         res = pd.DataFrame(columns=('subject_id', 'image_id', 'y_true',
@@ -82,7 +83,7 @@ class Predictor(object):
             # store predictions for all classes
             p_all = preds[i, :]
             preds_all = {class_mapper[j]: p_all[j] for j in
-                         range(0, len(p_all))}
+                         range(0, n_classes)}
 
             if image_links == '':
                 link = ''
@@ -123,7 +124,7 @@ class Predictor(object):
         preds = self.model.predict_generator(
             generator,
             steps=(generator.n // batch_size) + extra_step,
-            workers=5,
+            workers=1,
             use_multiprocessing=bool(self.cfg_model['multi_processing']))
 
         logging.debug("Predicted %s of %s images" % (preds.shape[0],
@@ -133,8 +134,8 @@ class Predictor(object):
         if preds.shape[0] != generator.n:
             logging.critical("Number of Preds %s don't match" +
                              "number of images %s" % (preds.shape[0],
-                                                     generator.n,
-                                                     ))
+                                                      generator.n,
+                                                      ))
 
         # consolidate output
         logging.info("Creating Result DF")

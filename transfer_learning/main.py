@@ -68,7 +68,7 @@ def main():
                   cfg_path=cfg_path,
                   callbacks=cfg_model['callbacks'],
                   optimizer=cfg_model['optimizer'],
-                  num_classes=len(class_mapper.keys()))
+                  num_classes=len(set(class_mapper.values())))
 
     ########################
     # Train Model
