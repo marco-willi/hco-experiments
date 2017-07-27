@@ -27,6 +27,9 @@ else:
     config['general']['multi_processing'] = '0'
 
 
+# add timestamp to config
+config['general']['ts'] = datetime.now().strftime('%Y%m%d%H%m')
+
 # function to load path parameters
 def path_loader(config, create_project_paths=True):
 
@@ -105,7 +108,7 @@ print("Config Loaded")
 ##############################
 
 # initialize logging file
-ts = datetime.now().strftime('%Y%m%d%H%m')
+ts = str(config['general']['ts'])
 if 'experiment_id' in cfg_model:
     exp_id = cfg_model['experiment_id'] + '_'
 else:

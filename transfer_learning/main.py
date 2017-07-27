@@ -98,7 +98,10 @@ def main():
                     'test_set': exp.test_set,
                     'val_set': exp.val_set}
 
-    pickle.dump(save_objects, open(cfg_path['save'] + 'objects.pkl', "wb"))
+    pickle.dump(save_objects, open(cfg_path['save'] +
+                                   cfg_model['experiment_id'] +
+                                   '_' + str(cfg_model['ts']) +
+                                   '_objects.pkl', "wb"))
 
 
 if __name__ == "__main__":

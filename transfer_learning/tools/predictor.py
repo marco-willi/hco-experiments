@@ -66,7 +66,8 @@ class Predictor(object):
 
         # create result dictionary
         res = pd.DataFrame(columns=('subject_id', 'image_id', 'y_true',
-                                    'y_pred', 'p', 'link', 'model'))
+                                    'y_pred', 'p', 'preds_all',
+                                    'link', 'model'))
 
         for i in range(0, len(file_names)):
             if '\\' in file_names[i]:
@@ -77,12 +78,18 @@ class Predictor(object):
             image_id = fname.split('_')[1].split('.')[0]
             p = max_pred[i]
             y_pred = class_mapper[id_max[i]]
+
+            # store predictions for all classes
+            p_all = preds[i, :]
+            preds_all = {class_mapper[j]: p_all[j] for j in
+                         range(0, len(p_all))}
+
             if image_links == '':
                 link = ''
             else:
                 link = image_links[i]
             res.loc[i] = [subject_id, image_id, class_mapper[y_true[i]],
-                          y_pred, p,
+                          y_pred, p, preds_all,
                           link, self.mod_file]
 
         return res
@@ -90,23 +97,44 @@ class Predictor(object):
     def predict_path(self, path):
         """ Predict path with class folders """
 
+        # prediction batch sizes
+        batch_size = 256
+
         logging.info("Initializing generator")
         generator = self.datagen.flow_from_directory(
                 path,
                 target_size=self.model.input_shape[1:3],
                 color_mode=self.color_mode,
-                batch_size=256,
+                batch_size=batch_size,
                 class_mode='sparse',
                 seed=self.cfg_model['random_seed'],
                 shuffle=False)
 
         # predict whole set
         logging.info("Predicting images in path")
+
+        # calculate number of iterations to make
+        steps_remainder = generator.n % batch_size
+        if steps_remainder > 0:
+            extra_step = 1
+        else:
+            extra_step = 0
+
         preds = self.model.predict_generator(
             generator,
-            steps=(generator.n // 256) + 1,
-            workers=1,
+            steps=(generator.n // batch_size) + extra_step,
+            workers=5,
             use_multiprocessing=bool(self.cfg_model['multi_processing']))
+
+        logging.debug("Predicted %s of %s images" % (preds.shape[0],
+                                                     generator.n,
+                                                     ))
+        # check size and log critical
+        if preds.shape[0] != generator.n:
+            logging.critical("Number of Preds %s don't match" +
+                             "number of images %s" % (preds.shape[0],
+                                                     generator.n,
+                                                     ))
 
         # consolidate output
         logging.info("Creating Result DF")

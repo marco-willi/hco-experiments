@@ -44,7 +44,7 @@ class Model(object):
         self._model = None
         self.model_dict = None
         self.start_epoch = 0
-        self._timestamp = datetime.now().strftime('%Y%m%d%H%m')
+        self._timestamp = str(cfg['ts'])
 
         project_id = self.config['projects']['panoptes_id']
         self._model_id = self.config[project_id]['experiment_id']
@@ -209,7 +209,7 @@ class Model(object):
 
     def train(self):
         """ train model """
-        
+
         ##################################
         # Logging
         ##################################
