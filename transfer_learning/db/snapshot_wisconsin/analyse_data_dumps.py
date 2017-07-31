@@ -60,16 +60,16 @@ def read_classification_data(path_csv):
 # manual step
 #########################
 
-cfg_path['db']
-
-# save classifications
-create_path(cfg_path['db'])
-path_to_file = get_url(link_cl, cfg_path['db'] + 'classifications.zip')
-
-
-# save subject data
-create_path(cfg_path['db'] + 'subjects')
-path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
+# cfg_path['db']
+#
+# # save classifications
+# create_path(cfg_path['db'])
+# path_to_file = get_url(link_cl, cfg_path['db'] + 'classifications.zip')
+#
+#
+# # save subject data
+# create_path(cfg_path['db'] + 'subjects')
+# path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
 
 
 #########################
@@ -77,7 +77,7 @@ path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
 #########################
 
 subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
-
+subs[list(subs.keys())[0]]
 
 cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
 cls.head
@@ -95,15 +95,16 @@ cls.groupby(['workflow_name']).size()
 cls.groupby(['workflow_version']).size()
 
 # filter on workflow: Spot and count rainforest animals
-cls = cls[cls.workflow_name == 'Spot and count rainforest animals']
+cls = cls[cls.workflow_name != 'showing shortcut functionality']
 
 # filter classifications without a choice
 cls = cls[cls.annotations.str.contains('choice')]
 
 # filter classifications without most recent workflow_version
 work_v = cls.groupby(['workflow_version']).size()
-most_recent_wf = work_v.index[-1]
-cls = cls[cls.workflow_version == most_recent_wf]
+work_v
+min_size_wf = work_v[work_v > 5000]
+cls = cls[cls.workflow_version.isin(min_size_wf.index)]
 
 # subject id
 print("number of subjects %s" % len(cls['subject_ids'].unique()))
@@ -122,7 +123,7 @@ for i in range(0, len(choic)):
         print(i)
         print(choic[i])
 
-idd = 1347199
+idd = 1157821
 cls.iloc[idd]
 cls.iloc[idd]['subject_data']
 subs[int(list(json.loads(cls.iloc[idd]['subject_data']).keys())[0])]
@@ -131,16 +132,25 @@ subs[int(list(json.loads(cls.iloc[idd]['subject_data']).keys())[0])]
 subd = dict()
 retirement_reasons = list()
 for i in range(0, cls['subject_data'].shape[0]):
-     tt = json.loads(cls['subject_data'].iloc[i])
-     key = list(tt.keys())[0]
-     if tt[key]['retired'] == None:
-         subd[key] = 'Not Retired'
-     else:
-         subd[key] = tt[key]['retired']['retirement_reason']
-     retirement_reasons.append(subd[key])
+    tt = json.loads(cls['subject_data'].iloc[i])
+    key = list(tt.keys())[0]
+    if tt[key]['retired'] is None:
+        subd[key] = 'Not Retired'
+    else:
+        subd[key] = tt[key]['retired']['retirement_reason']
+    retirement_reasons.append(subd[key])
 
 tt = pd.DataFrame(retirement_reasons, columns=['retirement_reason'])
 tt.groupby(['retirement_reason']).size()
+
+
+# retirement_reason
+# Not Retired             191889
+# classification_count      3508
+# consensus               636595
+# nothing_here            235134
+# other                     1718
+
 
 # check number of entries per subject and user
 cls.columns

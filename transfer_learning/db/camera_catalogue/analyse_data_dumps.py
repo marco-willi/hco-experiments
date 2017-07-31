@@ -60,16 +60,16 @@ def read_classification_data(path_csv):
 # manual step
 #########################
 
-cfg_path['db']
-
-# save classifications
-create_path(cfg_path['db'])
-path_to_file = get_url(link_cl, cfg_path['db'] + 'classifications.zip')
-
-
-# save subject data
-create_path(cfg_path['db'] + 'subjects')
-path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
+# cfg_path['db']
+#
+# # save classifications
+# create_path(cfg_path['db'])
+# path_to_file = get_url(link_cl, cfg_path['db'] + 'classifications.zip')
+#
+#
+# # save subject data
+# create_path(cfg_path['db'] + 'subjects')
+# path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
 
 
 #########################
@@ -86,7 +86,6 @@ cls.head
 # Analysis
 ###############################
 
-
 # workflows
 cls['workflow_name'].unique()
 cls.groupby(['workflow_name']).size()
@@ -94,8 +93,8 @@ cls.groupby(['workflow_name']).size()
 # workflow versions
 cls.groupby(['workflow_version']).size()
 
-# filter on workflow: Spot and count rainforest animals
-cls = cls[cls.workflow_name == 'Spot and count rainforest animals']
+# filter on workflow
+cls = cls[cls.workflow_name == 'South Africa (3)']
 
 # filter classifications without a choice
 cls = cls[cls.annotations.str.contains('choice')]
@@ -116,13 +115,15 @@ for i in range(0, cls['annotations'].shape[0]):
     choices = [x['choice'] for x in tt[0]['value']]
     choic.append(choices)
 
+# print answers with multiple choices
 for i in range(0, len(choic)):
     if len(choic[i]) >1:
         print("----------------------------")
         print(i)
         print(choic[i])
 
-idd = 1347199
+# take a look at an individual multiple choice answer
+idd = 1159980
 cls.iloc[idd]
 cls.iloc[idd]['subject_data']
 subs[int(list(json.loads(cls.iloc[idd]['subject_data']).keys())[0])]
@@ -131,16 +132,25 @@ subs[int(list(json.loads(cls.iloc[idd]['subject_data']).keys())[0])]
 subd = dict()
 retirement_reasons = list()
 for i in range(0, cls['subject_data'].shape[0]):
-     tt = json.loads(cls['subject_data'].iloc[i])
-     key = list(tt.keys())[0]
-     if tt[key]['retired'] == None:
-         subd[key] = 'Not Retired'
-     else:
-         subd[key] = tt[key]['retired']['retirement_reason']
-     retirement_reasons.append(subd[key])
+    tt = json.loads(cls['subject_data'].iloc[i])
+    key = list(tt.keys())[0]
+    if tt[key]['retired'] is None:
+        subd[key] = 'Not Retired'
+    else:
+        subd[key] = tt[key]['retired']['retirement_reason']
+    retirement_reasons.append(subd[key])
 
 tt = pd.DataFrame(retirement_reasons, columns=['retirement_reason'])
 tt.groupby(['retirement_reason']).size()
+
+# retirement_reason
+# Not Retired              75601
+# classification_count    238450
+# consensus                   53
+# nothing_here            146492
+# other                   270239
+# dtype: int64
+
 
 # check number of entries per subject and user
 cls.columns

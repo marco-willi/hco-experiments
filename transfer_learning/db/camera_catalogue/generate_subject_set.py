@@ -233,8 +233,10 @@ for key, value in subs_all_data.items():
     subject_set.addSubject(str(key), subject)
 
 # save to disk
-pickle.dump(subject_set, open(cfg_path['db'] + 'subject_set2.pkl',
-                              "wb"), protocol=4)
+subject_set.save(cfg_path['db'] + 'subject_set.json')
+
+#pickle.dump(subject_set, open(cfg_path['db'] + 'subject_set2.pkl',
+#                              "wb"), protocol=4)
 
 # checks
 urls, labels, ids = subject_set.getAllURLsLabelsIDs()
@@ -242,4 +244,3 @@ urls, labels, ids = subject_set.getAllURLsLabelsIDs()
 for i in range(0, 50):
     ii = random.randint(0, len(urls))
     print("%s is a %s on: %s" % (ids[ii], labels[ii], urls[ii]))
-
