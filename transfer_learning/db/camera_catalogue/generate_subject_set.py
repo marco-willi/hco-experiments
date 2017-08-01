@@ -51,25 +51,86 @@ subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
 cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
 cls.head
 
-# filter on workflow: Spot and count rainforest animals
-cls = cls[cls.workflow_name == 'Spot and count rainforest animals']
+# filter on workflow
+cls = cls[cls.workflow_name == 'South Africa (3)']
 
 # filter classifications without a choice
 cls = cls[cls.annotations.str.contains('choice')]
 
 # filter classifications without most recent workflow_version
 work_v = cls.groupby(['workflow_version']).size()
+# workflow_version
+# 311.3     142783
+# 318.4    1160544
 most_recent_wf = work_v.index[-1]
 cls = cls[cls.workflow_version == most_recent_wf]
+
+
+class_mapper = {
+    'GRFF': 'giraffe',
+    'BSHBCK': 'bushbuck',
+    'BSHBB': 'bushbaby',
+    'PRCPN': 'porcupine',
+    'HRTBSTTSSSB': 'hartebeest',
+    'CHTH': 'cheetah',
+    'HMNNTVHCLS': 'human',
+    'RDBCK': 'reedbuck',
+    'RDVRK': 'aardvark',
+    'MNKBBN': 'monkeybaboon',
+    'FRCNCVT': 'africancivet',
+    'BRD': 'bird',
+    'HUMANNOTVEHICLES': 'human',
+    'BSHPG': 'bushpig',
+    'HPPPTMS': 'hippopotamus',
+    'DKRSTNBK': 'duikersteenbok',
+    'WLDCT': 'wildcat',
+    'LPHNT': 'elephant',
+    'KD': 'kudu',
+    'LPRD': 'leopard',
+    'JCKL': 'jackal',
+    'RBBTHR': 'rabbithare',
+    'HNBRWN': 'hyaenabrown',
+    'DMSTCNML': 'domesticanimal',
+    'LND': 'eland',
+    'TTR': 'otter',
+    'WTRBCK': 'waterbuck',
+    'SRVL': 'serval',
+    'RDWLF': 'aardwolf',
+    'GNT': 'genet',
+    'NSCT': 'insect',
+    'HNSPTTD': 'hyaenaspotted',
+    'GMSBK': 'gemsbock',
+    'RHN': 'rhino',
+    'PLCT': 'polecat',
+    'WLDBST': 'wildebeest',
+    'HNBDGR': 'honeyBadger',
+    'WRTHG': 'warthog',
+    'LN': 'lion',
+    'KLPSPRNGR': 'klipspringer',
+    'BT': 'bat',
+    'MACAQUE': 'MACAQUE',
+    'PNGLN': 'pangolin',
+    'ZBR': 'zebra',
+    'RPTL': 'reptile',
+    'VEHICLE': 'vehicle',
+    'NL': 'nyala',
+    'RDNT': 'rodent',
+    'MPL': 'impala',
+    'RNSBL': 'roansable',
+    'BFFL': 'buffalo',
+    'BTRDFX': 'batEaredFox',
+    'MNGS': 'mongoose',
+    'WLDDG': 'wilddog',
+    'CRCL': 'caracal',
+    'VHCL': 'vehicle'
+}
 
 
 # loop through all classifications and fill subject dictionary
 subs_res = dict()
 for i in range(0, cls.shape[0]):
-
     # get subject id
     current_c = cls.iloc[i]
-
     # retirement
     ret = json.loads(current_c['subject_data'])
     key = list(ret.keys())[0]
@@ -77,24 +138,23 @@ for i in range(0, cls.shape[0]):
         ret_res = 'Not Retired'
     else:
         ret_res = ret[key]['retired']['retirement_reason']
-
     # classifications
     cls_usr = [x['choice'] for x in json.loads(current_c['annotations']
                                                )[0]['value']]
-
+    # map correct classes
+    for ii in range(0, len(cls_usr)):
+        if cls_usr[ii] in class_mapper.keys():
+            cls_usr[ii] = class_mapper[cls_usr[ii]]
     # create user in subject key
     if current_c['subject_ids'] not in subs_res:
         subs_res[current_c['subject_ids']] = {'users': dict(),
                                               'retirement_reason': ''}
-
     # create dictionary for user
     if current_c['user_name'] not in subs_res[current_c['subject_ids']]['users']:
         subs_res[current_c['subject_ids']]['users'][current_c['user_name']] = dict()
-
     # add all classifications / species to subject/user combination
     for cl in cls_usr:
         subs_res[current_c['subject_ids']]['users'][current_c['user_name']][cl] = 1
-
     subs_res[current_c['subject_ids']]['retirement_reason'] = ret_res
 
 subs_res[list(subs_res.keys())[0]]
@@ -103,16 +163,13 @@ subs_res[list(subs_res.keys())[0]]
 # generate plurality algorithm result
 subs_res_final = dict()
 for k, v in subs_res.items():
-
     # blanks
-    blank_classes = ['nothing_here', 'VEGETATIONNOANIMAL', 'NOTHINGHERE']
-
+    blank_classes = ['nothing_here', 'VEGETATIONNOANIMAL', 'NOTHINGHERE','NTHNGHR']
     # check retirement reason
-    if v['retirement_reason'] in ['Not Retired','classification_count', None]:
+    if v['retirement_reason'] in ['Not Retired','classification_count', 'consensus', 'other', None]:
         label = 'not_retired'
     else:
         label = v['retirement_reason']
-
     users = v['users']
     # calculate different species
     n_species_user = list()
@@ -120,20 +177,15 @@ for k, v in subs_res.items():
     for u in users.keys():
         n_species_user.append(len(users[u]))
         species_all.extend(list(users[u].keys()))
-
     n_species_med = np.median(n_species_user)
-
     # rank species
     top_n = Counter(species_all).most_common(int(n_species_med))
-
     # extract label
     label_plur = [x[0] for x in top_n]
-
     if not label == 'not_retired':
         label_final = label
     else:
         label_final = label_plur
-
     if type(label_final) is not list:
         label_final = [label_final]
     for i in range(0, len(label_final)):
@@ -141,9 +193,6 @@ for k, v in subs_res.items():
             label_final[i] = 'HUMAN'
         elif label_final[i] in blank_classes:
             label_final[i] = 'blank'
-
-
-
     subs_res_final[k] = {'ret_label': label,
                          'plur_label': label_plur,
                          'n_species': n_species_med,
@@ -162,7 +211,6 @@ for k, v in subs_res_final.items():
     else:
         #print(v['label'])
         lab = v['label']
-
     for l in lab:
         if l not in labels_all:
             labels_all[l] = 1
@@ -181,12 +229,10 @@ for k, v in subs_res_final.items():
         label = label[0]
     else:
         continue
-
     if k in subs.keys():
         url = subs[k]['url']
     else:
         continue
-
     subs_all_data[k] = {'label': label,
                         'url': url,
                         'meta_data': v}
@@ -224,7 +270,6 @@ file2.close()
 subject_set = SubjectSet(labels=list(labels_all.keys()))
 
 for key, value in subs_all_data.items():
-
     subject = Subject(identifier=key,
                       label=value['label'],
                       meta_data=value['meta_data'],
@@ -240,7 +285,6 @@ subject_set.save(cfg_path['db'] + 'subject_set.json')
 
 # checks
 urls, labels, ids = subject_set.getAllURLsLabelsIDs()
-
 for i in range(0, 50):
     ii = random.randint(0, len(urls))
     print("%s is a %s on: %s" % (ids[ii], labels[ii], urls[ii]))

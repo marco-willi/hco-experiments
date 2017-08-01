@@ -94,7 +94,7 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
 
 def create_optimizer(name="standard"):
     """ Creates optimizers according to pre-defined options """
-    if name == "standard":
+    if name == "sgd":
         opt = SGD(lr=0.01, momentum=0.9, decay=0)
     elif name == "sgd_ss":
         opt = SGD(lr=0.01, momentum=0.9, decay=5e-4)

@@ -77,7 +77,7 @@ def read_classification_data(path_csv):
 #########################
 
 subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
-
+subs[list(subs.keys())[0]]
 
 cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
 cls.head
@@ -90,6 +90,17 @@ cls.head
 cls['workflow_name'].unique()
 cls.groupby(['workflow_name']).size()
 
+# workflow_name
+# Angola               553147
+# Empty Or Not              3
+# Gabon (1)             61848
+# Namibia (1)          292281
+# SE Asia (1)          240096
+# SW Angola           1835325
+# South Africa (3)    1303327
+# Tajikistan (1)       408101
+# test                     39
+
 # workflow versions
 cls.groupby(['workflow_version']).size()
 
@@ -101,6 +112,9 @@ cls = cls[cls.annotations.str.contains('choice')]
 
 # filter classifications without most recent workflow_version
 work_v = cls.groupby(['workflow_version']).size()
+# workflow_version
+# 311.3     142783
+# 318.4    1160544
 most_recent_wf = work_v.index[-1]
 cls = cls[cls.workflow_version == most_recent_wf]
 
