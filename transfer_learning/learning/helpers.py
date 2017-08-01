@@ -306,7 +306,7 @@ def create_callbacks(identifier='',
                                       cooldown=0, min_lr=0.0001)
         callbacks.append(reduce_lr)
 
-    if 'ss_learning_rate':
+    if 'ss_learning_rate' in names:
         # learning rate adjustment scheme according to epoch number
         def lrnrate_dec(epoch):
             if epoch < 18:
@@ -328,7 +328,7 @@ def create_callbacks(identifier='',
 
         callbacks.append(learning_rate_decay)
 
-    if 'ss_decay':
+    if 'ss_decay' in names:
         # learning rate adjustment scheme according to epoch number
         def decay_dec(epoch):
             if epoch < 18:

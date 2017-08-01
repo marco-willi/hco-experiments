@@ -24,7 +24,7 @@ class Model(object):
     def __init__(self, train_set, test_set, val_set, mod_file,
                  pre_processing, config, cfg_path, num_classes,
                  callbacks=['checkpointer', 'csv_logger', 'tb_logger'],
-                 optimizer="standard"):
+                 optimizer="sgd"):
         self.test_set = test_set
         self.train_set = train_set
         self.val_set = val_set
