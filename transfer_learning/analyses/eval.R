@@ -25,7 +25,7 @@ model <- "blank_vs_non_blank_small"
 # Elephant Expedition
 path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
 project_id <- "elephant_expedition"
-pred_file = "ee_blank_vs_nonblank_201708012008_preds_test"
+pred_file = "ee_blank_vs_nonblank_201708021608_preds_test"
 log_file <- "ee_blank_vs_nonblank_201708012008_training"
 model <- "ee_blank_vs_nonblank"
 
@@ -77,7 +77,7 @@ log_rf$variable <- revalue(log_rf$variable, c("acc"="Top-1 Accuracy - Train", "l
                           "val_acc"="Top-1 Accuracy - Test", "val_loss"="Test Loss",
                           "sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Train",
                           "val_sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Test"))
-log_rf$set <- ifelse(grepl(pattern = "Train", log_rf$variable),"Test","Train")
+log_rf$set <- ifelse(grepl(pattern = "Train", log_rf$variable),"Train","Test")
 
 
 gg <- ggplot(log_rf, aes(x=epoch, y=value, colour=set, group=variable)) + geom_line(lwd=1.5) +
@@ -107,6 +107,21 @@ head(preds)
 # total accuracy
 sum(preds$y_true == preds$y_pred) / dim(preds)[1]
 
+#########################
+# Class distribution
+#########################
+
+gg <- ggplot(preds, aes(x=y_true)) + geom_bar() +
+  theme_light() +
+  ggtitle(paste("Class Distribution \nmodel: ", model,sep="")) +
+  xlab("Classes") +
+  ylab("# of samples") +
+  coord_flip()
+gg
+
+pdf(file = paste(path_save,model,"_classes_numbers.pdf"), height=8, width=7)
+gg
+dev.off()
 
 
 ################################################ -
