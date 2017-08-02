@@ -296,7 +296,7 @@ def create_callbacks(identifier='',
 
     if 'early_stopping' in names:
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=0,
-                                       patience=3, verbose=0, mode='auto')
+                                       patience=5, verbose=0, mode='auto')
         callbacks.append(early_stopping)
 
     if 'reduce_lr_on_plateau' in names:

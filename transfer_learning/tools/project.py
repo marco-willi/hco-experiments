@@ -86,7 +86,7 @@ class Project(object):
         # to retry saving in case of connection errors while fetching urls
         counter = 0
         success = False
-        n_trials = 4
+        n_trials = 99
         while ((not success) & (counter < n_trials)):
             try:
                 self.subject_set.saveImagesOnDisk(set_name='all',

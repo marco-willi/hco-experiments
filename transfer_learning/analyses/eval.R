@@ -12,22 +12,30 @@ library(dplyr)
 # Parameters ----
 ############################ -
 
+
+# Snapshot Serengeti - Top26 species
 path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
 project_id <- "ss"
-#pred_file <- "ss_species_26_201707271307_preds_test"
-pred_file = "ss_blank_vs_non_blank_small_201707271407_preds_test"
-#log_file <- "ss_species_26_201707231807_training"
-log_file <- "ss_blank_vs_non_blank_small_201707172207_training"
-#model <- "ss_species_26"
-model <- "blank_vs_non_blank_small"
+pred_file <- "ss_species_26_201707271307_preds_test"
+log_file <- "ss_species_26_201707231807_training"
+model <- "ss_species_26"
+
+
+
+# Snapshot Serengeti - Blank vs Non Blank
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "ss"
+# pred_file = "ss_blank_vs_non_blank_small_201707271407_preds_test"
+# log_file <- "ss_blank_vs_non_blank_small_201707172207_training"
+# model <- "blank_vs_non_blank_small"
 
 
 # Elephant Expedition
-path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-project_id <- "elephant_expedition"
-pred_file = "ee_blank_vs_nonblank_201708021608_preds_test"
-log_file <- "ee_blank_vs_nonblank_201708012008_training"
-model <- "ee_blank_vs_nonblank"
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "elephant_expedition"
+# pred_file = "ee_blank_vs_nonblank_201708021608_preds_test"
+# log_file <- "ee_blank_vs_nonblank_201708012008_training"
+# model <- "ee_blank_vs_nonblank"
 
 
 ############################ -
@@ -86,17 +94,18 @@ gg <- ggplot(log_rf, aes(x=epoch, y=value, colour=set, group=variable)) + geom_l
   xlab("Training Epoch") +
   ylab("Loss / Accuracy (%)") +
   facet_grid(group~., scales = "free") +
-  scale_y_continuous(breaks=scales::pretty_breaks(n = 20)) +
+  scale_y_continuous(breaks=scales::pretty_breaks(n = 10)) +
   scale_color_brewer(type = "div", palette = "Set1")
 gg
 
-pdf(file = paste(path_save,model,"_log_file.pdf"), height=8, width=8)
+
+print_name = paste(path_save,model,"_log_file",sep="")
+pdf(file = paste(print_name,".pdf",sep=""), height=8, width=8)
 gg
 dev.off()
-# win.metafile(file = paste(path_save,model,"_log_file.wmf"), width=4, height=4)
-# gg
-# dev.off()
-
+png(file = paste(print_name,".png",sep=""), width=12, height=12,units = "cm", res=128)
+gg
+dev.off()
 
 ############### -
 # Plot Prediction Data
@@ -119,10 +128,14 @@ gg <- ggplot(preds, aes(x=y_true)) + geom_bar() +
   coord_flip()
 gg
 
-pdf(file = paste(path_save,model,"_classes_numbers.pdf"), height=8, width=7)
+
+print_name = paste(path_save,model,"_classes_numbers",sep="")
+pdf(file = paste(print_name,".pdf",sep=""), height=8, width=7)
 gg
 dev.off()
-
+png(file = paste(print_name,".png",sep=""), width=12, height=10,units = "cm", res=128)
+gg
+dev.off()
 
 ################################################ -
 # Per Class & Image Accuracy
@@ -140,10 +153,15 @@ gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, label=past
   xlab("Species") +
   ylab("Accuracy (%)") +
   coord_flip() +
-  geom_text(size = 3, position = position_stack(vjust = 0.5))
+  geom_text(size = 3, position = position_stack(vjust = 0.5), colour="white")
 gg
 
-pdf(file = paste(path_save,model,"_classes_images.pdf"), height=8, width=7)
+
+print_name = paste(path_save,model,"_classes_images",sep="")
+pdf(file = paste(print_name,".pdf",sep=""), height=8, width=7)
+gg
+dev.off()
+png(file = paste(print_name,".png",sep=""), width=12, height=10,units = "cm", res=128)
 gg
 dev.off()
 
@@ -168,10 +186,15 @@ gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, label=past
   xlab("Species") +
   ylab("Accuracy (%)") +
   coord_flip() +
-  geom_text(size = 3, position = position_stack(vjust = 0.5))
+  geom_text(size = 3, position = position_stack(vjust = 0.5), colour="white")
 gg
 
-pdf(file = paste(path_save,model,"_classes_subjects.pdf"), height=8, width=7)
+
+print_name = paste(path_save,model,"_classes_subjects",sep="")
+pdf(file = paste(print_name,".pdf",sep=""), height=8, width=7)
+gg
+dev.off()
+png(file = paste(print_name,".png",sep=""), width=12, height=10,units = "cm", res=128)
 gg
 dev.off()
 
@@ -203,34 +226,50 @@ gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy,
   xlab("Species") +
   ylab("Accuracy (%)") +
   coord_flip() +
-  geom_text(size = 3, position = position_stack(vjust = 0.5))
+  geom_text(size = 3, position = position_stack(vjust = 0.5), colour="white")
 gg
 
-pdf(file = paste(path_save,model,"_classes_subjects_high_confidence.pdf"), height=8, width=7)
+
+print_name = paste(path_save,model,"_classes_subjects_high_confidence",sep="")
+pdf(file = paste(print_name,".pdf",sep=""), height=8, width=7)
+gg
+dev.off()
+png(file = paste(print_name,".png",sep=""), width=12, height=10,units = "cm", res=128)
 gg
 dev.off()
 
-
 # plot confusion matrix
+
+# empty confusion matrix
+conf_empty <- expand.grid(levels(preds$y_true),levels(preds$y_true))
+names(conf_empty) <- c("y_true","y_pred")
 
 # accuracy per true class
 class_sum <- group_by(preds,y_true) %>% summarise(n_class = n())
 conf <- group_by(preds,y_true, y_pred) %>% summarise(n = n()) %>% left_join(class_sum) %>%
   mutate(p_class=n / n_class)
+conf <- left_join(conf_empty, conf,by=c("y_true","y_pred")) %>% mutate(p_class = ifelse(is.na(p_class),0,p_class))
+
 conf
 gg <- ggplot(conf, aes(x=y_pred, y=y_true)) + 
-  geom_tile(aes(fill = p_class), colour = "black") + theme_minimal() +
+  geom_tile(aes(fill = p_class), colour = "black") + theme_bw() +
   ggtitle(paste("Confusion Matrix\nmodel: ", model,sep="")) + 
-  scale_fill_gradient2(low="red", mid="yellow", high="blue", midpoint=0.5) +
+  scale_fill_gradient2(low="blue", mid="yellow", high="red", midpoint=0.5) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  geom_text(aes(label = round(p_class, 2)),cex=2)
+  geom_text(aes(label = round(p_class, 2)),cex=2.5) +
+  ylab("True") +
+  xlab("Predicted") +
+  scale_x_discrete()
 gg
 
 
-pdf(file = paste(path_save,model,"_confusion_matrix.pdf"), height=8, width=8)
+print_name = paste(path_save,model,"_confusion_matrix",sep="")
+pdf(file = paste(print_name,".pdf",sep=""), height=8, width=8)
 gg
 dev.off()
-
+png(file = paste(print_name,".png",sep=""), width=12, height=12,units = "cm", res=128)
+gg
+dev.off()
 
 ################################################ -
 # Distribution of predicted values
@@ -238,14 +277,19 @@ dev.off()
 
 preds_dist <- preds
 preds_dist$correct <- ifelse(preds_dist$y_true==preds_dist$y_pred,1,0)
-gg <- ggplot(preds_dist, aes(x=p, colour=correct)) + geom_histogram() + 
-  facet_wrap("y_true") +
-  ggtitle(paste("Prediction values distribution\nmodel: ", model,sep="")) + 
-  theme_light()
+gg <- ggplot(preds_dist, aes(x=p, colour=correct)) + geom_density() + 
+  facet_wrap("y_true", scales="free") +
+  ggtitle(paste("Predicted values - density distribution\nmodel: ", model,sep="")) + 
+  theme_light() +
+  xlab("Predicted Value") +
+  ylab("Density")
 gg
 
-pdf(file = paste(path_save,model,"_dist_predictions.pdf"), height=8, width=8)
+print_name = paste(path_save,model,"_dist_predictions",sep="")
+pdf(file = paste(print_name,".pdf",sep=""), height=8, width=8)
 gg
 dev.off()
-
+png(file = paste(print_name,".png",sep=""), width=12, height=12,units = "cm", res=128)
+gg
+dev.off()
 
