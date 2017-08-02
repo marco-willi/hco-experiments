@@ -12,7 +12,8 @@ import time
 import os
 import importlib
 from config.config import cfg_model as cfg, logging
-from keras.models import load_model
+from keras.models import load_model, Model as KerasModel
+from keras.layers import Dense
 from datetime import datetime
 from tools.helpers import get_most_rescent_file_with_string
 from tools.predictor import Predictor
@@ -174,10 +175,88 @@ class Model(object):
             logging.info("Loading model from disk: %s" % model_file)
             model = load_model(model_file)
 
-            # pick up learning at last epoch
-            start_epoch = int(model_file.split('/')[-1].split('_')[-2]) + 1
+            # check if output layer has to be replaced
+            if self.cfg['load_model_replace_output'] == 1:
 
-            logging.info("Pick up training from epoch %s" % start_epoch)
+                # get model input
+                new_input = model.input
+
+                # get old model output before last layer
+                old_output = model.layers[-2].output
+
+                # create a new output layer
+                new_output = Dense(units=self.num_classes,
+                                   kernel_initializer="he_normal",
+                                   activation="softmax")(old_output)
+
+                # combine old model with new output layer
+                new_model = KerasModel(inputs=new_input,
+                                       outputs=new_output)
+
+                logging.info("Replacing output layer of model")
+
+                # print layers of old model
+                for layer, i in zip(model.layers, range(0, len(model.layers))):
+                    logging.info("Old model - layer %s: %s" %
+                                 (i, layer.name))
+
+                # overwrite model
+                model = new_model
+
+                # get optimizer
+                self._loadOptimizer()
+
+                # compile model
+                model.compile(loss='sparse_categorical_crossentropy',
+                              optimizer=self._opt,
+                              metrics=['accuracy',
+                                       'sparse_top_k_categorical_accuracy'])
+
+                # print layers of new model
+                for layer, i in zip(model.layers, range(0, len(model.layers))):
+                    logging.info("New model - layer %s: %s" %
+                                 (i, layer.name))
+
+            # check if layers have to be set to non-trainable
+            if self.cfg['load_model_retrain_layer'] not in ('', 'None', None):
+
+                # model layer names
+                layer_names = [x.name for x in model.layers]
+
+                # check if layer name is in model
+                if not self.cfg['load_model_retrain_layer'] in layer_names:
+                    logging.error("Layer %s not in model.layers" %
+                                  self.cfg['load_model_retrain_layer'])
+                    logging.error("Available Layers %s" %
+                                  layer_names)
+                    IOError("Layer %s not in model.layers" %
+                            self.cfg['load_model_retrain_layer'])
+
+                else:
+
+                    # look for specified layer and set all previous layers
+                    # to non-trainable
+                    n_retrain = layer_names.index(
+                                      self.cfg['load_model_retrain_layer']
+                                      )
+                    for layer in model.layers[0:n_retrain]:
+                        layer.trainable = False
+
+                    logging.info("Setting layers before %s to non-trainable" %
+                                 self.cfg['load_model_retrain_layer'])
+
+                    for layer in model.layers:
+                        logging.info("Layer %s is trainable: %s" %
+                                     (layer.name, layer.trainable))
+
+            # determine starting epoch if a model was loaded from disk, without
+            # changing any layers (continue training)
+            if (self.cfg['load_model_retrain_layer'] in
+               ('', 'None', None)) and not \
+               (self.cfg['load_model_replace_output'] == 1):
+                # pick up learning at last epoch
+                start_epoch = int(model_file.split('/')[-1].split('_')[-2]) + 1
+                logging.info("Pick up training from epoch %s" % start_epoch)
 
         # create new model and start learning from scratch
         else:
@@ -194,6 +273,13 @@ class Model(object):
 
         # store model
         self.model = model
+
+        # final model configuration
+        logging.info("Final Model Architecture")
+        for layer, i in zip(model.layers, range(0, len(model.layers))):
+            logging.info("Layer %s: Name: %s Input: %s Output: %s" %
+                         (i, layer.name, layer.input_shape,
+                          layer.output_shape))
 
         ##################################
         # Data Generators
