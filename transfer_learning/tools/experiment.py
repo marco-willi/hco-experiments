@@ -337,7 +337,6 @@ class Experiment(object):
         # print label distribution
         for s, l in zip([self.train_set, self.test_set, self.val_set],
                         ['train', 'test', 'val']):
-            print("Label Distribution %s" % l)
             logging.info("Label Distribution %s" % l)
             s.printLabelDistribution()
 
@@ -353,7 +352,7 @@ class Experiment(object):
             # log exception
             logging.exception("model preparation failed")
             raise Exception
-            
+                        
     def train(self):
         """ train model """
         try:

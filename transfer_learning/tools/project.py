@@ -97,8 +97,7 @@ class Project(object):
                 # log exception
                 logging.exception("saveSubjectSetOnDisk failed")
                 counter += 1
-                print("Failed to Save Subjects on Disk")
-                print("Starting attempt %s / %s" % (counter, n_trials))
+                logging.info("Starting attempt %s / %s" % (counter, n_trials))
         if not success:
             IOError("Could not save subject set on disk")
         else:

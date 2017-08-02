@@ -332,8 +332,8 @@ class Model(object):
                     use_multiprocessing=bool(self.cfg['multi_processing']),
                     initial_epoch=self.start_epoch)
 
-        print("Finished training after %s minutes" %
-              ((time.time() - time_s) // 60))
+        logging.info("Finished training after %s minutes" %
+                     ((time.time() - time_s) // 60))
 
         ##################################
         # Evaluation
@@ -349,10 +349,8 @@ class Model(object):
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
-        print("Test Results")
         logging.info("Test Results")
         for name, value in zip(self.model.metrics_names, eval_metrics):
-            print("%s: %s" % (name, value))
             logging.info("%s: %s" % (name, value))
 
         logging.info("Starting Evaluation on Validation set")
@@ -364,10 +362,8 @@ class Model(object):
                         use_multiprocessing=bool(self.cfg['multi_processing']))
 
         # print evaluation
-        print("Validation Results")
         logging.info("Validation Results")
         for name, value in zip(self.model.metrics_names, eval_metrics):
-            print("%s: %s" % (name, value))
             logging.info("%s: %s" % (name, value))
 
         ##################################

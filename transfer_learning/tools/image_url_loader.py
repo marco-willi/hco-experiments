@@ -32,157 +32,6 @@ class ImageUrlLoader(object):
         img = Image.open(BytesIO(response.content))
         return img
 
-    def _getAsyncUrls(self, urls, ids):
-        """ Load multiple urls in a parallel way """
-
-        # prepare result dictionary
-        images_dict = dict()
-
-        # define asynchronous functions
-        async def download_coroutine(session, key, url):
-            # with async_timeout.timeout(180):
-            async with session.get(url) as response:
-                while True:
-                    chunk = await response.content.read()
-                    if not chunk:
-                        break
-                    try:
-                        img = Image.open(BytesIO(chunk))
-                        images_dict[key] = img
-                    except Exception as e:
-                        # log exception
-                        logging.warn("Could not access image: %s \n" % url)
-                        print("Could not access image: %s \n" % url)
-            return await response.release()
-
-        # asynchronous main loop
-        async def main(loop):
-            async with aiohttp.ClientSession(loop=loop) as session:
-                tasks = [download_coroutine(session, key, url) for
-                         key, url in zip(ids, urls)]
-                await asyncio.gather(*tasks)
-
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main(loop))
-        return images_dict
-
-    def _getAsyncUrls2(self, urls, ids):
-        """ Load multiple urls in a parallel way """
-
-        # prepare result dictionary
-        images_dict = dict()
-
-        # define asynchronous functions
-        async def download_coroutine(session, key, url):
-            # with async_timeout.timeout(180):
-            async with session.get(url) as response:
-                while True:
-                    chunk = await response.content.read()
-                    if not chunk:
-                        break
-                    try:
-                        img = Image.open(BytesIO(chunk))
-                        images_dict[key] = img
-                    except:
-                        print("Could not access image: %s with id %s \n"
-                              % (url, key))
-                        success = False
-                        counter = 0
-                        while (not success) and (counter < 10):
-                            print("Trying again")
-                            time.sleep(0.1)
-                            try:
-                                chunk = await response.content.read()
-                                img = Image.open(BytesIO(chunk))
-                                images_dict[key] = img
-                                success = True
-                            except:
-                                counter += 1
-                                print("Failed Attempt %s / %s" % (counter, 10))
-
-
-            return await response.release()
-
-        # asynchronous main loop
-        async def main(loop):
-            async with aiohttp.ClientSession(loop=loop) as session:
-                tasks = [download_coroutine(session, key, url) for
-                         key, url in zip(ids, urls)]
-                await asyncio.gather(*tasks)
-
-        # crate new event loop to work in multithreaded environment
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(main(loop))
-        return images_dict
-
-    def _getAsyncUrls3(self, urls, ids):
-        """ Load multiple urls in a parallel way, catch failed attempts """
-
-        # prepare result dictionary
-        images_dict = dict()
-
-        # prepare list for fails
-        failures = {'urls': list(), 'ids': list()}
-
-        # define asynchronous functions
-        async def download_coroutine(session, key, url):
-            # with async_timeout.timeout(180):
-            async with session.get(url) as response:
-                while True:
-                    chunk = await response.content.read()
-                    if not chunk:
-                        break
-                    try:
-                        img = Image.open(BytesIO(chunk))
-                        images_dict[key] = img
-                    except:
-                        logging.warn("Could not access image: %s with id %s"
-                                     % (url, key))
-                        print("Could not access image: %s with id %s \n"
-                              % (url, key))
-                        success = False
-                        counter = 0
-                        n_attempts = 3
-                        while (not success) and (counter < n_attempts):
-                            print("Trying again")
-                            time.sleep(0.1)
-                            try:
-                                chunk = await response.content.read()
-                                img = Image.open(BytesIO(chunk))
-                                images_dict[key] = img
-                                success = True
-                            except:
-                                counter += 1
-                                print("Failed Attempt %s / %s"
-                                      % (counter, n_attempts))
-                                logging.warn("Failed Attempt %s / %s"
-                                             % (counter, n_attempts))
-                        # add to failures list
-                        if not success:
-                            failures['urls'].append(url)
-                            failures['ids'].append(key)
-                            # log failures
-                            for u, i in zip(failures['urls'], failures['ids']):
-                                logging.warn("Failed to access id: %s on\
-                                             url: %s" % (i, u))
-
-            return await response.release()
-
-        # asynchronous main loop
-        async def main(loop):
-            async with aiohttp.ClientSession(loop=loop) as session:
-                tasks = [download_coroutine(session, key, url) for
-                         key, url in zip(ids, urls)]
-                await asyncio.gather(*tasks)
-
-        # crate new event loop to work in multithreaded environment
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(main(loop))
-
-        return images_dict, failures
-
     def _getAsyncUrls4(self, urls, ids):
         """ Load multiple urls in a parallel way, catch failed attempts """
 
@@ -205,15 +54,13 @@ class ImageUrlLoader(object):
                             img = Image.open(BytesIO(chunk))
                             images_dict[key] = img
                         except:
-                            logging.warn("Could not access image: %s with id %s"
+                            logging.warn("Could not access image: %s w id %s"
                                          % (url, key))
-                            print("Could not access image: %s with id %s \n"
-                                  % (url, key))
                             success = False
                             counter = 0
                             n_attempts = 0
                             while ((not success) and (counter < n_attempts)):
-                                print("Trying again")
+                                logging.debug("Trying again")
                                 time.sleep(0.1)
                                 try:
                                     chunk = await response.content.read()
@@ -222,8 +69,6 @@ class ImageUrlLoader(object):
                                     success = True
                                 except:
                                     counter += 1
-                                    print("Failed Attempt %s / %s"
-                                          % (counter, n_attempts))
                                     logging.warn("Failed Attempt %s / %s"
                                                  % (counter, n_attempts))
                             # add to failures list
@@ -320,9 +165,6 @@ class ImageUrlLoader(object):
                 res[i] = img
         # invoke asynchronous read
         else:
-            # create dummy ids
-#            internal_ids = [x for x in range(0, size)]
-
             # invoke parallel read
             res, failures = self._getAsyncUrls4(urls, ids)
 
@@ -337,16 +179,6 @@ class ImageUrlLoader(object):
 
                 # increase counter
                 counter += 1
-
-
-#            # ensure correct ordering
-#            for i in internal_ids:
-#                try:
-#                    res.append(res_dict[i])
-#                except:
-#                    print("Could not append image %s" % i)
-
-        # return list of image objects
         return res
 
     def storeOnDisk(self, urls, labels, fnames, path, target_size=None,
@@ -409,12 +241,10 @@ class ImageUrlLoader(object):
 
         # return if nothing needs to be done
         if size == 0:
-            print("Everything already on disk")
             logging.info("Everything already on disk")
             return summary
 
         if size > 0:
-            print("Already on disk: %s" % (size_total - size))
             logging.info("Already on disk: %s" % (size_total - size))
 
         # define chunks of images to load
@@ -443,13 +273,13 @@ class ImageUrlLoader(object):
                 chunk_y.append(val[1])
 
             # invoke asynchronous read
-            binary_images = self.getImages(chunk_urls, chunk_ids,
-                                           zooniverse_imgproc=zooniverse_imgproc,
-                                           target_size=target_size)
+            binary_images = self.getImages(
+                chunk_urls, chunk_ids,
+                zooniverse_imgproc=zooniverse_imgproc,
+                target_size=target_size)
 
             # store on disk
             img_id = 0
-
 
             for c_id, c_y in zip(chunk_ids, chunk_y):
 
@@ -466,7 +296,6 @@ class ImageUrlLoader(object):
                 except:
                     logging.warn("Could not access image %s - skipping..."
                                  % c_id)
-                    print("Could not access image %s - skipping..." % c_id)
                     failures_savings[c_id] = img_id
                     continue
 
@@ -486,15 +315,14 @@ class ImageUrlLoader(object):
                     tm_now = time.time()
                     tm = round(tm_now - time_b, 0)
                     tm_total = second_to_str(time.time() - time_begin)
-                    print("%s / %s stored on disk, took %s s (Total: %s)"
-                          % (jj+size_total-size, size_total, tm, tm_total))
                     time_b = time.time()
                     logging.info("%s / %s stored on disk\
                                   , took %s s (Total: %s)"
-                                  % (jj+size_total-size, size_total,
+                                 % (jj+size_total-size, size_total,
                                      tm, tm_total))
 
         return summary
+
 
 if __name__ == "__main__":
     from main import prep_data

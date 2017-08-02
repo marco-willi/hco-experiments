@@ -127,12 +127,8 @@ class SubjectSet(object):
         # sort labels
         res_sort = sorted(res.items(), key=lambda x: x[1], reverse=True)
 
-        print("Label Distribution")
         logging.info("Label distribution")
         for r in res_sort:
-            print("{:15s} {:7d} / {:7d} {:.2%}".format(r[0], r[1], len(ids),
-                                                       int(r[1])/len(ids)))
-
             logging.info("{:15s} {:7d} / {:7d} {:.2%}".format(r[0],
                                                               r[1], len(ids),
                                                               int(r[1]) /
@@ -161,8 +157,6 @@ class SubjectSet(object):
         data_loader = ImageUrlLoader()
 
         # save to disk
-        print("------------------------------------------")
-        print("Saving %s data ...." % set_name)
         logging.info("Saving %s data ...." % set_name)
         time_s = time.time()
         urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
@@ -173,10 +167,6 @@ class SubjectSet(object):
                                       target_size=cfg['image_size_save'][0:2],
                                       chunk_size=100,
                                       zooniverse_imgproc=False)
-
-        print("Finished saving on disk after %s minutes" %
-              ((time.time() - time_s) // 60))
-        print("------------------------------------------")
         logging.info("Finished saving on disk after %s minutes" %
                      ((time.time() - time_s) // 60))
 
@@ -205,7 +195,7 @@ class SubjectSet(object):
                 try:
                     img.setPath(path + label + "/")
                 except:
-                    print("lalala")
+                    logging.warning("Failed to set path")
 
     def save(self, path):
         """ save subject set to disk as json file """
@@ -228,7 +218,6 @@ class SubjectSet(object):
         with open(path, 'w') as fp:
             json.dump(res, fp)
 
-        print("SubjectSet saved to %s" % path)
         logging.info("SubjectSet saved to %s" % path)
 
     def load(self, path):
@@ -249,7 +238,6 @@ class SubjectSet(object):
             self.addSubject(k, s)
 
         # Log / Print Information
-        print("SubjectSet %s Loaded" % path)
         logging.info("SubjectSet %s Loaded" % path)
         logging.info("Contains %s subjects" % len(self.subjects.keys()))
         self.printLabelDistribution()

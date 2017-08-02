@@ -37,7 +37,8 @@ def main():
     # Define Experiment
     ########################
 
-    # map classes, defined in create_class_mappings function
+    # map classes as specified by the current experiment,
+    # choose from a mapping defined in create_class_mappings() function
     class_mapper = create_class_mappings(cfg_model['class_mapping'])
 
     # experiment object
@@ -49,7 +50,7 @@ def main():
                      random_state=cfg_model['random_seed'])
 
     # create separate directories with image data for this experiment
-    # use only links to save space
+    # use only links to original images to save space
     exp.createExpDataSet(link_only=bool(eval(config['general']['link_only'])),
                          clear_old_files=False,
                          splits=cfg_model['experiment_data'])

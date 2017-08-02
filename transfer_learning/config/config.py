@@ -107,19 +107,27 @@ print("Config Loaded")
 # Logging
 ##############################
 
-# initialize logging file
+# timestamp and logging file name
 ts = str(config['general']['ts'])
 if 'experiment_id' in cfg_model:
     exp_id = cfg_model['experiment_id'] + '_'
 else:
     exp_id = ''
 
-logging.basicConfig(filename=cfg_path['logs'] + exp_id + ts + '_run.log',
-                    filemode="w",
-                    level=logging.DEBUG,
-                    format='%(asctime)s - %(funcName)s - %(levelname)s:' +
-                           '%(message)s')
+# handlers to log stuff to (file and stdout)
+file_handler = logging.FileHandler(
+    filename=cfg_path['logs'] + exp_id + ts + '_run.log')
 
-# log the parameters
+stdout_handler = logging.StreamHandler(sys.stdout)
+
+handlers = [file_handler, stdout_handler]
+
+# logger configuration
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(funcName)s - %(levelname)s:' +
+                           '%(message)s',
+                    handlers=handlers)
+
+# log parameters / config
 logging.info("Path Parameters: %s" % cfg_path)
 logging.info("Model Parameters: %s" % cfg_model)
