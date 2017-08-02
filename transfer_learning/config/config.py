@@ -30,6 +30,7 @@ else:
 # add timestamp to config
 config['general']['ts'] = datetime.now().strftime('%Y%m%d%H%m')
 
+
 # function to load path parameters
 def path_loader(config, create_project_paths=True):
 

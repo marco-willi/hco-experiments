@@ -21,6 +21,15 @@ log_file <- "ss_blank_vs_non_blank_small_201707172207_training"
 #model <- "ss_species_26"
 model <- "blank_vs_non_blank_small"
 
+
+# Elephant Expedition
+path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+project_id <- "elephant_expedition"
+pred_file = "ee_blank_vs_nonblank_201708012008_preds_test"
+log_file <- "ee_blank_vs_nonblank_201708012008_training"
+model <- "ee_blank_vs_nonblank"
+
+
 ############################ -
 # Paths ----
 ############################ -
@@ -41,6 +50,10 @@ head(preds)
 log <- read.csv(paste(path_logs,log_file,".log",sep=""))
 head(log)                  
 
+# remove top5 accuracy if less than 6 different classes
+if (nlevels(preds$y_true) < 6){
+  log <- log[,!grepl("top_k",colnames(log))]
+}
 
 ############################ -
 # Plot Data ----
@@ -52,7 +65,10 @@ head(log)
 
 # reformat data
 log_rf <- melt(log, id.vars = c("epoch"))
-log_rf <- filter(log_rf, !grepl(pattern = "loss", variable))
+log_rf$group <- ifelse(grepl(pattern = "loss", log_rf$variable),"Loss",
+                       ifelse(grepl(pattern = "top", log_rf$variable),"Top-5 Accuracy","Top-1 Accuracy"))
+
+#log_rf <- filter(log_rf, !grepl(pattern = "loss", variable))
 head(log_rf)
 
 # rename variables
@@ -61,19 +77,25 @@ log_rf$variable <- revalue(log_rf$variable, c("acc"="Top-1 Accuracy - Train", "l
                           "val_acc"="Top-1 Accuracy - Test", "val_loss"="Test Loss",
                           "sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Train",
                           "val_sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Test"))
+log_rf$set <- ifelse(grepl(pattern = "Train", log_rf$variable),"Test","Train")
 
 
-gg <- ggplot(log_rf, aes(x=epoch, y=value, colour=variable)) + geom_line(lwd=1.5) +
+gg <- ggplot(log_rf, aes(x=epoch, y=value, colour=set, group=variable)) + geom_line(lwd=1.5) +
   theme_light() +
-  ggtitle(paste("Accuracy Train / Test along training epochs\nmodel: ", model,sep="")) +
-  xlab("Epoch") +
-  ylab("Accuracy (%)") +
-  scale_color_brewer("",palette="Set1")
+  ggtitle(paste("Accuracy/Loss of Train / Test along training epochs\nmodel: ", model,sep="")) +
+  xlab("Training Epoch") +
+  ylab("Loss / Accuracy (%)") +
+  facet_grid(group~., scales = "free") +
+  scale_y_continuous(breaks=scales::pretty_breaks(n = 20)) +
+  scale_color_brewer(type = "div", palette = "Set1")
 gg
 
-pdf(file = paste(path_save,model,"_log_file.pdf"), height=5, width=8)
+pdf(file = paste(path_save,model,"_log_file.pdf"), height=8, width=8)
 gg
 dev.off()
+# win.metafile(file = paste(path_save,model,"_log_file.wmf"), width=4, height=4)
+# gg
+# dev.off()
 
 
 ############### -
@@ -84,6 +106,12 @@ head(preds)
 
 # total accuracy
 sum(preds$y_true == preds$y_pred) / dim(preds)[1]
+
+
+
+################################################ -
+# Per Class & Image Accuracy
+################################################ -
 
 # accuracy per true class
 preds_class <- group_by(preds,y_true) %>% summarise(matches = sum(y_true == y_pred), n = n()) %>%
@@ -103,6 +131,10 @@ gg
 pdf(file = paste(path_save,model,"_classes_images.pdf"), height=8, width=7)
 gg
 dev.off()
+
+################################################ -
+# Per Class & Most confidence Image Accuracy
+################################################ -
 
 # take only with most confidence
 preds_max_p <- group_by(preds, subject_id) %>% summarise(max_p=max(p))
@@ -128,6 +160,11 @@ pdf(file = paste(path_save,model,"_classes_subjects.pdf"), height=8, width=7)
 gg
 dev.off()
 
+################################################ -
+# Per Class & Most confidence Image Accuracy &
+# only if above 95% model score
+################################################ -
+
 # take only with most confidence and Threshold
 preds_max_p <- group_by(preds, subject_id) %>% summarise(max_p=max(p))
 preds_1 <- left_join(preds, preds_max_p, by="subject_id") %>% filter(p==max_p) %>% filter(p>0.95)
@@ -138,8 +175,13 @@ preds_class <- group_by(preds_1,y_true) %>% summarise(matches = sum(y_true == y_
   mutate(accuracy=matches/n)
 preds_class
 
+# get total class numbers and join
+class_numbers <- group_by(preds, y_true) %>% summarise(n_total=n_distinct(subject_id))
 
-gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, label=paste("Acc: ", round(accuracy,3)," Obs: ", n))) + 
+preds_class <- left_join(preds_class, class_numbers, by="y_true") %>% mutate(p_high_threshold=round(n/n_total,2)*100)
+
+gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, 
+                              label=paste("Acc: ", round(accuracy,3)," Obs: ", n," / ",n_total," (",p_high_threshold," %)",sep=""))) + 
   geom_bar(stat="identity", colour="gray") +
   theme_light() +
   ggtitle(paste("Test Accuracy for Classes\nmodel: ", model,"\nsubject level and only > 95% confidence",sep="")) +
@@ -171,6 +213,23 @@ gg
 
 
 pdf(file = paste(path_save,model,"_confusion_matrix.pdf"), height=8, width=8)
+gg
+dev.off()
+
+
+################################################ -
+# Distribution of predicted values
+################################################ -
+
+preds_dist <- preds
+preds_dist$correct <- ifelse(preds_dist$y_true==preds_dist$y_pred,1,0)
+gg <- ggplot(preds_dist, aes(x=p, colour=correct)) + geom_histogram() + 
+  facet_wrap("y_true") +
+  ggtitle(paste("Prediction values distribution\nmodel: ", model,sep="")) + 
+  theme_light()
+gg
+
+pdf(file = paste(path_save,model,"_dist_predictions.pdf"), height=8, width=8)
 gg
 dev.off()
 
