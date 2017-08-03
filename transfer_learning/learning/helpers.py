@@ -301,7 +301,7 @@ def create_callbacks(identifier='',
 
     if 'reduce_lr_on_plateau' in names:
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,
-                                      patience=2, verbose=0,
+                                      patience=3, verbose=0,
                                       mode='auto', epsilon=0.0001,
                                       cooldown=0, min_lr=0.0001)
         callbacks.append(reduce_lr)

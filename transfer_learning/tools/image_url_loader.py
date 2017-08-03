@@ -301,7 +301,13 @@ class ImageUrlLoader(object):
 
                 # resize if specified
                 if target_size is not None:
-                    img = img.resize(target_size)
+                    try:
+                        img = img.resize(target_size)
+                    except:
+                        logging.warn("Could not resize image %s - skipping..."
+                                     % c_id)
+                        failures_savings[c_id] = img_id
+                        continue
 
                 # save to disk
                 img.save(path_img)
