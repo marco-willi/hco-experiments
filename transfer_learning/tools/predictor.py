@@ -145,7 +145,7 @@ class Predictor(object):
                                      image_links="")
 
         return res
-
+        
 
 if __name__ == '__main__':
     pass

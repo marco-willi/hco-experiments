@@ -220,6 +220,23 @@ def create_data_generators(cfg, target_shape, data_augmentation="none"):
         logging.info("Initialized DoubleIterator")
         return res
 
+    # print all class mappings
+    for gen, label in zip((train_generator, test_generator, val_generator),
+                          ["train", "test", "val"]):
+        logging.info("Class mapping for set: %s" % label)
+
+        # empty class list
+        classes_all = list()
+        # mapping of index to class
+        class_mapper = {v: k for k, v in gen.class_indices.items()}
+        for i in range(0, len(class_mapper.keys())):
+            classes_all.append(class_mapper[i])
+
+        for k, v in gen.class_indices.items():
+            logging.info("Class %s maps to index %s" % (k, v))
+
+        logging.info("Full ordered mapping: %s" % classes_all)
+
     return train_generator, test_generator, val_generator
 
 

@@ -11,10 +11,11 @@ from learning.helpers import create_optimizer
 import time
 import os
 import importlib
+import csv
+import json
 from config.config import cfg_model as cfg, logging
 from keras.models import load_model, Model as KerasModel
 from keras.layers import Dense
-from datetime import datetime
 from tools.helpers import get_most_rescent_file_with_string
 from tools.predictor import Predictor
 import dill as pickle
@@ -37,6 +38,7 @@ class Model(object):
         self.callbacks = callbacks
         self.cfg = cfg
         self.num_classes = num_classes
+        self.class_mapping = None
         self.datagen_train = None
         self.datagen_test = None
         self.datagen_val = None
@@ -64,7 +66,7 @@ class Model(object):
         self._opt = create_optimizer(name=self.optimizer)
 
     def _save(self, postfix=None, create_dir=True):
-        """ Save model object """
+        """ Save model object and model configs """
         # extract project id for further loading project specifc configs
         project_id = self.config['projects']['panoptes_id']
 
@@ -87,8 +89,48 @@ class Model(object):
         else:
             NameError("Path not Found")
 
-        self.model.save(path_to_save + out_name + '.h5')
-        logging.info("Saved model %s" % (path_to_save + out_name + '.h5'))
+        self.model.save(path_to_save + out_name + '.hdf5')
+        logging.info("Saved model %s" % (path_to_save + out_name + '.hdf5'))
+
+        # save model config information
+        gen = self.val_generator.image_data_generator
+
+        # Transform some pre-processing statistics such that they can
+        # be stored in a json file
+        if gen.std is not None:
+            std = [float(x) for x in gen.std]
+        else:
+            std = None
+
+        if gen.mean is not None:
+            mean = [float(x) for x in gen.mean]
+        else:
+            mean = None
+
+        if gen.principal_components is not None:
+            pca = [float(x) for x in gen.principal_components]
+        else:
+            pca = None
+
+        # create cfg dictionary
+        model_cfg = {
+         'class_mapper': self.class_mapping,
+         'pre_processing':
+         {
+          'rescale': gen.rescale,
+          'featurewise_std_normalization': gen.featurewise_std_normalization,
+          'featurewise_center': gen.featurewise_center,
+          'std': std,
+          'mean': mean,
+          'principal_components': pca,
+          'zca_whitening': gen.zca_whitening,
+          'zca_epsilon': gen.zca_epsilon
+         }
+        }
+
+        # save as json file
+        with open(path_to_save + out_name + '_cfg.json', 'w') as fp:
+            json.dump(model_cfg, fp)
 
     def _dataGens(self, target_shape):
         """ generate input data from a generator function that applies
@@ -99,6 +141,11 @@ class Model(object):
                                                         target_shape,
                                                         self.pre_processing
                                                         )
+        # store class mapping (index to class)
+        class_mapper = {v: k for k, v in
+                        self.train_generator.class_indices.items()}
+
+        self.class_mapping = class_mapper
 
     def _getCallbacks(self):
         """ create pre-defined callbacks """
@@ -324,8 +371,8 @@ class Model(object):
                     self.cfg['batch_size'],
                     epochs=self.cfg['num_epochs'],
                     workers=10,
-                    validation_data=self.test_generator,
-                    validation_steps=self.test_generator.n //
+                    validation_data=self.val_generator,
+                    validation_steps=self.val_generator.n //
                     self.cfg['batch_size'],
                     callbacks=self._callbacks_obj,
                     class_weight=cl_w,
@@ -339,6 +386,19 @@ class Model(object):
         # Evaluation
         ##################################
 
+        logging.info("Starting Evaluation on Validation set")
+        # Validation Data
+        eval_metrics = self.model.evaluate_generator(
+                        self.val_generator,
+                        steps=self.val_generator.n // self.cfg['batch_size'],
+                        workers=10,
+                        use_multiprocessing=bool(self.cfg['multi_processing']))
+
+        # print evaluation
+        logging.info("Validation Results")
+        for name, value in zip(self.model.metrics_names, eval_metrics):
+            logging.info("%s: %s" % (name, value))
+
         logging.info("Starting Evaluation on Test set")
 
         # Test Data
@@ -350,19 +410,6 @@ class Model(object):
 
         # print evaluation
         logging.info("Test Results")
-        for name, value in zip(self.model.metrics_names, eval_metrics):
-            logging.info("%s: %s" % (name, value))
-
-        logging.info("Starting Evaluation on Validation set")
-        # Validation Data
-        eval_metrics = self.model.evaluate_generator(
-                        self.val_generator,
-                        steps=self.val_generator.n // self.cfg['batch_size'],
-                        workers=10,
-                        use_multiprocessing=bool(self.cfg['multi_processing']))
-
-        # print evaluation
-        logging.info("Validation Results")
         for name, value in zip(self.model.metrics_names, eval_metrics):
             logging.info("%s: %s" % (name, value))
 

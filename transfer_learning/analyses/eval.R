@@ -14,11 +14,11 @@ library(dplyr)
 
 
 # Snapshot Serengeti - Top26 species
-path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-project_id <- "ss"
-pred_file <- "ss_species_26_201707271307_preds_test"
-log_file <- "ss_species_26_201707231807_training"
-model <- "ss_species_26"
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "ss"
+# pred_file <- "ss_species_26_201707271307_preds_test"
+# log_file <- "ss_species_26_201707231807_training"
+# model <- "ss_species_26"
 
 
 
@@ -30,12 +30,19 @@ model <- "ss_species_26"
 # model <- "blank_vs_non_blank_small"
 
 
-# Elephant Expedition
+# Elephant Expedition - blank vs non-blank
 # path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
 # project_id <- "elephant_expedition"
 # pred_file = "ee_blank_vs_nonblank_201708021608_preds_test"
 # log_file <- "ee_blank_vs_nonblank_201708012008_training"
 # model <- "ee_blank_vs_nonblank"
+
+# Elephant Expedition - species
+path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+project_id <- "elephant_expedition"
+pred_file = "ee_nonblank_201708030208_preds_test"
+log_file <- "ee_nonblank_201708021908_training"
+model <- "ee_nonblank"
 
 
 ############################ -
@@ -112,6 +119,11 @@ dev.off()
 ############### -
 
 head(preds)
+
+# check levels
+missing_levels <- setdiff(levels(preds$y_true), levels(preds$y_pred))
+
+levels(preds$y_pred) <- c(levels(preds$y_pred),missing_levels)
 
 # total accuracy
 sum(preds$y_true == preds$y_pred) / dim(preds)[1]
@@ -276,13 +288,14 @@ dev.off()
 ################################################ -
 
 preds_dist <- preds
-preds_dist$correct <- ifelse(preds_dist$y_true==preds_dist$y_pred,1,0)
-gg <- ggplot(preds_dist, aes(x=p, colour=correct)) + geom_density() + 
+preds_dist$correct <- factor(ifelse(preds_dist$y_true!=preds_dist$y_pred,0,1))
+gg <- ggplot(preds_dist, aes(x=p, fill=correct)) + geom_density(alpha=0.3) + 
   facet_wrap("y_true", scales="free") +
   ggtitle(paste("Predicted values - density distribution\nmodel: ", model,sep="")) + 
   theme_light() +
   xlab("Predicted Value") +
-  ylab("Density")
+  ylab("Density") + 
+  scale_fill_brewer(type = "qual",direction = -1)
 gg
 
 print_name = paste(path_save,model,"_dist_predictions",sep="")
