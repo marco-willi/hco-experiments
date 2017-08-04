@@ -86,6 +86,12 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
         map_dict = {'elephant': 'elephant',
                     'zebra': 'zebra'}
 
+    elif mapping == 'ee_nonblank_no_cannotidentify':
+        map_dict = {c: c for c in all_classes}
+        for bl in blank_classes:
+            map_dict.pop(bl, None)
+        map_dict.pop('CANNOTIDENTIFY', None)
+
     else:
         NotImplementedError("Mapping %s not implemented" % mapping)
 
