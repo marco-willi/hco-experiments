@@ -11,7 +11,6 @@ from learning.helpers import create_optimizer
 import time
 import os
 import importlib
-import csv
 import json
 from config.config import cfg_model as cfg, logging
 from keras.models import load_model, Model as KerasModel
@@ -98,17 +97,17 @@ class Model(object):
         # Transform some pre-processing statistics such that they can
         # be stored in a json file
         if gen.std is not None:
-            std = [float(x) for x in gen.std]
+            std = [float(x) for x in gen.std[0][0]]
         else:
             std = None
 
         if gen.mean is not None:
-            mean = [float(x) for x in gen.mean]
+            mean = [float(x) for x in gen.mean[0][0]]
         else:
             mean = None
 
         if gen.principal_components is not None:
-            pca = [float(x) for x in gen.principal_components]
+            pca = [float(x) for x in gen.principal_components[0][0]]
         else:
             pca = None
 

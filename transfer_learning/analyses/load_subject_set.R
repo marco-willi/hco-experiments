@@ -112,9 +112,11 @@ ggplot(preds, aes(x=class,y=prob)) + geom_bar(stat="identity") +
   annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
                     -Inf, Inf, -Inf, Inf)
 
-gg1 <- ggplot(data.frame(x=1:10,y= 1:10),aes(x=x,y=y), geom="blank") + annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
-                                                -Inf, Inf, -Inf, Inf) + theme_minimal() +
-  geom_text(aes(label="TEXT",x=5,y=10))
+gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
+  annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
+                    -Inf, Inf, -Inf, Inf) + theme_minimal() +
+  theme(axis.title = element_blank(), axis.text = element_blank()) +
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 gg1
 gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill="lightblue") +
   coord_flip() +
@@ -125,9 +127,14 @@ gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identi
         axis.title.x=element_text(size=16),
         axis.title.y=element_text(size=16)) +
   geom_text(aes(label=class, y=0), vjust="right", hjust="left") +
-  theme(plot.margin = unit(c(0,0,0.5,0), "cm"))
+  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) +
+  scale_y_continuous(expand=c(0,0)) +
+  labs(x=NULL)
 gg2
-grid.arrange(gg1,gg2)
+
+
+title=textGrob(label = label,gp=gpar(fontsize=20,font=3))
+grid.arrange(gg1,gg2,top=title)
 
 
 
