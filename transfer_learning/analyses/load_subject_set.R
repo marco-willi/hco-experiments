@@ -126,14 +126,14 @@ gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identi
   theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
         axis.title.x=element_text(size=16),
         axis.title.y=element_text(size=16)) +
-  geom_text(aes(label=class, y=0), vjust="right", hjust="left") +
+  geom_text(aes(label=class, y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
   theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) +
   scale_y_continuous(expand=c(0,0)) +
   labs(x=NULL)
 gg2
 
 
-title=textGrob(label = label,gp=gpar(fontsize=20,font=3))
+title=textGrob(label = label,gp=gpar(fontsize=20,fontface="bold"), vjust=1)
 grid.arrange(gg1,gg2,top=title)
 
 

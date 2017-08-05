@@ -92,6 +92,12 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
             map_dict.pop(bl, None)
         map_dict.pop('CANNOTIDENTIFY', None)
 
+    # Camera Catalogue: blank vs vehicle vs species
+    elif mapping == 'cc_blank_vehicle_species':
+        veh_bl = ['vehicle', 'blank']
+        map_spec = {c: 'species' for c in all_classes if c not in veh_bl}
+        map_veh_bl = {c: c for c in veh_bl}
+        map_dict = {**map_spec, **map_veh_bl}
     else:
         NotImplementedError("Mapping %s not implemented" % mapping)
 
