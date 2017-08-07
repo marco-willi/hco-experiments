@@ -107,6 +107,19 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
         map_spec = {c: 'species' for c in all_classes if c not in veh_bl}
         map_veh_bl = {c: c for c in veh_bl}
         map_dict = {**map_spec, **map_veh_bl}
+
+    # Camera Catalogue: species
+    elif mapping == 'cc_species':
+        veh_bl = ['vehicle', 'blank']
+        low_occurrence_classes = ['reptile', 'otter', 'pangolin', 'polecat',
+                                  'MACAQUE']
+        map_dict = {c: c for c in all_classes}
+        for bl in veh_bl:
+            map_dict.pop(bl, None)
+
+        for lo in low_occurrence_classes:
+            map_dict.pop(lo, None)
+
     else:
         NotImplementedError("Mapping %s not implemented" % mapping)
 
