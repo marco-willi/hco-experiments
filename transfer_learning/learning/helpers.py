@@ -82,6 +82,15 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
         # combine top 26 and others category
         map_dict = {**map_26, **map_other}
 
+    elif mapping == "ss_51":
+        # remove blanks and low-occurence classes
+        low_occurrence_classes = ['steenbok', 'cattle', 'bat']
+        map_dict = {c: c for c in all_classes}
+        for bl in blank_classes:
+            map_dict.pop(bl, None)
+        for bl in low_occurrence_classes:
+            map_dict.pop(bl, None)
+
     elif mapping == 'ss_zebra_elephant':
         map_dict = {'elephant': 'elephant',
                     'zebra': 'zebra'}

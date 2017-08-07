@@ -33,22 +33,29 @@ library(gridExtra)
 
 
 # Elephant Expedition - blank vs non-blank
-# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-# project_id <- "elephant_expedition"
-# pred_file = "ee_blank_vs_nonblank_201708021608_preds_test"
-# log_file <- "ee_blank_vs_nonblank_201708012008_training"
-# model <- "ee_blank_vs_nonblank"
+path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+project_id <- "elephant_expedition"
+pred_file = "ee_blank_vs_nonblank_201708021608_preds_val"
+log_file <- "ee_blank_vs_nonblank_201708012008_training"
+model <- "ee_blank_vs_nonblank"
+subject_set <- "val_subject_set_ee_blank_vs_nonblank"
 
 # Elephant Expedition - species
-path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-project_id <- "elephant_expedition"
-pred_file = "ee_nonblank_201708030208_preds_test"
-log_file <- "ee_nonblank_201708021908_training"
-model <- "ee_nonblank"
-subject_set <- "test_subject_set_ee_nonblank"
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "elephant_expedition"
+# pred_file = "ee_nonblank_201708030208_preds_test"
+# log_file <- "ee_nonblank_201708021908_training"
+# model <- "ee_nonblank"
+# subject_set <- "test_subject_set_ee_nonblank"
+# 
 
-path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-project_id <- "elephant_expedition"
+# Elephant Expedition - species no cannotidentify
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "elephant_expedition"
+# pred_file = "ee_nonblank_no_cannotidentify_201708050608_preds_val"
+# log_file <- "ee_nonblank_no_cannotidentify_201708042308_training"
+# model <- "ee_nonblank_no_cannotidentify"
+# subject_set <- "val_subject_set_ee_nonblank_no_cannotidentify"
 
 ############################ -
 # Paths ----
@@ -58,6 +65,7 @@ path_logs <- paste(path_main,"logs/",project_id,"/",sep="")
 path_save <- paste(path_main,"save/",project_id,"/",sep="")
 path_db <- paste(path_main,"db/",project_id,"/",sep="")
 path_scratch <- paste(path_main,"scratch/",project_id,"/",sep="")
+path_figures <- paste(path_main,"save/",project_id,"/figures/",sep="")
 
 ############################ -
 # Read Data ----
@@ -86,55 +94,57 @@ random_wrongs
 
 
 ############################ -
-# Download Image ----
+# Plot missclassifications ----
 ############################ -
 
-ii <- 1
+for (ii in 1:10){
+  
+  id <- paste(random_wrongs[ii,"subject_id"])
+  preds <- random_wrongs[ii,"preds_all"]
+  preds <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
+  preds <- melt(preds,value.name = "prob",variable.name = "class")
+  sub <- subjects[id]
+  url <- unlist(sub[[id]]['urls'])
+  label <- unlist(sub[[id]]['label'])
+  url
+  label
+  preds
+  file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
+  download.file(url, destfile = file_name, mode = 'wb')
+  
+  
+  img <- readJPEG(file_name)
+  
+  
+  gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
+    annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
+                      -Inf, Inf, -Inf, Inf) + theme_minimal() +
+    theme(axis.title = element_blank(), axis.text = element_blank()) +
+    theme(plot.margin = unit(c(0.7,0.7,0,0.7), "cm"))
+  
+  gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill="lightblue") +
+    coord_flip() +
+    theme_light() +
+    ylab("Predicted Probability") +
+    xlab("") +
+    theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
+          axis.title.x=element_text(size=16),
+          axis.title.y=element_text(size=16),
+          axis.ticks.y = element_blank()) +
+    geom_text(aes(label=class, y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
+    theme(plot.margin = unit(c(0.7,0.7,0,0.7), "cm")) +
+    scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
+    labs(x=NULL)
 
-id <- paste(random_wrongs[ii,"subject_id"])
-preds <- random_wrongs[ii,"preds_all"]
-preds <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
-preds <- melt(preds,value.name = "prob",variable.name = "class")
-sub <- subjects[id]
-url <- unlist(sub[[id]]['urls'])
-label <- unlist(sub[[id]]['label'])
-url
-label
-preds
-file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
-download.file(url, destfile = file_name, mode = 'wb')
-
-
-img <- readJPEG(file_name)
-
-
-ggplot(preds, aes(x=class,y=prob)) + geom_bar(stat="identity") +
-  annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
-                    -Inf, Inf, -Inf, Inf)
-
-gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
-  annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
-                    -Inf, Inf, -Inf, Inf) + theme_minimal() +
-  theme(axis.title = element_blank(), axis.text = element_blank()) +
-  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
-gg1
-gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill="lightblue") +
-  coord_flip() +
-  theme_light() +
-  ylab("Predicted Probability") +
-  xlab("") +
-  theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
-        axis.title.x=element_text(size=16),
-        axis.title.y=element_text(size=16)) +
-  geom_text(aes(label=class, y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
-  theme(plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) +
-  scale_y_continuous(expand=c(0,0)) +
-  labs(x=NULL)
-gg2
-
-
-title=textGrob(label = label,gp=gpar(fontsize=20,fontface="bold"), vjust=1)
-grid.arrange(gg1,gg2,top=title)
-
-
+  
+  title=textGrob(label = label,gp=gpar(fontsize=20,fontface="bold"), vjust=1)
+  
+  print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
+  pdf(file = paste(print_name,".pdf",sep=""), height=8, width=8)
+  grid.arrange(gg1,gg2,top=title)
+  dev.off()
+  png(file = paste(print_name,".png",sep=""), width=18, height=18,units = "cm", res=128)
+  grid.arrange(gg1,gg2,top=title)
+  dev.off()
+}
 
