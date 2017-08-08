@@ -33,12 +33,12 @@ library(gridExtra)
 
 
 # Elephant Expedition - blank vs non-blank
-path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-project_id <- "elephant_expedition"
-pred_file = "ee_blank_vs_nonblank_201708021608_preds_val"
-log_file <- "ee_blank_vs_nonblank_201708012008_training"
-model <- "ee_blank_vs_nonblank"
-subject_set <- "val_subject_set_ee_blank_vs_nonblank"
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "elephant_expedition"
+# pred_file = "ee_blank_vs_nonblank_201708021608_preds_val"
+# log_file <- "ee_blank_vs_nonblank_201708012008_training"
+# model <- "ee_blank_vs_nonblank"
+# subject_set <- "val_subject_set_ee_blank_vs_nonblank"
 
 # Elephant Expedition - species
 # path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
@@ -56,6 +56,14 @@ subject_set <- "val_subject_set_ee_blank_vs_nonblank"
 # log_file <- "ee_nonblank_no_cannotidentify_201708042308_training"
 # model <- "ee_nonblank_no_cannotidentify"
 # subject_set <- "val_subject_set_ee_nonblank_no_cannotidentify"
+
+# Camera Catalogue - Blank vs Vehicle vs Species
+path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+project_id <- "camera_catalogue"
+pred_file <- "cc_blank_vehicle_species_201708052008_preds_val"
+log_file <- "cc_blank_vehicle_species_201708052008_training"
+model <- "cc_blank_vehicle_species"
+subject_set <- "val_subject_set_cc_blank_vehicle_species"
 
 ############################ -
 # Paths ----

@@ -14,11 +14,11 @@ library(dplyr)
 
 
 # Snapshot Serengeti - Top26 species
-path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-project_id <- "ss"
-pred_file <- "ss_species_26_201707271307_preds_test"
-log_file <- "ss_species_26_201707231807_training"
-model <- "ss_species_26"
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "ss"
+# pred_file <- "ss_species_26_201707271307_preds_test"
+# log_file <- "ss_species_26_201707231807_training"
+# model <- "ss_species_26"
 
 
 
@@ -50,6 +50,22 @@ model <- "ss_species_26"
 # pred_file = "ee_nonblank_no_cannotidentify_201708050608_preds_val"
 # log_file <- "ee_nonblank_no_cannotidentify_201708042308_training"
 # model <- "ee_nonblank_no_cannotidentify"
+
+
+# Camera Catalogue - Blank vs Vehicle vs Species
+# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+# project_id <- "camera_catalogue"
+# pred_file <- "cc_blank_vehicle_species_201708052008_preds_val"
+# log_file <- "cc_blank_vehicle_species_201708052008_training"
+# model <- "cc_blank_vehicle_species"
+
+# Camera Catalogue - Species
+path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+project_id <- "camera_catalogue"
+pred_file <- "cc_species_201708072308_preds_val"
+log_file <- "cc_species_201708072308_training"
+model <- "cc_species"
+
 
 
 ############################ -
@@ -114,7 +130,7 @@ gg <- ggplot(log_rf, aes(x=epoch, y=value, colour=set, group=variable)) + geom_l
 gg
 
 
-print_name = paste(path_save,model,"_log_file",sep="")
+print_name = paste(path_figures,model,"_log_file",sep="")
 pdf(file = paste(print_name,".pdf",sep=""), height=8, width=8)
 gg
 dev.off()
@@ -155,7 +171,7 @@ gg <- ggplot(class_dist, aes(x=reorder(y_true, n_obs), y=n_obs)) + geom_bar(stat
 gg
 
 
-print_name = paste(path_save,model,"_classes_numbers",sep="")
+print_name = paste(path_figures,model,"_classes_numbers",sep="")
 pdf(file = paste(print_name,".pdf",sep=""), height=8, width=7)
 gg
 dev.off()
@@ -314,7 +330,7 @@ gg <- ggplot(res3, aes(x=threshold, y=value, colour=variable, group=variable)) +
   theme(axis.text = element_text(size=12),
         axis.title = element_text(size=14),
         legend.text = element_text(size=12))
-
+gg
 
 print_name = paste(path_figures,model,"_accuracy_vs_threshold_overall",sep="")
 pdf(file = paste(print_name,".pdf",sep=""), height=6, width=12)
