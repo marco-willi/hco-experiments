@@ -6,8 +6,8 @@ Class to implement a Model object
 - loads the model infrastructure
 - invokes model training functions from Keras
 """
-from learning.helpers import create_data_generators, create_callbacks
-from learning.helpers import create_optimizer
+from learning.model_components import create_data_generators, create_callbacks
+from learning.model_components import create_optimizer
 import time
 import os
 import importlib

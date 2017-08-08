@@ -3,7 +3,7 @@ from config.config import config, cfg_path, cfg_model
 from tools.project import Project
 from tools.experiment import Experiment
 from tools.model import Model
-from learning.helpers import create_class_mappings
+from learning.model_components import create_class_mappings
 import dill as pickle
 
 

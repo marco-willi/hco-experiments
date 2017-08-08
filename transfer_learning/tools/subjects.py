@@ -197,6 +197,59 @@ class SubjectSet(object):
                 except:
                     logging.warning("Failed to set path")
 
+    def to_csv(self, out_file, mode="label_dist_subjects"):
+        """ save subject set data to disk as csv """
+
+        # check input
+        if out_file is None:
+            IOError("out_file must be specified")
+
+        # check mode
+        all_modes = ['label_dist_subjects', 'label_dist_images',
+                     'all_images', 'all_subjects']
+        if mode not in all_modes:
+            IOError("mode must be one of: %s" % all_modes)
+
+        # save label distribution of subjects
+        if mode in ['label_dist_subjects', 'label_dist_images']:
+
+            # get all labels and subjects / urls
+            if mode == 'label_dist_subjects':
+                ids, labels = self.getAllIDsLabels()
+            elif mode == 'label_dist_images':
+                ids, labels = self.getAllURLsLabels()
+
+            # count labels
+            res = dict()
+            for lab in labels:
+                if lab not in res.keys():
+                    res[lab] = 1
+                else:
+                    res[lab] += 1
+
+            # sort labels
+            res_sort = sorted(res.items(), key=lambda x: x[1], reverse=True)
+
+            # export to csv
+            file = open(out_file, "w")
+            file.write('class,n\n')
+            for r in res_sort:
+                # write labels to disk
+                file.write(str(r[0]) + ',' + str(r[1]) + "\n")
+
+        if mode in ['all_images']:
+            # get all labels, ids, urls and fnames
+            urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
+
+            # export to csv
+            file = open(out_file, "w")
+            file.write('subject_id,label,fname,url\n')
+
+            # loop over all and write to file
+            for u, l, i, f in zip(urls, labels, ids, fnames):
+                # write labels to disk
+                file.write("%s,%s,%s,%s\n" % (i, l, f, u))
+
     def save(self, path):
         """ save subject set to disk as json file """
         # get all ids and prepare dictionary

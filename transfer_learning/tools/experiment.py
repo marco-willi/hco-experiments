@@ -5,7 +5,7 @@ import shutil
 from tools.project import Project
 from tools.model import Model
 from config.config import cfg_path, cfg_model, config
-from learning.helpers import create_class_mappings
+from learning.model_components import create_class_mappings
 from config.config import logging
 import random
 
@@ -125,6 +125,15 @@ class Experiment(object):
                    self.name + '.json'
 
             s.save(path)
+
+            # save aggregate statistics
+            path_csv = self.project.cfg_path['db'] + n + '_subject_set_' +\
+                self.name + '_label_dist_subjects.csv'
+            s.to_csv(path_csv, mode="label_dist_subjects")
+
+            path_csv = self.project.cfg_path['db'] + n + '_subject_set_' +\
+                self.name + '_label_dist_images.csv'
+            s.to_csv(path_csv, mode="label_dist_images")
 
     def load(self):
         """ Load test/tain/val datasets from disk """
@@ -352,7 +361,7 @@ class Experiment(object):
             # log exception
             logging.exception("model preparation failed")
             raise Exception
-                        
+
     def train(self):
         """ train model """
         try:

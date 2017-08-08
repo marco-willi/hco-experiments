@@ -2,8 +2,8 @@
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
 from config.config import config, cfg_path
 import time
-from learning.helpers import create_data_generators
-from learning.helpers import model_save, model_param_loader
+from learning.model_components import create_data_generators
+from learning.model_components import model_save, model_param_loader
 import importlib
 from config.config import logging
 
