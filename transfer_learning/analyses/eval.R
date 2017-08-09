@@ -106,22 +106,15 @@ if (nlevels(preds$y_true) < 6){
 log_rf <- melt(log, id.vars = c("epoch"))
 log_rf$group <- ifelse(grepl(pattern = "loss", log_rf$variable),"Loss",
                        ifelse(grepl(pattern = "top", log_rf$variable),"Top-5 Accuracy","Top-1 Accuracy"))
-
-#log_rf <- filter(log_rf, !grepl(pattern = "loss", variable))
-head(log_rf)
-
-# rename variables
-str(log_rf)
 log_rf$variable <- revalue(log_rf$variable, c("acc"="Top-1 Accuracy - Train", "loss"="Train Loss",
-                          "val_acc"="Top-1 Accuracy - Test", "val_loss"="Test Loss",
-                          "sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Train",
-                          "val_sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Test"))
-log_rf$set <- ifelse(grepl(pattern = "Train", log_rf$variable),"Train","Test")
-
+                                              "val_acc"="Top-1 Accuracy - Validation", "val_loss"="Validation Loss",
+                                              "sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Train",
+                                              "val_sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Validation"))
+log_rf$set <- ifelse(grepl(pattern = "Train", log_rf$variable),"Train","Validation")
 
 gg <- ggplot(log_rf, aes(x=epoch, y=value, colour=set, group=variable)) + geom_line(lwd=1.5) +
   theme_light() +
-  ggtitle(paste("Accuracy/Loss of Train / Test along training epochs\nmodel: ", model,sep="")) +
+  ggtitle(paste("Accuracy/Loss of Train / Validation along training epochs\nmodel: ", model,sep="")) +
   xlab("Training Epoch") +
   ylab("Loss / Accuracy (%)") +
   facet_grid(group~., scales = "free") +
@@ -191,7 +184,7 @@ preds_class
 gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, label=paste("Acc: ", round(accuracy,3)," Obs: ", n))) + 
   geom_bar(stat="identity", colour="gray") +
   theme_light() +
-  ggtitle(paste("Test Accuracy for Classes\nmodel: ", model,"\nall images",sep="")) +
+  ggtitle(paste("Validation Accuracy for Classes\nmodel: ", model,"\nall images",sep="")) +
   xlab("") +
   ylab("Accuracy (%)") +
   coord_flip() +
@@ -224,7 +217,7 @@ preds_class
 gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, label=paste("Acc: ", round(accuracy,3)," Obs: ", n))) + 
   geom_bar(stat="identity", colour="gray") +
   theme_light() +
-  ggtitle(paste("Test Accuracy for Classes\nmodel: ", model,"\nSubject level",sep="")) +
+  ggtitle(paste("Validation Accuracy for Classes\nmodel: ", model,"\nSubject level",sep="")) +
   xlab("Species") +
   ylab("Accuracy (%)") +
   coord_flip() +
@@ -264,7 +257,7 @@ gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy,
                               label=paste("Acc: ", round(accuracy,3)," Obs: ", n," / ",n_total," (",p_high_threshold," %)",sep=""))) + 
   geom_bar(stat="identity", colour="gray") +
   theme_light() +
-  ggtitle(paste("Test Accuracy for Classes\nmodel: ", model,"\nsubject level and only > 95% confidence",sep="")) +
+  ggtitle(paste("Validation Accuracy for Classes\nmodel: ", model,"\nsubject level and only > 95% confidence",sep="")) +
   xlab("Species") +
   ylab("Accuracy (%)") +
   coord_flip() +
@@ -308,7 +301,7 @@ for (ii in seq_along(thresholds)){
   # get total class numbers and join
   class_numbers <- group_by(preds) %>% summarise(n_total=n_distinct(subject_id))
   
-  preds_class$p_high_threshold <- round(preds_class$n/class_numbers$n_total,2)
+  preds_class$p_high_threshold <- sapply(round(preds_class$n/class_numbers$n_total,2),function(x){min(1,x)})
   preds_class$threshold <- thresholds[ii]
   
   res[[ii]] <- preds_class

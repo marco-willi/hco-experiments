@@ -10,6 +10,7 @@ library(jsonlite)
 library(jpeg)
 library(grid)
 library(gridExtra)
+
 ############################ -
 # Parameters ----
 ############################ -
@@ -109,50 +110,65 @@ for (ii in 1:10){
   
   id <- paste(random_wrongs[ii,"subject_id"])
   preds <- random_wrongs[ii,"preds_all"]
-  preds <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
-  preds <- melt(preds,value.name = "prob",variable.name = "class")
-  sub <- subjects[id]
-  url <- unlist(sub[[id]]['urls'])
-  label <- unlist(sub[[id]]['label'])
-  url
-  label
-  preds
-  file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
-  download.file(url, destfile = file_name, mode = 'wb')
   
-  
-  img <- readJPEG(file_name)
-  
-  
-  gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
-    annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
-                      -Inf, Inf, -Inf, Inf) + theme_minimal() +
-    theme(axis.title = element_blank(), axis.text = element_blank()) +
-    theme(plot.margin = unit(c(0.7,0.7,0,0.7), "cm"))
-  
-  gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill="lightblue") +
-    coord_flip() +
-    theme_light() +
-    ylab("Predicted Probability") +
-    xlab("") +
-    theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
-          axis.title.x=element_text(size=16),
-          axis.title.y=element_text(size=16),
-          axis.ticks.y = element_blank()) +
-    geom_text(aes(label=class, y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
-    theme(plot.margin = unit(c(0.7,0.7,0,0.7), "cm")) +
-    scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
-    labs(x=NULL)
-
-  
-  title=textGrob(label = label,gp=gpar(fontsize=20,fontface="bold"), vjust=1)
-  
+  gg <- plot_subject_image(preds, subjects, id, path_scratch, ii)
+  # preds <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
+  # preds <- melt(preds,value.name = "prob",variable.name = "class")
+  # sub <- subjects[id]
+  # url <- unlist(sub[[id]]['urls'])
+  # label <- unlist(sub[[id]]['label'])
+  # url
+  # label
+  # preds
+  # file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
+  # download.file(url, destfile = file_name, mode = 'wb')
+  # 
+  # 
+  # img <- readJPEG(file_name)
+  # 
+  # 
+  # gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
+  #   annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
+  #                     -Inf, Inf, -Inf, Inf) + theme_minimal() +
+  #   theme(axis.title = element_blank(), axis.text = element_blank()) +
+  #   theme(plot.margin = unit(c(0.7,0.9,0,0.9), "cm"))
+  # 
+  # # keep only top 5
+  # preds <- preds[order(preds$prob, decreasing = TRUE)[1:min(5,dim(preds)[1])],]
+  # 
+  # gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill="lightblue") +
+  #   coord_flip() +
+  #   theme_light() +
+  #   ylab("Predicted Probability") +
+  #   xlab("") +
+  #   theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
+  #         axis.title.x=element_text(size=16),
+  #         axis.title.y=element_text(size=16),
+  #         axis.ticks.y = element_blank()) +
+  #   geom_text(aes(label=class, y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
+  #   theme(plot.margin = unit(c(0.7,0.9,0.5,0.9), "cm"), panel.border=element_rect(fill=NA)) +
+  #   scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
+  #   labs(x=NULL)
+  # 
+  # 
+  # title=textGrob(label = label,gp=gpar(fontsize=20,fontface="bold"), vjust=1)
+  # 
+  # grid.arrange(gg1,gg2,top=title)
+  # grid.rect(.5,.5,width=unit(0.99,"npc"), height=unit(0.99,"npc"), 
+  #           gp=gpar(lwd=3, fill=NA, col="black"))
+  # 
   print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
   pdf(file = paste(print_name,".pdf",sep=""), height=8, width=8)
-  grid.arrange(gg1,gg2,top=title)
+  #grid.arrange(gg1,gg2,top=title)
+  grid.draw(gg[[1]])
+  grid.draw(gg[[2]])
+  #do.call(grid.draw, gg)
   dev.off()
   png(file = paste(print_name,".png",sep=""), width=18, height=18,units = "cm", res=128)
-  grid.arrange(gg1,gg2,top=title)
+  #grid.arrange(gg1,gg2,top=title)
+  grid.draw(gg[[1]])
+  grid.draw(gg[[2]])
+  #do.call(grid.draw, gg)
   dev.off()
 }
 

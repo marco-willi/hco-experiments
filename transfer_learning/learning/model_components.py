@@ -347,12 +347,12 @@ def create_callbacks(identifier='',
 
     if 'early_stopping' in names:
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=0,
-                                       patience=5, verbose=0, mode='auto')
+                                       patience=5, verbose=1, mode='auto')
         callbacks.append(early_stopping)
 
     if 'reduce_lr_on_plateau' in names:
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1,
-                                      patience=3, verbose=0,
+                                      patience=3, verbose=1,
                                       mode='auto', epsilon=0.0001,
                                       cooldown=0, min_lr=0.0001)
         callbacks.append(reduce_lr)
