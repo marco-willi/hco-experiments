@@ -120,6 +120,20 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
         for lo in low_occurrence_classes:
             map_dict.pop(lo, None)
 
+    elif mapping == 'sw_species':
+        low_occurrence_classes = ['COUGAR', 'OTHERDOMESTIC', 'MARTEN',
+                                  'PHEASANT',
+                                  'HUMAN', 'MUSKRAT', 'BADGER']
+
+        map_dict = {c: c for c in all_classes}
+        # remove blanks
+        for bl in blank_classes:
+            map_dict.pop(bl, None)
+
+        # remove rare classes
+        for lo in low_occurrence_classes:
+            map_dict.pop(lo, None)
+
     else:
         NotImplementedError("Mapping %s not implemented" % mapping)
 
