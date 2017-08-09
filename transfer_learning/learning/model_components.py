@@ -123,7 +123,9 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
     elif mapping == 'sw_species':
         low_occurrence_classes = ['COUGAR', 'OTHERDOMESTIC', 'MARTEN',
                                   'PHEASANT',
-                                  'HUMAN', 'MUSKRAT', 'BADGER']
+                                  'HUMAN', 'MUSKRAT', 'BADGER',
+                                  'REPTILESANDAMPHIBIANS', 'MOOSE',
+                                  'WLVRN']
 
         map_dict = {c: c for c in all_classes}
         # remove blanks
