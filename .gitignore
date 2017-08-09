@@ -4,3 +4,7 @@ transfer_learning/.spyproject/*
 .Rproj.user
 *.Rproj
 *.Rhistory
+*.pdf
+*.html
+*.gz
+*.log
