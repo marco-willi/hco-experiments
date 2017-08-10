@@ -149,7 +149,7 @@ def create_optimizer(name="standard"):
     elif name == "sgd_ss":
         opt = SGD(lr=0.01, momentum=0.9, decay=5e-4)
     elif name == "rmsprop":
-        opt = RMSprop(lr=0.001, rho=0.9, epsilon=1e-08, decay=0.0)
+        opt = RMSprop(lr=0.01, rho=0.9, epsilon=1e-08, decay=0.0)
     elif name == "adagrad":
         opt = Adagrad(lr=0.01, epsilon=1e-08, decay=0.0)
     else:
