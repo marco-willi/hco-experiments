@@ -13,12 +13,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 
 
 # Snapshot Serengeti - Top26 species
-project_id <- "ss"
-model <- "ss_species_26"
-project_name <- "Snapshot Serengeti"
-ts_id <- "201707271307"
-model_name <- "Species Top26"
-
+# project_id <- "ss"
+# model <- "ss_species_26"
+# project_name <- "Snapshot Serengeti"
+# ts_id <- "201707271307"
+# model_name <- "Species Top26"
 
 
 # Snapshot Serengeti - Blank vs Non Blank
@@ -55,11 +54,18 @@ model_name <- "Species Top26"
 # subject_set <- "val_subject_set_ee_nonblank_no_cannotidentify"
 
 # Camera Catalogue - Blank vs Vehicle vs Species
-project_id <- "camera_catalogue"
-model <- "cc_blank_vehicle_species"
-project_name <- "Camera Catalogue"
-ts_id <- "201708052008"
-model_name <- "Blank vs Vehicle vs Species"
+# project_id <- "camera_catalogue"
+# model <- "cc_blank_vehicle_species"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708052008"
+# model_name <- "Blank vs Vehicle vs Species"
+
+# Camera Catalogue - Species
+# project_id <- "camera_catalogue"
+# model <- "cc_species"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708072308"
+# model_name <- "Species"
 
 
 # Elephant Expedition - blank vs non-blank
@@ -83,6 +89,15 @@ model_name <- "Blank vs Vehicle vs Species"
 # ts_id <- "201708081608"
 # project_name <- "Snapshot Wisconsin"
 # model_name <- "Blank vs Non-Blank"
+
+# Snapshot Wisconsin - species
+project_id <- "snapshot_wisconsin"
+model <- "sw_species"
+ts_id <- "201708092208"
+project_name <- "Snapshot Wisconsin"
+model_name <- "Species Detection"
+
+
 
 ############################ -
 # Paths Project ----
