@@ -1,0 +1,208 @@
+---
+title: "`r params$title`"
+author: "`r params$author`"
+date: "`r params$date`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# output: html_document
+knitr::opts_chunk$set(echo = FALSE, fig.width=7, fig.height=7)
+# knitr::opts_chunk$set(dev = 'pdf')
+# Options
+path_main <- params$path_main 
+project_id <- params$project_id
+pred_file <- paste(params$model_id,"_",params$ts_id,"_preds_val",sep="")
+log_file <- paste(params$model_id,"_",params$ts_id,"_training",sep="")
+model <- params$model_id
+project_name <- params$project_name
+subject_set <- paste("val_subject_set_",params$model_id,sep="")
+
+# fig.height=width_large, fig.width=width_large
+width_large <- 12
+height_large <- 12
+
+# fig.height=width_med, fig.width=width_med
+width_med <- 10
+height_med <- 10
+
+# fig.height=width_small, fig.width=width_small
+width_small <- 6
+height_small <- 6
+```
+
+
+
+```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+############################ -
+# Libraries ----
+############################ -
+
+library(ggplot2)
+library(reshape2)
+library(plyr)
+library(dplyr)
+library(jsonlite)
+library(jpeg)
+library(grid)
+library(gridExtra)
+
+# source("analyses/plot_functions.R")
+# 
+# # Load Functions
+# source("analyses/plot_functions.R")
+# 
+# # Load data
+# source("analyses/load_data.R")
+```
+
+## Introduction
+
+This report shows some results obtained from training and evaluating a convolutional neural network (CNN) on images from `r params$project_name`. The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is completely independent and is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model calculates pseudo probabilities for each class (values between 0 and 1, while the sum over all classes is 1, originates from a softmax transformation). We assign the class with the highest output value to each image.
+
+The labels from which the CNN learns from have been obtained by annotations of users on Zooniverse. We have used the plurality algorithm to assign labels to individual camera-trap events. Whenever most users think there is only one species in an image (median number of species is 1), we have assigned the most frequent annotation as class label. Images where most users have identified multiple species have been excluded to reduce complexity in the training process. The number of annotations per image can vary significantly, in extreme cases only 1 person might have annotated an image.
+
+## Overview
+
+A short overview on the number of classes & their distribution.
+
+### Class distribution Validation Set
+```{r, echo=FALSE, fig.height=width_med, fig.width=width_med}
+gg <- plot_class_dist(preds, model)
+gg
+```
+
+
+## Training Progress
+
+Some metrics which visualize the progress of training the convolutional neural network.
+
+* Training Epoch: The number of full passes over the whole training set.
+* Top-1 Accuracy: Percent of all images when the image corresponds to the class the model deems to be the most likely class.
+* Top-5 Accuracy: Percent of all images when the image corresponds to the class the model predicts in its top 5 classes (common metric in machine learning)
+* Loss: This is the metric, the algorithm tries to minimize during training. Validation loss is used to decide when to stop training the model.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_large, fig.width=width_large}
+############### -
+# Plot LOG File
+############### -
+gg <- plot_log(log, model)
+gg
+```
+
+## Accuracy Measurements
+### Accuracy per Class on Validation set
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_med, fig.width=width_med }
+# accuracy per true class
+gg <- plot_class_acc(preds, model)
+gg
+```
+
+### Accuracy per Class - only high confidence predictions
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_med, fig.width=width_med}
+# take only with most confidence and Threshold
+gg <- plot_class_most_conf_95th_acc(preds, model)
+gg
+```
+
+
+### Accuracy for different model thresholds
+
+#### Overall
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_small, fig.width=width_small}
+# Overall View
+gg <- plot_threshold_vs_acc_overall(preds, model)
+gg
+```
+
+#### Per Class
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_large, fig.width=width_large}
+gg <- plot_threshold_vs_acc_class(preds, model)
+gg
+```
+
+## Confusion Matrix
+
+Predicted labels vs true labels.
+```{r, echo=FALSE, warning=FALSE, message=FALSE,  fig.height=width_med, fig.width=width_med}
+# empty confusion matrix
+gg <- plot_cm(preds, model)
+gg
+```
+
+## Distribution of Predicted Values
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_large, fig.width=width_large}
+gg <- plot_dist_pred(preds, model)
+gg
+```
+
+
+## Examples
+
+Below are some randomly selected correct / missclassified predictions. Included is the confidence of the model for the different classes.
+
+
+### Correct Predictions
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small}
+
+############################ -
+# Find some correct classifications ----
+############################ -
+
+random_wrongs <- dplyr::filter(preds,correct==1)
+set.seed(23)
+random_wrongs <- random_wrongs[sample(size = 10,x=dim(random_wrongs)[1]),]
+
+
+############################ -
+# Plot correct classifications ----
+############################ -
+
+for (ii in 1:10){
+  id <- paste(random_wrongs[ii,"subject_id"])
+  preds_sel <- random_wrongs[ii,"preds_all"]
+  gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
+  print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
+  #grid.arrange(gg1,gg2,top=title)
+  grid.draw(gg[[1]])
+  grid.draw(gg[[2]])
+  grid.newpage()
+}
+
+```
+
+
+
+### Missclassifications
+Here are some random missclassifications.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small}
+
+############################ -
+# Find some Missclassificationss ----
+############################ -
+
+random_wrongs <- dplyr::filter(preds,correct==0)
+set.seed(23)
+random_wrongs <- random_wrongs[sample(size = 10,x=dim(random_wrongs)[1]),]
+
+
+############################ -
+# Plot Missclassifications ----
+############################ -
+
+for (ii in 1:10){
+  id <- paste(random_wrongs[ii,"subject_id"])
+  preds_sel <- random_wrongs[ii,"preds_all"]
+  gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
+  print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
+  #grid.arrange(gg1,gg2,top=title)
+  grid.draw(gg[[1]])
+  grid.draw(gg[[2]])
+  grid.newpage()
+}
+```

@@ -1,14 +1,23 @@
+
+############################ -
+# Parameters Fix ----
+############################ -
+
+path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
+path_output_report <- "D:/Studium_GD/Zooniverse/Results/transfer_learning/reports/"
+path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\reports\\"
+
 ############################ -
 # Parameters ----
 ############################ -
 
 
 # Snapshot Serengeti - Top26 species
-# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-# project_id <- "ss"
-# pred_file <- "ss_species_26_201707271307_preds_test"
-# log_file <- "ss_species_26_201707231807_training"
-# model <- "ss_species_26"
+project_id <- "ss"
+model <- "ss_species_26"
+project_name <- "Snapshot Serengeti"
+ts_id <- "201707271307"
+model_name <- "Species Top26"
 
 
 
@@ -46,13 +55,49 @@
 # subject_set <- "val_subject_set_ee_nonblank_no_cannotidentify"
 
 # Camera Catalogue - Blank vs Vehicle vs Species
-path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
 project_id <- "camera_catalogue"
-pred_file <- "cc_blank_vehicle_species_201708052008_preds_val"
-log_file <- "cc_blank_vehicle_species_201708052008_training"
 model <- "cc_blank_vehicle_species"
-subject_set <- "val_subject_set_cc_blank_vehicle_species"
+project_name <- "Camera Catalogue"
+ts_id <- "201708052008"
+model_name <- "Blank vs Vehicle vs Species"
 
+
+# Elephant Expedition - blank vs non-blank
+# project_id <- "elephant_expedition"
+# model <- "ee_blank_vs_nonblank"
+# ts_id <- "201708012008"
+# project_name <- "Elephant Expedition"
+# model_name <- "Blank vs Non-Blank"
+
+# Elephant Expedition - Species
+# project_id <- "elephant_expedition"
+# model <- "ee_nonblank_no_cannotidentify"
+# ts_id <- "201708042308"
+# project_name <- "Elephant Expedition"
+# model_name <- "Species (excl. Cannotidentify)"
+
+
+# Snapshot Wisconsin - blank vs non-blank
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_blank_vs_nonblank"
+# ts_id <- "201708081608"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Blank vs Non-Blank"
+
+############################ -
+# Paths Project ----
+############################ -
+
+path_logs <- paste(path_main,"logs/",project_id,"/",sep="")
+path_save <- paste(path_main,"save/",project_id,"/",sep="")
+path_db <- paste(path_main,"db/",project_id,"/",sep="")
+path_scratch <- paste(path_main,"scratch/",project_id,"/",sep="")
+path_figures <- paste(path_main,"save/",project_id,"/figures/",sep="")
+
+
+############################ -
+# Load Functions & Data ----
+############################ -
 
 # Load Functions
 source("analyses/plot_functions.R")
@@ -61,7 +106,35 @@ source("analyses/plot_functions.R")
 source("analyses/load_data.R")
 
 # save eval plots
-source("analyses/eval2.R")
+# source("analyses/eval2.R")
 
 # save subject set plots
-source("analyses/plot_subject_set.R")
+# source("analyses/plot_subject_set.R")
+
+
+############################ -
+# Create Report ----
+############################ -
+
+library(knitr)
+library(rmarkdown)
+
+# render report
+params = list(
+  project_name=project_name,
+  project_id=project_id,
+  ts_id=ts_id,
+  model_name=model_name,
+  model_id=model,
+  title=paste(project_name," - ",model_name,sep=""),
+  author="Marco Willi",
+  date=Sys.Date(),
+  path_main=path_main
+)
+rmarkdown::render(input="analyses/report_template.Rmd", 
+                  params=params,
+                  #output_format=pdf_document(latex_engine='xelatex'),
+                  #output_format = "pdf_document",
+                  output_format = "html_document",
+                  output_file = paste(path_output_report,project_id,"_",model,".html",sep=""))
+

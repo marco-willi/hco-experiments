@@ -1,19 +1,12 @@
-############################ -
-# Paths ----
-############################ -
-
-path_logs <- paste(path_main,"logs/",project_id,"/",sep="")
-path_save <- paste(path_main,"save/",project_id,"/",sep="")
-path_db <- paste(path_main,"db/",project_id,"/",sep="")
-path_scratch <- paste(path_main,"scratch/",project_id,"/",sep="")
-path_figures <- paste(path_main,"save/",project_id,"/figures/",sep="")
-
-
 
 
 ############################ -
 # Read Data ----
 ############################ -
+
+pred_file <- paste(model,"_",ts_id,"_preds_val",sep="")
+subject_set <- paste("val_subject_set_",model,sep="")
+log_file <- paste(model, "_",ts_id,"_training",sep="")
 
 preds <- read.csv(paste(path_save,pred_file,".csv",sep=""))
 preds$model <- model

@@ -1,0 +1,74 @@
+---
+title: "`r params$title`"
+author: "`r params$author`"
+date: "`r params$date`"
+graphics: yes
+---
+
+```{r setup, include=FALSE}
+# output: html_document
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=10, fig.height=10)
+# knitr::opts_chunk$set(dev = 'pdf')
+# Options
+path_main <- params$path_main 
+project_id <- params$project_id
+pred_file <- paste(params$model_id,"_",params$ts_id,"_preds_val",sep="")
+log_file <- paste(params$model_id,"_",params$ts_id,"_training",sep="")
+model <- params$model_id
+project_name <- params$project_name
+subject_set <- paste("val_subject_set_",params$model_id,sep="")
+```
+
+
+
+```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+############################ -
+# Libraries ----
+############################ -
+
+library(ggplot2)
+library(reshape2)
+library(plyr)
+library(dplyr)
+library(jsonlite)
+library(jpeg)
+library(grid)
+library(gridExtra)
+
+```
+
+## Introduction
+
+This report shows some results obtained from training and evaluating a convolutional neural network (CNN) on images from `r params$project_name`. The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is completely independent and is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model calculates pseudo probabilities for each class (values between 0 and 1, while the sum over all classes is 1, originates from a softmax transformation). We assign the class with the highest output value to each image.
+
+The labels from which the CNN learns from have been obtained by annotations of users on Zooniverse. We have used the plurality algorithm to assign labels to individual camera-trap events. Whenever most users think there is only one species in an image (median number of species is 1), we have assigned the most frequent annotation as class label. Images where most users have identified multiple species have been excluded to reduce complexity in the training process. The number of annotations per image can vary significantly, in extreme cases only 1 person might have annotated an image.
+
+## Overview
+
+A short overview on the number of classes & their distribution.
+
+### Class distribution Validation Set
+```{r class_dist, echo=FALSE, message=FALSE}
+
+plot_class_dist <- function(preds, model){
+  class_dist <- dplyr::group_by(preds,y_true) %>%
+    summarise(n_obs = n()) %>%
+    mutate(p_obs=n_obs / sum(n_obs))
+  
+  gg <- ggplot(class_dist, aes(x=reorder(y_true, n_obs), y=n_obs)) + geom_bar(stat="identity") +
+    theme_light() +
+    ggtitle(paste("Class Distribution \nmodel: ", model,sep="")) +
+    ylab("# of samples") +
+    xlab("") +
+    coord_flip() +
+    geom_text(aes(label=paste(" ",round(p_obs,4)*100," %",sep="")), hjust="left") +
+    scale_y_continuous(limits=c(0,max(class_dist$n_obs) * 1.1)) +
+    theme(axis.text = element_text(size=12),
+          axis.title = element_text(size=14),
+          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+  return(gg)
+}
+plot_class_dist(preds, model)
+```
+
