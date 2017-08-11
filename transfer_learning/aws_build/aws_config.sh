@@ -19,11 +19,6 @@ sudo mount /dev/xvdf ~/data_hdd
 # sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3
 # sudo docker commit docker_id root/tensorflow:latest-devel-gpu-py3
 
-# connect to aws instance from lucifer
-ssh -i ~/keys/zv_test_key.pem ubuntu@ec2-34-207-210-160.compute-1.amazonaws.com
-
-# transfer files from lucifer to aws instance
-scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/camera_catalogue/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/db/camera_catalogue/
 
 # Nvidia docker
 sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
@@ -37,6 +32,30 @@ sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-py3 bash
 # no gpu docker
 sudo docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-py3 bash
 pip install dill requests panoptes_client pillow aiohttp keras h5py
+
+# connect to aws instance from lucifer
+ssh -i ~/keys/zv_test_key.pem ubuntu@ec2-34-207-210-160.compute-1.amazonaws.com
+
+# transfer files from lucifer to aws instance
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/camera_catalogue/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/db/camera_catalogue/
+
+# transfer files from aws to aws instance
+sudo chmod -R 777 snapshot_wisconsin/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/camera_catalogue/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/db/camera_catalogue/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/elephant_expedition/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/db/elephant_expedition/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/snapshot_wisconsin/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/db/snapshot_wisconsin/
+
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/logs/camera_catalogue/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/logs/camera_catalogue/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/logs/elephant_expedition/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/logs/elephant_expedition/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/logs/snapshot_wisconsin/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/logs/snapshot_wisconsin/
+
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/save/camera_catalogue/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/save/camera_catalogue/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/save/elephant_expedition/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/save/elephant_expedition/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/save/snapshot_wisconsin/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/save/snapshot_wisconsin/
+
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/models/camera_catalogue/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/models/camera_catalogue/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/models/elephant_expedition/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/models/elephant_expedition/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/models/snapshot_wisconsin/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/models/snapshot_wisconsin/
 
 # add swap space
 #cd /var/tmp

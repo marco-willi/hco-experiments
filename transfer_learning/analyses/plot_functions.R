@@ -30,7 +30,7 @@ plot_log <- function(log, model=""){
     theme_light() +
     ggtitle(paste("Accuracy/Loss of Train / Validation along training epochs\nmodel: ", model,sep="")) +
     xlab("Training Epoch") +
-    ylab("Accuracy (%) / Loss") +
+    ylab("Accuracy / Loss") +
     facet_grid(group~., scales = "free") +
     scale_y_continuous(breaks=scales::pretty_breaks(n = 10)) +
     scale_x_continuous(breaks=scales::pretty_breaks(n=10)) +
@@ -55,10 +55,10 @@ plot_class_dist <- function(preds, model){
     summarise(n_obs = n()) %>%
     mutate(p_obs=n_obs / sum(n_obs))
   
-  gg <- ggplot(class_dist, aes(x=reorder(y_true, n_obs), y=n_obs)) + geom_bar(stat="identity") +
+  gg <- ggplot(class_dist, aes(x=reorder(y_true, n_obs), y=n_obs)) + geom_bar(stat="identity", fill="wheat") +
     theme_light() +
     ggtitle(paste("Class Distribution \nmodel: ", model,sep="")) +
-    ylab("# of samples") +
+    ylab("# of observations") +
     xlab("") +
     coord_flip() +
     geom_text(aes(label=paste(" ",round(p_obs,4)*100," %",sep="")), hjust="left") +
@@ -80,17 +80,20 @@ plot_class_acc <- function(preds, model){
     mutate(accuracy=matches/n)
   preds_class
   
-  gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, label=paste("Acc: ", round(accuracy,3)," Obs: ", n))) + 
-    geom_bar(stat="identity", colour="gray") +
+  gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy)) + 
+    geom_bar(stat="identity", fill="wheat") +
     theme_light() +
-    ggtitle(paste("Validation Accuracy for Classes\nmodel: ", model,"\nall images",sep="")) +
+    ggtitle(paste("Validation Accuracy\nmodel: ", model,"\nall images",sep="")) +
     xlab("") +
-    ylab("Accuracy (%)") +
+    ylab("Accuracy") +
     coord_flip()  +
-    geom_text(size = 4, position = position_stack(vjust = 0.5), colour="white") +
+    # geom_text(size = 4, position = position_stack(vjust = 0.5), colour="white") +
+    geom_text(aes(label=paste(" Acc: ", round(accuracy,3),"/ Obs: ", n), y=0.01), 
+              size=3, vjust="middle", hjust="left") +
     theme(axis.text = element_text(size=12),
           axis.title = element_text(size=14),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+          strip.text.x = element_text(size = 14, colour = "white", face="bold")) +
+    scale_y_continuous(limits=c(0,1))
   return(gg)
 }
 
@@ -109,14 +112,15 @@ plot_class_most_conf_acc <- function(preds, model){
   preds_class <- dplyr::group_by(preds_1,y_true) %>% summarise(matches = sum(y_true == y_pred), n = n()) %>%
     mutate(accuracy=matches/n)
   
-  gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, label=paste("Acc: ", round(accuracy,3)," Obs: ", n))) + 
-    geom_bar(stat="identity", colour="gray") +
+  gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy)) + 
+    geom_bar(stat="identity", fill="wheat") +
     theme_light() +
-    ggtitle(paste("Validation Accuracy for Classes\nmodel: ", model,"\nSubject level",sep="")) +
-    xlab("Species") +
-    ylab("Accuracy (%)") +
+    ggtitle(paste("Validation Accuracy\nmodel: ", model,"\nsubject level",sep="")) +
+    xlab("") +
+    ylab("Accuracy") +
     coord_flip()  +
-    geom_text(size = 4, position = position_stack(vjust = 0.5), colour="white") +
+    geom_text(aes(label=paste(" Acc: ", round(accuracy,3),"/ Obs: ", n), y=0.01), 
+              size=3, vjust="middle", hjust="left") +
     theme(axis.text = element_text(size=12),
           axis.title = element_text(size=14),
           strip.text.x = element_text(size = 14, colour = "white", face="bold"))
@@ -144,18 +148,19 @@ plot_class_most_conf_95th_acc<- function(preds, model){
   
   preds_class <- left_join(preds_class, class_numbers, by="y_true") %>% mutate(p_high_threshold=round(n/n_total,2)*100)
   
-  gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy, 
-                                label=paste("Acc: ", round(accuracy,3)," Obs: ", n," / ",n_total," (",p_high_threshold," %)",sep=""))) + 
-    geom_bar(stat="identity", colour="gray") +
+  gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy)) + 
+    geom_bar(stat="identity", fill="wheat") +
     theme_light() +
-    ggtitle(paste("Validation Accuracy for Classes\nmodel: ", model,"\nsubject level and only > 95% confidence",sep="")) +
-    xlab("Species") +
-    ylab("Accuracy (%)") +
+    ggtitle(paste("Validation Accuracy\nmodel: ", model,"\nsubject level and only > 0.95 model output",sep="")) +
+    xlab("") +
+    ylab("Accuracy") +
     coord_flip() +
-    geom_text(size = 4, position = position_stack(vjust = 0.5), colour="white") +
+    geom_text(aes(label=paste("Acc: ", round(accuracy,3)," / Obs: ", n,"/",n_total," (",p_high_threshold," %)",sep=""), y=0.01), 
+              size=3, vjust="middle", hjust="left") +
     theme(axis.text = element_text(size=12),
           axis.title = element_text(size=14),
           strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+  gg
   return(gg)
 }
 
@@ -211,7 +216,7 @@ plot_threshold_vs_acc_overall<- function(preds, model){
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.background = element_rect(size=1,colour="black"),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+          strip.text.x = element_text(size = 12, colour = "white", face="bold"))
   return(gg)
 }
 
@@ -271,7 +276,7 @@ plot_threshold_vs_acc_class<- function(preds, model){
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.background = element_rect(size=1,colour="black"),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+          strip.text.x = element_text(size = 12, colour = "white", face="bold"))
   return(gg)
 }
 
@@ -295,8 +300,10 @@ plot_cm<- function(preds, model){
   gg <- ggplot(conf, aes(x=y_pred, y=y_true)) + 
     geom_tile(aes(fill = p_class), colour = "black") + theme_bw() +
     ggtitle(paste("Confusion Matrix\nmodel: ", model,sep="")) + 
-    scale_fill_gradient2(low="blue", mid="yellow", high="red", midpoint=0.5, guide =  FALSE) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    #scale_fill_gradient2(low="blue", mid="yellow", high="red", midpoint=0.5, guide =  FALSE) +
+    scale_fill_gradient(low = "white", high = "steelblue", guide =  FALSE) + 
+    #scale_fill_gradient2(low="white", mid="yellow", high="red", midpoint=0.5, guide =  FALSE) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
     geom_text(aes(label = round(p_class, 2)),cex=2.5) +
     ylab("True") +
     xlab("Predicted") +
@@ -326,7 +333,8 @@ plot_dist_pred<- function(preds, model){
           legend.box = "horizontal",
           legend.title = element_blank(),
           legend.background = element_rect(size=1,colour="black"),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+          strip.text.x = element_text(size = 12, colour = "white", face="bold"))
+  gg
   return(gg)
 }
 
@@ -338,10 +346,10 @@ plot_dist_pred<- function(preds, model){
 plot_subject_image <- function(preds, subjects, id, path_scratch, ii){
 
 
-  preds <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
-  preds <- melt(preds,value.name = "prob",variable.name = "class")
+  preds0 <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
+  preds0 <- melt(preds0,value.name = "prob",variable.name = "class")
   sub <- subjects[id]
-  url <- unlist(sub[[id]]['urls'])
+  url <- unlist(sub[[id]]['urls'])[1]
   label <- unlist(sub[[id]]['label'])
   file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
   download.file(url, destfile = file_name, mode = 'wb')
@@ -356,12 +364,18 @@ plot_subject_image <- function(preds, subjects, id, path_scratch, ii){
     theme(plot.margin = unit(c(0.7,0.9,0,0.9), "cm"))
   
   # keep only top 5
-  preds <- preds[order(preds$prob, decreasing = TRUE)[1:min(5,dim(preds)[1])],]
+  preds0 <- preds0[order(preds0$prob, decreasing = TRUE)[1:min(5,dim(preds0)[1])],]
   
-  gg2 <- ggplot(preds, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill="lightblue") +
+  # identify correct one and color differently
+  hit_id <- which(preds0$class == label)
+  colours <- rep("lightblue",dim(preds0)[1])
+  # colours[hit_id] <- "salmon"
+  colours[hit_id] <- "springgreen"
+  
+  gg2 <- ggplot(preds0, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill=rev(colours)) +
     coord_flip() +
     theme_light() +
-    ylab("Predicted Probability") +
+    ylab("Model Output") +
     xlab("") +
     theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
           axis.title.x=element_text(size=16),
@@ -380,6 +394,8 @@ plot_subject_image <- function(preds, subjects, id, path_scratch, ii){
   rect <- grid.rect(.5,.5,width=unit(0.99,"npc"), height=unit(0.99,"npc"), 
               gp=gpar(lwd=3, fill=NA, col="black"))
   gg_comb <- list(gg, rect)
+  # grid.draw(gg_comb[[1]])
+  # grid.draw(gg_comb[[2]])
 
 
   return(gg_comb)

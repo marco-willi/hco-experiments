@@ -58,9 +58,9 @@ library(gridExtra)
 
 ## Introduction
 
-This report shows some results obtained from training and evaluating a convolutional neural network (CNN) on images from `r params$project_name`. The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is completely independent and is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model calculates pseudo probabilities for each class (values between 0 and 1, while the sum over all classes is 1, originates from a softmax transformation). We assign the class with the highest output value to each image.
+This report shows some results obtained from training and evaluating a convolutional neural network (CNN) on images from `r params$project_name`. The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model estimates probabilities for each class (values between 0 and 1, while the sum over all classes is 1). To each image we assign the class with the highest output value.
 
-The labels from which the CNN learns from have been obtained by annotations of users on Zooniverse. We have used the plurality algorithm to assign labels to individual camera-trap events. Whenever most users think there is only one species in an image (median number of species is 1), we have assigned the most frequent annotation as class label. Images where most users have identified multiple species have been excluded to reduce complexity in the training process. The number of annotations per image can vary significantly, in extreme cases only 1 person might have annotated an image.
+The labels from which the CNN learns from have been obtained by annotations of users on Zooniverse. We have used the plurality algorithm to assign labels to individual camera-trap events. Whenever most users think there is only one species in an image (median number of species is 1), we have assigned the most frequent annotation as class label. Images where most users have identified multiple species have been excluded to reduce complexity in the training process. The number of annotations per image can vary significantly, in extreme cases only 1 person might have annotated an image. Where available, the retirement reason as defined by the project logic has been used to generate labels (e.g. if an image was retired early because of annotations indicating an empty image).
 
 ## Overview
 
@@ -75,7 +75,7 @@ gg
 
 ## Training Progress
 
-Some metrics which visualize the progress of training the convolutional neural network.
+Some metrics which visualize the progress of training the CNN.
 
 * Training Epoch: The number of full passes over the whole training set.
 * Top-1 Accuracy: Percent of all images when the image corresponds to the class the model deems to be the most likely class.
@@ -94,6 +94,8 @@ gg
 ## Accuracy Measurements
 ### Accuracy per Class on Validation set
 
+The accuracy per class normaly depends on a) how many training images are available, and b) how visually distinct a class is.
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_med, fig.width=width_med }
 # accuracy per true class
 gg <- plot_class_acc(preds, model)
@@ -101,6 +103,8 @@ gg
 ```
 
 ### Accuracy per Class - only high confidence predictions
+
+In this figure, only images which were assigned an estimated probability of at least 0.95 have been taken into account. The plot shows for each class how much of the total number of images pass that threshold and how the accuracy on those images is.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_med, fig.width=width_med}
 # take only with most confidence and Threshold
@@ -110,6 +114,8 @@ gg
 
 
 ### Accuracy for different model thresholds
+
+Following plots show the accuracy and the number of images when we only consider images that surpass a certain threshold (x axis). The tradeoff is clearly visible: The higher the threshold, the higher the accuracy, however, the less images can be scored by the model.
 
 #### Overall
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_small, fig.width=width_small}
@@ -134,6 +140,9 @@ gg
 ```
 
 ## Distribution of Predicted Values
+
+This plot visualizes the density distribution of the different classes' predicted probabilities. Shown are two distributions for each class: when the prediction was correct, and when it was wrong. Generally speaking, when the model is highly confident in predicting a particular class, the mode of the distribution will be close to 1 and the distribution will be narrow causing the density to spike. For classes the model is generally uncertain, the distribution tends to span a wider range.
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_large, fig.width=width_large}
 gg <- plot_dist_pred(preds, model)
 gg
@@ -142,7 +151,7 @@ gg
 
 ## Examples
 
-Below are some randomly selected correct / missclassified predictions. Included is the confidence of the model for the different classes.
+Below are some randomly selected correct / missclassified predictions. Included is the predicted probability for the top classes.
 
 
 ### Correct Predictions
@@ -178,7 +187,7 @@ for (ii in 1:10){
 
 
 ### Missclassifications
-Here are some random missclassifications.
+Shown are some randomly selected missclassifications.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small}
 

@@ -29,12 +29,13 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 
 
 # Elephant Expedition - blank vs non-blank
-# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-# project_id <- "elephant_expedition"
-# pred_file = "ee_blank_vs_nonblank_201708021608_preds_val"
-# log_file <- "ee_blank_vs_nonblank_201708012008_training"
-# model <- "ee_blank_vs_nonblank"
-# subject_set <- "val_subject_set_ee_blank_vs_nonblank"
+project_id <- "elephant_expedition"
+ts_id <- "201708021608"
+model <- "ee_blank_vs_nonblank"
+subject_set <- "val_subject_set_ee_blank_vs_nonblank"
+project_name <- "Elephant Expedition"
+model_nam <- "Blank vs Non-Blank"
+
 
 # Elephant Expedition - species
 # path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
@@ -91,11 +92,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Blank vs Non-Blank"
 
 # Snapshot Wisconsin - species
-project_id <- "snapshot_wisconsin"
-model <- "sw_species"
-ts_id <- "201708092208"
-project_name <- "Snapshot Wisconsin"
-model_name <- "Species Detection"
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_species"
+# ts_id <- "201708092208"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Species Detection"
 
 
 

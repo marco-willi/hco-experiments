@@ -148,10 +148,7 @@ class Model(object):
 
     def _getCallbacks(self):
         """ create pre-defined callbacks """
-        project_id = self.config['projects']['panoptes_id']
-        model_id = self.config[project_id]['experiment_id']
-        self._callbacks_obj = create_callbacks(model_id + '_' +
-                                               self._timestamp,
+        self._callbacks_obj = create_callbacks(self._id,
                                                self.callbacks)
 
     def _calcClassWeights(self):
@@ -380,6 +377,18 @@ class Model(object):
 
         logging.info("Finished training after %s minutes" %
                      ((time.time() - time_s) // 60))
+
+        ##################################
+        # Load best model
+        # (if checkpointing for the best)
+        ##################################
+
+        if 'checkpointer_best' in self.callbacks:
+            model_file = self.cfg_path['models'] +\
+                         self._id + '_' +\
+                         "model_best.hdf5"
+            self.model.load_weights(model_file)
+            logging.info("Loaded weights from %s" % model_file)
 
         ##################################
         # Evaluation
