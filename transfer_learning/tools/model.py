@@ -210,7 +210,14 @@ class Model(object):
                     in_str=self.cfg['experiment_id'],
                     excl_str='best')
 
-            # load specified model
+            # load specified model from save folder if path is specified
+            elif os.sep in self.cfg['load_model']:
+                root_save_path = self.cfg_path['save'].split(os.sep)[0:-2]
+                root_save_path = os.path.join(*root_save_path)
+                root_save_path = root_save_path.replace(':', ':' + os.sep)
+                model_file = root_save_path + os.sep +\
+                    self.cfg['load_model'] + '.hdf5'
+            # load model from own models path if only file name is specified
             else:
                 model_file = self.cfg_path['models'] +\
                              self.cfg['load_model'] + '.hdf5'

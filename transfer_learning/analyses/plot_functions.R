@@ -11,6 +11,14 @@ library(gridExtra)
 library(plyr)
 library(dplyr)
 
+############################ -
+# Parameters ----
+############################ -
+text_small <- 10
+text_med <- 12
+text_large <- 14
+text_very_small <- 6
+
 ########################### -
 # Plot Log File ----
 ########################### -
@@ -31,14 +39,14 @@ plot_log <- function(log, model=""){
     ggtitle(paste("Accuracy/Loss of Train / Validation along training epochs\nmodel: ", model,sep="")) +
     xlab("Training Epoch") +
     ylab("Accuracy / Loss") +
-    facet_grid(group~., scales = "free") +
-    scale_y_continuous(breaks=scales::pretty_breaks(n = 10)) +
-    scale_x_continuous(breaks=scales::pretty_breaks(n=10)) +
+    facet_wrap("group",ncol = 1, scales = "free_y") +
+    scale_y_continuous(breaks=scales::pretty_breaks(n = 5)) +
+    scale_x_continuous(breaks=scales::pretty_breaks(n=5)) +
     scale_color_brewer(type = "div", palette = "Set1") +
-    theme(axis.text = element_text(size=12),
+    theme(axis.text = element_text(size=14),
           axis.title = element_text(size=14),
-          strip.text.y = element_text(size = 14, colour = "white", face="bold"),
-          legend.text = element_text(size=12),
+          strip.text.x = element_text(size = 14, colour = "white", face="bold"),
+          legend.text = element_text(size=14),
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.title = element_blank(),
@@ -61,11 +69,11 @@ plot_class_dist <- function(preds, model){
     ylab("# of observations") +
     xlab("") +
     coord_flip() +
-    geom_text(aes(label=paste(" ",round(p_obs,4)*100," %",sep="")), hjust="left") +
+    geom_text(aes(label=paste(" ",round(p_obs,4)*100," %",sep="")), size=text_med * (5/14), hjust="left") +
     scale_y_continuous(limits=c(0,max(class_dist$n_obs) * 1.1)) +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+    theme(axis.text = element_text(size=text_large),
+          axis.title = element_text(size=text_large),
+          strip.text.x = element_text(size = text_large, colour = "white", face="bold"))
   return(gg)
 }
 
@@ -89,10 +97,10 @@ plot_class_acc <- function(preds, model){
     coord_flip()  +
     # geom_text(size = 4, position = position_stack(vjust = 0.5), colour="white") +
     geom_text(aes(label=paste(" Acc: ", round(accuracy,3),"/ Obs: ", n), y=0.01), 
-              size=3, vjust="middle", hjust="left") +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold")) +
+              size=text_small* (5/14), vjust="middle", hjust="left") +
+    theme(axis.text = element_text(size=text_large),
+          axis.title = element_text(size=text_large),
+          strip.text.x = element_text(size = text_large, colour = "white", face="bold")) +
     scale_y_continuous(limits=c(0,1))
   return(gg)
 }
@@ -120,10 +128,10 @@ plot_class_most_conf_acc <- function(preds, model){
     ylab("Accuracy") +
     coord_flip()  +
     geom_text(aes(label=paste(" Acc: ", round(accuracy,3),"/ Obs: ", n), y=0.01), 
-              size=3, vjust="middle", hjust="left") +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
+              size=text_small* (5/14), vjust="middle", hjust="left") +
+    theme(axis.text = element_text(size=text_large),
+          axis.title = element_text(size=text_large),
+          strip.text.x = element_text(size = text_large, colour = "white", face="bold"))
   return(gg)
 }
 
@@ -156,11 +164,10 @@ plot_class_most_conf_95th_acc<- function(preds, model){
     ylab("Accuracy") +
     coord_flip() +
     geom_text(aes(label=paste("Acc: ", round(accuracy,3)," / Obs: ", n,"/",n_total," (",p_high_threshold," %)",sep=""), y=0.01), 
-              size=3, vjust="middle", hjust="left") +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
-  gg
+              size=text_small* (5/14), vjust="middle", hjust="left") +
+    theme(axis.text = element_text(size=text_large),
+          axis.title = element_text(size=text_large),
+          strip.text.x = element_text(size = text_large, colour = "white", face="bold"))
   return(gg)
 }
 
@@ -210,13 +217,13 @@ plot_threshold_vs_acc_overall<- function(preds, model){
     scale_y_continuous(breaks = pretty(seq(min(res3$value),1,0.02))) +
     scale_color_brewer(type = "qual",palette = 6, guide =  guide_legend(title=NULL),  
                        labels = c("Accuracy (%)", "Proportion of Images Above Threshold (%)")) +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          legend.text = element_text(size=12),
+    theme(axis.text = element_text(size=text_large),
+          axis.title = element_text(size=text_large),
+          legend.text = element_text(size=text_med),
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.background = element_rect(size=1,colour="black"),
-          strip.text.x = element_text(size = 12, colour = "white", face="bold"))
+          strip.text.x = element_text(size = text_large, colour = "white", face="bold"))
   return(gg)
 }
 
@@ -259,24 +266,26 @@ plot_threshold_vs_acc_class<- function(preds, model){
   }
   res2 <- do.call(rbind,res)
   res3 <- melt(data = res2, id.vars = c("threshold", "y_true")) %>% filter(variable %in% c("accuracy", "p_high_threshold"))
+  
+  
 
   gg <- ggplot(res3, aes(x=threshold, y=value, colour=variable, group=variable)) + geom_line(lwd=2)  + 
     theme_light() +
-    facet_wrap("y_true") +
+    facet_wrap("y_true", ncol = min(5,floor(sqrt(nlevels(res3$y_true))))) +
     ggtitle(paste("Accuracy vs Model Threshold\nmodel: ", model,sep="")) + 
     xlab("Model Threshold") +
     ylab("Accuracy / Share (%)") +
     scale_x_continuous(limit = c(min(res3$threshold),1)) +
-    scale_y_continuous(breaks = pretty(seq(min(res3$value),1,0.02))) +
+    scale_y_continuous(breaks = pretty(seq(min(res3$value),1,0.1))) +
     scale_color_brewer(type = "qual",palette = 6, guide =  guide_legend(title=NULL),  
                        labels = c("Accuracy (%)", "Proportion of Images Above Threshold (%)")) +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          legend.text = element_text(size=12),
+    theme(axis.text = element_text(size=text_med),
+          axis.title = element_text(size=text_large),
+          legend.text = element_text(size=text_large),
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.background = element_rect(size=1,colour="black"),
-          strip.text.x = element_text(size = 12, colour = "white", face="bold"))
+          strip.text.x = element_text(size = text_small, colour = "white", face="bold"))
   return(gg)
 }
 
@@ -304,7 +313,7 @@ plot_cm<- function(preds, model){
     scale_fill_gradient(low = "white", high = "steelblue", guide =  FALSE) + 
     #scale_fill_gradient2(low="white", mid="yellow", high="red", midpoint=0.5, guide =  FALSE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-    geom_text(aes(label = round(p_class, 2)),cex=2.5) +
+    geom_text(aes(label = round(p_class, 1)),cex=text_very_small* (5/14)) +
     ylab("True") +
     xlab("Predicted") +
     scale_x_discrete()
@@ -320,21 +329,20 @@ plot_dist_pred<- function(preds, model){
   preds_dist <- preds
   preds_dist$correct <- factor(ifelse(preds_dist$y_true!=preds_dist$y_pred,"Wrong","Correct"))
   gg <- ggplot(preds_dist, aes(x=p, fill=correct)) + geom_density(alpha=0.3) + 
-    facet_wrap("y_true", scales="free") +
+    facet_wrap("y_true", scales="free", ncol = min(5,floor(sqrt(nlevels(preds_dist$y_true))))) +
     ggtitle(paste("Predicted values - density distribution\nmodel: ", model,sep="")) + 
     theme_light() +
     xlab("Model Output") +
     ylab("Density") + 
     scale_fill_brewer(type = "qual",direction = 1, palette=2) +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          legend.text = element_text(size=12),
+    theme(axis.text = element_text(size=text_large),
+          axis.title = element_text(size=text_large),
+          legend.text = element_text(size=text_large),
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.title = element_blank(),
           legend.background = element_rect(size=1,colour="black"),
-          strip.text.x = element_text(size = 12, colour = "white", face="bold"))
-  gg
+          strip.text.x = element_text(size = text_small, colour = "white", face="bold"))
   return(gg)
 }
 

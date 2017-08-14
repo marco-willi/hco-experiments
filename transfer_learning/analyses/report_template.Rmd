@@ -9,6 +9,7 @@ output: html_document
 # output: html_document
 knitr::opts_chunk$set(echo = FALSE, fig.width=7, fig.height=7)
 # knitr::opts_chunk$set(dev = 'pdf')
+# knitr::opts_chunk$set(dev = 'pdf')
 # Options
 path_main <- params$path_main 
 project_id <- params$project_id
@@ -21,6 +22,7 @@ subject_set <- paste("val_subject_set_",params$model_id,sep="")
 # fig.height=width_large, fig.width=width_large
 width_large <- 12
 height_large <- 12
+height_very_large <- 18
 
 # fig.height=width_med, fig.width=width_med
 width_med <- 10
@@ -61,6 +63,7 @@ library(gridExtra)
 This report shows some results obtained from training and evaluating a convolutional neural network (CNN) on images from `r params$project_name`. The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model estimates probabilities for each class (values between 0 and 1, while the sum over all classes is 1). To each image we assign the class with the highest output value.
 
 The labels from which the CNN learns from have been obtained by annotations of users on Zooniverse. We have used the plurality algorithm to assign labels to individual camera-trap events. Whenever most users think there is only one species in an image (median number of species is 1), we have assigned the most frequent annotation as class label. Images where most users have identified multiple species have been excluded to reduce complexity in the training process. The number of annotations per image can vary significantly, in extreme cases only 1 person might have annotated an image. Where available, the retirement reason as defined by the project logic has been used to generate labels (e.g. if an image was retired early because of annotations indicating an empty image).
+\newpage
 
 ## Overview
 
@@ -72,6 +75,7 @@ gg <- plot_class_dist(preds, model)
 gg
 ```
 
+\newpage
 
 ## Training Progress
 
@@ -90,8 +94,10 @@ Some metrics which visualize the progress of training the CNN.
 gg <- plot_log(log, model)
 gg
 ```
+\newpage
 
 ## Accuracy Measurements
+
 ### Accuracy per Class on Validation set
 
 The accuracy per class normaly depends on a) how many training images are available, and b) how visually distinct a class is.
@@ -101,6 +107,7 @@ The accuracy per class normaly depends on a) how many training images are availa
 gg <- plot_class_acc(preds, model)
 gg
 ```
+\newpage
 
 ### Accuracy per Class - only high confidence predictions
 
@@ -112,6 +119,7 @@ gg <- plot_class_most_conf_95th_acc(preds, model)
 gg
 ```
 
+\newpage
 
 ### Accuracy for different model thresholds
 
@@ -123,31 +131,36 @@ Following plots show the accuracy and the number of images when we only consider
 gg <- plot_threshold_vs_acc_overall(preds, model)
 gg
 ```
+\newpage
 
 #### Per Class
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_large, fig.width=width_large}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_very_large, fig.width=width_large}
 gg <- plot_threshold_vs_acc_class(preds, model)
 gg
 ```
+\newpage
 
 ## Confusion Matrix
 
 Predicted labels vs true labels.
-```{r, echo=FALSE, warning=FALSE, message=FALSE,  fig.height=width_med, fig.width=width_med}
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE,  fig.height=width_large, fig.width=width_large}
 # empty confusion matrix
 gg <- plot_cm(preds, model)
 gg
 ```
+\newpage
 
 ## Distribution of Predicted Values
 
 This plot visualizes the density distribution of the different classes' predicted probabilities. Shown are two distributions for each class: when the prediction was correct, and when it was wrong. Generally speaking, when the model is highly confident in predicting a particular class, the mode of the distribution will be close to 1 and the distribution will be narrow causing the density to spike. For classes the model is generally uncertain, the distribution tends to span a wider range.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_large, fig.width=width_large}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_very_large, fig.width=width_large}
 gg <- plot_dist_pred(preds, model)
 gg
 ```
 
+\newpage
 
 ## Examples
 
@@ -155,6 +168,8 @@ Below are some randomly selected correct / missclassified predictions. Included 
 
 
 ### Correct Predictions
+
+Shown are some randomly selected correct classifications.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small}
 

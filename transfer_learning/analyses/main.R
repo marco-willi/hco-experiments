@@ -19,6 +19,13 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # ts_id <- "201707271307"
 # model_name <- "Species Top26"
 
+# Snapshot Serengeti - Top51 species
+# project_id <- "ss"
+# model <- "ss_species_51"
+# project_name <- "Snapshot Serengeti"
+# ts_id <- "201708072308"
+# model_name <- "Species Top51"
+
 
 # Snapshot Serengeti - Blank vs Non Blank
 # path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
@@ -29,12 +36,12 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 
 
 # Elephant Expedition - blank vs non-blank
-project_id <- "elephant_expedition"
-ts_id <- "201708021608"
-model <- "ee_blank_vs_nonblank"
-subject_set <- "val_subject_set_ee_blank_vs_nonblank"
-project_name <- "Elephant Expedition"
-model_nam <- "Blank vs Non-Blank"
+# project_id <- "elephant_expedition"
+# ts_id <- "201708021608"
+# model <- "ee_blank_vs_nonblank"
+# subject_set <- "val_subject_set_ee_blank_vs_nonblank"
+# project_name <- "Elephant Expedition"
+# model_nam <- "Blank vs Non-Blank"
 
 
 # Elephant Expedition - species
@@ -55,11 +62,11 @@ model_nam <- "Blank vs Non-Blank"
 # subject_set <- "val_subject_set_ee_nonblank_no_cannotidentify"
 
 # Camera Catalogue - Blank vs Vehicle vs Species
-# project_id <- "camera_catalogue"
-# model <- "cc_blank_vehicle_species"
-# project_name <- "Camera Catalogue"
-# ts_id <- "201708052008"
-# model_name <- "Blank vs Vehicle vs Species"
+project_id <- "camera_catalogue"
+model <- "cc_blank_vehicle_species"
+project_name <- "Camera Catalogue"
+ts_id <- "201708052008"
+model_name <- "Blank vs Vehicle vs Species"
 
 # Camera Catalogue - Species
 # project_id <- "camera_catalogue"
@@ -147,10 +154,11 @@ params = list(
   date=Sys.Date(),
   path_main=path_main
 )
+
+output <- "html"
+
 rmarkdown::render(input="analyses/report_template.Rmd", 
                   params=params,
-                  #output_format=pdf_document(latex_engine='xelatex'),
-                  #output_format = "pdf_document",
-                  output_format = "html_document",
-                  output_file = paste(path_output_report,project_id,"_",model,".html",sep=""))
+                  output_format = paste(output,"_document",sep=""),
+                  output_file = paste(path_output_report,project_id,"_",model,".",output,sep=""))
 

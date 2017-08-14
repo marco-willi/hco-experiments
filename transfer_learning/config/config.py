@@ -45,6 +45,8 @@ def path_loader(config, create_project_paths=True):
     # create project paths
     if create_project_paths:
         for p in paths:
+            # reformat paths according to os
+            paths[p] = os.path.normpath(paths[p]) + os.sep
             # create only if main path exists
             if os.path.exists(paths[p]):
                 if not os.path.exists(paths[p] + project_id):
@@ -52,7 +54,7 @@ def path_loader(config, create_project_paths=True):
 
     # add project id to paths
     for p in paths:
-        paths[p] = paths[p] + project_id + "/"
+        paths[p] = paths[p] + project_id + os.sep
 
     return paths
 
@@ -69,6 +71,8 @@ def _extract_configs(key, value):
         size = value.split(',')
         size = tuple([int(x) for x in size])
         return size
+    elif key in ['load_model'] and value not in ['', None]:
+        return os.path.normpath(value)
     else:
         try:
             return eval(value)
