@@ -279,8 +279,8 @@ class Model(object):
                                   self.cfg['load_model_retrain_layer'])
                     logging.error("Available Layers %s" %
                                   layer_names)
-                    IOError("Layer %s not in model.layers" %
-                            self.cfg['load_model_retrain_layer'])
+                    raise IOError("Layer %s not in model.layers" %
+                                  self.cfg['load_model_retrain_layer'])
 
                 else:
 
