@@ -237,7 +237,8 @@ class Model(object):
                 # create a new output layer
                 new_output = Dense(units=self.num_classes,
                                    kernel_initializer="he_normal",
-                                   activation="softmax")(old_output)
+                                   activation="softmax",
+                                   name=model.layers[-1].name)(old_output)
 
                 # combine old model with new output layer
                 new_model = KerasModel(inputs=new_input,
