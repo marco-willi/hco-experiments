@@ -213,7 +213,7 @@ class Model(object):
             # load specified model from save folder if path is specified
             elif os.sep in self.cfg['load_model']:
                 root_save_path = self.cfg_path['save'].split(os.sep)[0:-2]
-                root_save_path = os.path.join(*root_save_path)
+                root_save_path = os.path.join(os.sep, *root_save_path)
                 root_save_path = root_save_path.replace(':', ':' + os.sep)
                 model_file = root_save_path + os.sep +\
                     self.cfg['load_model'] + '.hdf5'
