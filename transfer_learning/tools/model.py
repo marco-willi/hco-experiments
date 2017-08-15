@@ -13,7 +13,7 @@ import os
 import importlib
 import json
 from config.config import cfg_model as cfg, logging
-from keras.models import load_model, Model as KerasModel
+from keras.models import load_model, Model as KerasModel, Sequential
 from keras.layers import Dense
 from tools.helpers import get_most_rescent_file_with_string
 from tools.predictor import Predictor
@@ -200,7 +200,7 @@ class Model(object):
         # define starting epoch (0 for new models)
         self.start_epoch = 0
 
-        # load model if specified
+        # load already trained model if specified
         if self.cfg['load_model'] not in ('', 'None', None):
 
             # load latest model
@@ -224,6 +224,59 @@ class Model(object):
 
             logging.info("Loading model from disk: %s" % model_file)
             model = load_model(model_file)
+
+            # check if specific layers have to be overwritten with randomly
+            # initialized weights, e.g. for transfer-learning / fine-tuning
+            if self.cfg['load_model_rand_weights_after_layer'] not in ('',
+               'None', None):
+
+                # get randomly initialized model
+                model_random = self.model_dict['model']
+
+                # model layer names
+                layer_names = [x.name for x in model.layers]
+
+                # layer and all following to randomly initialize
+                target_layer = self.cfg['load_model_rand_weights_after_layer']
+
+                # check if target layer is in model
+                if target_layer not in layer_names:
+                    logging.error("Layer %s not in model.layers" %
+                                  target_layer)
+                    logging.error("Available Layers %s" %
+                                  layer_names)
+                    raise IOError("Layer %s not in model.layers" %
+                                  target_layer)
+
+                # find layers which have to be kept unchanged
+                i_set_random = layer_names.index(target_layer)
+
+                # combine old, trained layers with new random layers
+                comb_layers = model.layers[0:i_set_random]
+                new_layers = model_random.layers[i_set_random:]
+                comb_layers.extend(new_layers)
+
+                # define new model
+                new_model = Sequential(comb_layers)
+
+                logging.info("Replacing layers of model with random layers")
+
+                # overwrite model
+                model = new_model
+
+                # get optimizer
+                self._loadOptimizer()
+
+                # compile model
+                model.compile(loss='sparse_categorical_crossentropy',
+                              optimizer=self._opt,
+                              metrics=['accuracy',
+                                       'sparse_top_k_categorical_accuracy'])
+
+                # print layers of new model
+                for layer, i in zip(model.layers, range(0, len(model.layers))):
+                    logging.info("New model - layer %s: %s" %
+                                 (i, layer.name))
 
             # check if output layer has to be replaced
             if self.cfg['load_model_replace_output'] == 1:
@@ -283,22 +336,20 @@ class Model(object):
                     raise IOError("Layer %s not in model.layers" %
                                   self.cfg['load_model_retrain_layer'])
 
-                else:
+                # look for specified layer and set all previous layers
+                # to non-trainable
+                n_retrain = layer_names.index(
+                                  self.cfg['load_model_retrain_layer']
+                                  )
+                for layer in model.layers[0:n_retrain]:
+                    layer.trainable = False
 
-                    # look for specified layer and set all previous layers
-                    # to non-trainable
-                    n_retrain = layer_names.index(
-                                      self.cfg['load_model_retrain_layer']
-                                      )
-                    for layer in model.layers[0:n_retrain]:
-                        layer.trainable = False
+                logging.info("Setting layers before %s to non-trainable" %
+                             self.cfg['load_model_retrain_layer'])
 
-                    logging.info("Setting layers before %s to non-trainable" %
-                                 self.cfg['load_model_retrain_layer'])
-
-                    for layer in model.layers:
-                        logging.info("Layer %s is trainable: %s" %
-                                     (layer.name, layer.trainable))
+                for layer in model.layers:
+                    logging.info("Layer %s is trainable: %s" %
+                                 (layer.name, layer.trainable))
 
             # determine starting epoch if a model was loaded from disk, without
             # changing any layers (continue training)
