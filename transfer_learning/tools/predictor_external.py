@@ -29,16 +29,17 @@ class PredictorExternal(object):
         self.color_mode = "rgb"
 
         if path_to_model is None:
-            IOError("Path to model has to be specified")
+            raise IOError("Path to model has to be specified")
 
         if keras_datagen is None:
-            IOError("Specify keras ImageDataGenerator")
+            raise IOError("Specify keras ImageDataGenerator")
 
         if class_list is None:
-            IOError("Specify class list to map predictions to classes")
+            raise IOError("Specify class list to map predictions to classes")
 
         if not os.path.isfile(self.path_to_model):
-            FileNotFoundError("Model File %s not found" % self.path_to_model)
+            raise FileNotFoundError("Model File %s not found" %
+                                    self.path_to_model)
 
         # Load model from disk
         print("Loading model from disk: %s" % self.path_to_model)
@@ -56,7 +57,7 @@ class PredictorExternal(object):
 
         # check input
         if any([x is None for x in [path, output_path]]):
-            IOError("Path and output_path have to be specified")
+            raise IOError("Path and output_path have to be specified")
 
         # check output_path
         if output_path[-1] != "/":
