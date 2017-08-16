@@ -35,38 +35,12 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model <- "blank_vs_non_blank_small"
 
 
-# Elephant Expedition - blank vs non-blank
-# project_id <- "elephant_expedition"
-# ts_id <- "201708021608"
-# model <- "ee_blank_vs_nonblank"
-# subject_set <- "val_subject_set_ee_blank_vs_nonblank"
-# project_name <- "Elephant Expedition"
-# model_nam <- "Blank vs Non-Blank"
-
-
-# Elephant Expedition - species
-# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-# project_id <- "elephant_expedition"
-# pred_file = "ee_nonblank_201708030208_preds_test"
-# log_file <- "ee_nonblank_201708021908_training"
-# model <- "ee_nonblank"
-# subject_set <- "test_subject_set_ee_nonblank"
-# 
-
-# Elephant Expedition - species no cannotidentify
-# path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
-# project_id <- "elephant_expedition"
-# pred_file = "ee_nonblank_no_cannotidentify_201708050608_preds_val"
-# log_file <- "ee_nonblank_no_cannotidentify_201708042308_training"
-# model <- "ee_nonblank_no_cannotidentify"
-# subject_set <- "val_subject_set_ee_nonblank_no_cannotidentify"
-
 # Camera Catalogue - Blank vs Vehicle vs Species
-project_id <- "camera_catalogue"
-model <- "cc_blank_vehicle_species"
-project_name <- "Camera Catalogue"
-ts_id <- "201708052008"
-model_name <- "Blank vs Vehicle vs Species"
+# project_id <- "camera_catalogue"
+# model <- "cc_blank_vehicle_species"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708052008"
+# model_name <- "Blank vs Vehicle vs Species"
 
 # Camera Catalogue - Species
 # project_id <- "camera_catalogue"
@@ -74,6 +48,20 @@ model_name <- "Blank vs Vehicle vs Species"
 # project_name <- "Camera Catalogue"
 # ts_id <- "201708072308"
 # model_name <- "Species"
+
+# Camera Catalogue - Species Fine Tune SS 51 all
+project_id <- "camera_catalogue"
+model <- "cc_species_ss51_finetune_all"
+project_name <- "Camera Catalogue"
+ts_id <- "201708160208"
+model_name <- "Species - Fine Tune SS51 All"
+
+# Camera Catalogue - Species Retrain SS 51 last layer
+# project_id <- "camera_catalogue"
+# model <- "cc_species_ss51_last_layer_only"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708151508"
+# model_name <- "Species - Last Layer SS51 only"
 
 
 # Elephant Expedition - blank vs non-blank
@@ -90,6 +78,19 @@ model_name <- "Blank vs Vehicle vs Species"
 # project_name <- "Elephant Expedition"
 # model_name <- "Species (excl. Cannotidentify)"
 
+# Elephant Expedition - Species Fine Tune SS 51 all
+# project_id <- "elephant_expedition"
+# model <- "ee_nonblank_no_ci_ss51_finetune_all"
+# ts_id <- "201708150208"
+# project_name <- "Elephant Expedition"
+# model_name <- "Species - Fine Tune SS51 All"
+
+# Elephant Expedition - Species Fine Tune SS 51 layst layer
+# project_id <- "elephant_expedition"
+# model <- "ee_nonblank_no_ci_ss51_last_layer_only"
+# ts_id <- "201708142208"
+# project_name <- "Elephant Expedition"
+# model_name <- "Species - Last Layer SS51 only"
 
 # Snapshot Wisconsin - blank vs non-blank
 # project_id <- "snapshot_wisconsin"
@@ -152,7 +153,8 @@ params = list(
   title=paste(project_name," - ",model_name,sep=""),
   author="Marco Willi",
   date=Sys.Date(),
-  path_main=path_main
+  path_main=path_main,
+  n_classes=length(levels(preds$y_true))
 )
 
 output <- "html"

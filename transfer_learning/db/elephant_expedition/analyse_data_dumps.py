@@ -11,6 +11,7 @@ import numpy as np
 from collections import Counter
 from tools.subjects import SubjectSet, Subject
 import pickle
+from datetime import datetime
 
 
 #########################
@@ -77,7 +78,7 @@ path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
 #########################
 
 subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
-
+subs[list(subs.keys())[0]]
 
 cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
 cls.head
@@ -108,6 +109,59 @@ cls = cls[cls.workflow_version == most_recent_wf]
 # subject id
 print("number of subjects %s" % len(cls['subject_ids'].unique()))
 
+
+###############################
+# Analyse Subjects
+###############################
+
+# subset all subjects that were used
+sub_ids_in_cls = set(cls['subject_ids'])
+subs_used = dict()
+for k, v in subs.items():
+    if k in sub_ids_in_cls:
+        subs_used[k] = v
+
+subs_used[list(subs_used.keys())[0]]
+# extract location, date and time of subject
+for v in subs_used.values():
+    location = v['metadata']['Filename'].split('-')[0].strip()
+    date_time = v['metadata']['Filename'].split('-')[-1].strip()
+    date = date_time.split(' ')[0].strip()
+    time_of_day = date_time.split(' ')[1].split('.')[0].strip()
+    try:
+        datetime_object = datetime.strptime(date + '_' + time_of_day,
+                                            '%Y_%m_%d_%H_%M_%S')
+    except:
+        print(v['metadata']['Filename'])
+    v['location'] = location
+    v['date'] = datetime_object.strftime("%Y%m%d")
+    v['time'] = datetime_object.strftime("%H%M%S")
+    v['datetime'] = datetime_object.strftime("%Y%m%d%H%M%S")
+
+###############################
+# analyse locations
+###############################
+
+locs = dict()
+for v in subs_used.values():
+    if v['location'] in locs:
+        locs[v['location']] += 1
+    else:
+        locs[v['location']] = 1
+
+for k, v in locs.items():
+    print("Location %s - %s observations" % (k, v))
+
+###############################
+# analyse camera intervals
+###############################
+
+
+
+
+###############################
+# Analyse Choices
+###############################
 
 # look for multiple choices per classification
 choic = list()
@@ -172,9 +226,3 @@ cls.iloc[1672081,:]['metadata']
 for i in range(500, 550):
     print("%s: ------------------" % i)
     print(cls.iloc[i,:]['annotations'])
-
-
-
-
-
-

@@ -17,7 +17,7 @@ library(dplyr)
 text_small <- 10
 text_med <- 12
 text_large <- 14
-text_very_small <- 6
+text_very_small <- 8
 
 ########################### -
 # Plot Log File ----
@@ -33,6 +33,22 @@ plot_log <- function(log, model=""){
                                                 "sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Train",
                                                 "val_sparse_top_k_categorical_accuracy"="Top-5 Accuracy - Validation"))
   log_rf$set <- ifelse(grepl(pattern = "Train", log_rf$variable),"Train","Validation")
+  
+  # information to plot on each panel
+  max_min_group <- group_by(log_rf, group) %>% summarise(max_group=max(value),min_group=min(value))
+  
+  info_text <- group_by(log_rf, variable,group) %>% summarise(max_val=max(value),min_val=min(value)) %>%
+    left_join(max_min_group,by="group")
+  info_text$epoch <- mean(c(max(log_rf$epoch), min(log_rf$epoch))) * 1.75
+  info_text$epoch <- max(log_rf$epoch)
+  info_text$value <- info_text$min_val
+  info_text$set <- NA
+  info_text$lab <- ifelse(grepl(pattern = "Accuracy", info_text$variable), 
+                          paste("Max Val Acc: ", round(info_text$max_val,3),sep=""), 
+                          paste("Min Val Loss: ", round(info_text$min_val,3),sep=""))
+  info_text$ypos <- ifelse(grepl(pattern = "Accuracy", info_text$variable), 
+                           info_text$min_group,info_text$max_group)
+  info_text <- info_text[grepl("Validation", info_text$variable),]
   
   gg <- ggplot(log_rf, aes(x=epoch, y=value, colour=set, group=variable)) + geom_line(lwd=1.5) +
     theme_light() +
@@ -50,7 +66,9 @@ plot_log <- function(log, model=""){
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.title = element_blank(),
-          legend.background = element_rect(size=1,colour="black"))
+          legend.background = element_rect(size=1,colour="black")) +
+    geom_text(data=info_text,aes(x=epoch,y=ypos,label=lab), colour="black",show.legend = FALSE, hjust="right")
+  gg
   return(gg)
 }
 
@@ -96,7 +114,7 @@ plot_class_acc <- function(preds, model){
     ylab("Accuracy") +
     coord_flip()  +
     # geom_text(size = 4, position = position_stack(vjust = 0.5), colour="white") +
-    geom_text(aes(label=paste(" Acc: ", round(accuracy,3),"/ Obs: ", n), y=0.01), 
+    geom_text(aes(label=paste(" Acc: ", sprintf("%.3f",round(accuracy,3)),"/ Obs: ", n), y=0.01), 
               size=text_small* (5/14), vjust="middle", hjust="left") +
     theme(axis.text = element_text(size=text_large),
           axis.title = element_text(size=text_large),
@@ -127,7 +145,7 @@ plot_class_most_conf_acc <- function(preds, model){
     xlab("") +
     ylab("Accuracy") +
     coord_flip()  +
-    geom_text(aes(label=paste(" Acc: ", round(accuracy,3),"/ Obs: ", n), y=0.01), 
+    geom_text(aes(label=paste(" Acc: ", sprintf("%.3f",round(accuracy,3)),"/ Obs: ", n), y=0.01), 
               size=text_small* (5/14), vjust="middle", hjust="left") +
     theme(axis.text = element_text(size=text_large),
           axis.title = element_text(size=text_large),
@@ -143,9 +161,14 @@ plot_class_most_conf_acc <- function(preds, model){
 ################################################ -
 
 plot_class_most_conf_95th_acc<- function(preds, model){
+  
   # take only with most confidence and Threshold
-  preds_max_p <- dplyr::group_by(preds, subject_id) %>% summarise(max_p=max(p))
-  preds_1 <- left_join(preds, preds_max_p, by="subject_id") %>% filter(p==max_p) %>% filter(p>0.95)
+  preds_max_p <- dplyr::group_by(preds, subject_id) %>% summarise(max_p=max(p)) 
+  preds_0 <- left_join(preds, preds_max_p, by="subject_id") %>% filter(p==max_p) %>% dplyr::arrange(subject_id)
+  # only take one image
+  preds_min_image_id <- group_by(preds_0, subject_id) %>% summarise(image_id=min(image_id))
+  preds_0 <- inner_join(preds_0,preds_min_image_id,by=c("subject_id","image_id"))
+  preds_1 <- left_join(preds_0, preds_max_p, by="subject_id") %>% filter(p>0.95)
   
   # accuracy per true class
   preds_class <- dplyr::group_by(preds_1,y_true) %>% summarise(matches = sum(y_true == y_pred), n = n()) %>%
@@ -163,7 +186,7 @@ plot_class_most_conf_95th_acc<- function(preds, model){
     xlab("") +
     ylab("Accuracy") +
     coord_flip() +
-    geom_text(aes(label=paste("Acc: ", round(accuracy,3)," / Obs: ", n,"/",n_total," (",p_high_threshold," %)",sep=""), y=0.01), 
+    geom_text(aes(label=paste("Acc: ", sprintf("%.3f",round(accuracy,3))," / Obs: ", n,"/",n_total," (",p_high_threshold," %)",sep=""), y=0.01), 
               size=text_small* (5/14), vjust="middle", hjust="left") +
     theme(axis.text = element_text(size=text_large),
           axis.title = element_text(size=text_large),
@@ -281,7 +304,7 @@ plot_threshold_vs_acc_class<- function(preds, model){
                        labels = c("Accuracy (%)", "Proportion of Images Above Threshold (%)")) +
     theme(axis.text = element_text(size=text_med),
           axis.title = element_text(size=text_large),
-          legend.text = element_text(size=text_large),
+          legend.text = element_text(size=text_med),
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.background = element_rect(size=1,colour="black"),
@@ -299,6 +322,15 @@ plot_cm<- function(preds, model){
   conf_empty <- expand.grid(levels(preds$y_true),levels(preds$y_true))
   names(conf_empty) <- c("y_true","y_pred")
   
+  # number of classes
+  n_classes <- length(levels(preds$y_true))
+  
+  if (n_classes > 10){
+    n_digits = 1
+  } else {
+    n_digits = 3
+  }
+  
   # accuracy per true class
   class_sum <- dplyr::group_by(preds,y_true) %>% summarise(n_class = n())
   conf <- dplyr::group_by(preds,y_true, y_pred) %>% summarise(n = n()) %>% left_join(class_sum) %>%
@@ -313,7 +345,7 @@ plot_cm<- function(preds, model){
     scale_fill_gradient(low = "white", high = "steelblue", guide =  FALSE) + 
     #scale_fill_gradient2(low="white", mid="yellow", high="red", midpoint=0.5, guide =  FALSE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-    geom_text(aes(label = round(p_class, 1)),cex=text_very_small* (5/14)) +
+    geom_text(aes(label = round(p_class, n_digits)),cex=text_very_small* (5/14)) +
     ylab("True") +
     xlab("Predicted") +
     scale_x_discrete()
@@ -337,12 +369,13 @@ plot_dist_pred<- function(preds, model){
     scale_fill_brewer(type = "qual",direction = 1, palette=2) +
     theme(axis.text = element_text(size=text_large),
           axis.title = element_text(size=text_large),
-          legend.text = element_text(size=text_large),
+          legend.text = element_text(size=text_med),
           legend.position = "bottom",
           legend.box = "horizontal",
           legend.title = element_blank(),
           legend.background = element_rect(size=1,colour="black"),
           strip.text.x = element_text(size = text_small, colour = "white", face="bold"))
+  gg
   return(gg)
 }
 
@@ -385,17 +418,19 @@ plot_subject_image <- function(preds, subjects, id, path_scratch, ii){
     theme_light() +
     ylab("Model Output") +
     xlab("") +
+    ggtitle("Model Predictions (ordered)") +
     theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
           axis.title.x=element_text(size=16),
           axis.title.y=element_text(size=16),
+          plot.title = element_text(size=16),
           axis.ticks.y = element_blank()) +
-    geom_text(aes(label=class, y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
+    geom_text(aes(label=paste(class," (",round(prob,3)*100," %)",sep=""), y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
     theme(plot.margin = unit(c(0.7,0.9,0.5,0.9), "cm"), panel.border=element_rect(fill=NA)) +
     scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
     labs(x=NULL)
   
   
-  title=textGrob(label = label,gp=gpar(fontsize=20,fontface="bold"), vjust=1)
+  title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=20,fontface="bold"), vjust=1)
   
   gg <- arrangeGrob(gg1,gg2,top=title)
   
