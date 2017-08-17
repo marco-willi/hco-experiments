@@ -16,7 +16,8 @@ class Experiment(object):
 
     def __init__(self, name, project, class_list=None, class_mapper=None,
                  train_size=0.9, test_size=None, equal_class_sizes=False,
-                 random_state=123):
+                 random_state=123,
+                 max_labels_per_subject=None):
         # experiment name
         self.name = name
         # a project object
@@ -32,6 +33,8 @@ class Experiment(object):
         self.random_state = random_state
         # class sizes
         self.equal_class_sizes = equal_class_sizes
+        # max allowed labels per subject
+        self.max_labels_per_subject = max_labels_per_subject
         self.classes = None
         self.train_set = None
         self.test_set = None
@@ -100,14 +103,14 @@ class Experiment(object):
             if len(delete_dirs) > 0:
                 for d in delete_dirs:
                     logging.debug("Removing directory %s" %
-                                  (root_path + "/" + d))
-                    shutil.rmtree(root_path + "/" + d)
+                                  (root_path + os.path.sep + d))
+                    shutil.rmtree(root_path + os.path.sep + d)
 
         # create class directories
         for cl in self.classes:
-            if not os.path.exists(root_path + "/" + cl):
-                logging.debug("Creating %s" % (root_path + "/" + cl))
-                os.mkdir(root_path + "/" + cl)
+            if not os.path.exists(root_path + os.path.sep + cl):
+                logging.debug("Creating %s" % (root_path + os.path.sep + cl))
+                os.mkdir(root_path + os.path.sep + cl)
 
         return root_path
 
@@ -155,19 +158,21 @@ class Experiment(object):
 
     def createExpDataSet(self, link_only=True,
                          splits="new",
-                         clear_old_files=True):
+                         clear_old_files=True,
+                         split_mode="none"):
         """ Create Test / Train / Validation Data set, if link_only is True
             only symbolik links are created, no actual data is copied """
 
         # create new splits
         if splits == 'new':
-            self.createTrainTestSplit(save_to_disk=True)
+            self.createTrainTestSplit(save_to_disk=True, split_mode=split_mode)
         elif splits == 'disk':
             # if files are there load them from disk, else create new
             try:
                 self.load()
             except:
-                self.createTrainTestSplit(save_to_disk=True)
+                self.createTrainTestSplit(save_to_disk=True,
+                                          split_mode=split_mode)
         else:
             raise NotImplementedError
 
@@ -182,6 +187,16 @@ class Experiment(object):
             # get all relevant subject ids
             subject_ids = sub_set.getAllIDs()
 
+            # if max labels per subject is restricted remove all
+            # that exceed that threshold
+            if self.max_labels_per_subject is not None:
+                subject_ids_allowed = list()
+                for ii in subject_ids:
+                    n_labels = sub_set.getSubject(ii).getNumLabels()
+                    if n_labels <= self.max_labels_per_subject:
+                        subject_ids_allowed.append(ii)
+                subject_ids = subject_ids_allowed
+
             # check if some already exist and keep them
             if not clear_old_files:
                 # get all files already on disk
@@ -190,7 +205,8 @@ class Experiment(object):
                 # store information of existing files in dictionary
                 existing_dict = dict()
                 for cl in all_classes:
-                    existing_files = os.listdir(root_path + "/" + cl + "/")
+                    existing_files = os.listdir(root_path + os.path.sep + cl +
+                                                os.path.sep)
                     for ex in existing_files:
                         existing_id = ex.split('_')[0]
                         if existing_id not in existing_dict:
@@ -214,8 +230,9 @@ class Experiment(object):
                         files_to_remove = existing_dict[r]['files']
                         class_to_be_removed = existing_dict[r]['cl']
                         for fr in files_to_remove:
-                            os.remove(root_path + "/" + class_to_be_removed +
-                                      "/" + fr)
+                            os.remove(root_path + os.path.sep +
+                                      class_to_be_removed +
+                                      os.path.sep + fr)
 
                     # only keep subject ids that are not already on disk
                     subject_ids = list(subject_ids_relev)
@@ -232,8 +249,8 @@ class Experiment(object):
                     label = sub.getLabel()
 
                     for img in imgs.values():
-                        img.createSymLink(dest_path=root_path + "/" +
-                                          label + "/")
+                        img.createSymLink(dest_path=root_path + os.path.sep +
+                                          label + os.path.sep)
             else:
                 logging.info("Creating hard copy files")
                 for s_i in subject_ids:
@@ -242,8 +259,8 @@ class Experiment(object):
                     label = sub.getLabel()
 
                     for img in imgs.values():
-                        img.copyTo(dest_path=root_path + "/" +
-                                   label + "/")
+                        img.copyTo(dest_path=root_path + os.path.sep +
+                                   label + os.path.sep)
 
     def _balancedSampling(self, ids, labels):
         """ downsample larger classes to match size of smallest class """
@@ -285,7 +302,7 @@ class Experiment(object):
 
         return ids_final, labels_final
 
-    def createTrainTestSplit(self, save_to_disk=False):
+    def createTrainTestSplit(self, save_to_disk=False, split_mode="none"):
         """ create Test / Train / Validation splits """
 
         # get random seed
@@ -301,24 +318,46 @@ class Experiment(object):
         if self.equal_class_sizes:
             ids, labels = self._balancedSampling(ids, labels)
 
+        # create splitting id to split subjects on
+        ids_orig, split_ids, split_labels =\
+            self.project.subject_set.createSplitIDs(split_mode=split_mode)
+
         # create id to label mapper
         class_mapper_id = dict()
         for i, l in zip(ids, labels):
             class_mapper_id[i] = l
 
+        # create split id to label mapper
+        class_mapper_split_id = dict()
+        for i, l in zip(split_ids, split_labels):
+            class_mapper_split_id[i] = l
+
+        # mapper split ids to orig ids
+        split_id_mapper = dict()
+        for jj in range(0, len(split_ids)):
+            if split_ids[jj] not in split_id_mapper:
+                split_id_mapper[split_ids[jj]] = [ids_orig[jj]]
+            else:
+                split_id_mapper[split_ids[jj]].append(ids_orig[jj])
+
         # training and test split
-        id_train, id_test = train_test_split(list(ids),
-                                             train_size=self.train_size,
-                                             test_size=self.test_size,
-                                             stratify=labels,
-                                             random_state=int(rand))
+        id_train_s, id_test_s = train_test_split(list(split_ids),
+                                                 train_size=self.train_size,
+                                                 test_size=self.test_size,
+                                                 stratify=split_labels,
+                                                 random_state=int(rand))
 
         # validation split
-        labels_val = [class_mapper_id[x] for x in id_test]
-        id_test, id_val = train_test_split(id_test,
-                                           train_size=0.5,
-                                           stratify=labels_val,
-                                           random_state=int(rand))
+        labels_s_val = [class_mapper_split_id[x] for x in id_test_s]
+        id_test_s, id_val_s = train_test_split(id_test_s,
+                                               train_size=0.5,
+                                               stratify=labels_s_val,
+                                               random_state=int(rand))
+
+        # map split ids to original ids
+        id_train = [[x for x in split_id_mapper[i]] for i in id_train_s]
+        id_test = [[x for x in split_id_mapper[i]] for i in id_test_s]
+        id_val = [[x for x in split_id_mapper[i]] for i in id_val_s]
 
         # generate new subject sets
         train_set = SubjectSet(labels=self.classes)
