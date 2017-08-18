@@ -24,11 +24,11 @@ def get_most_rescent_file_with_string(dirpath, in_str='', excl_str='!'):
     return dirpath + '/' + latest
 
 
-def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="none"):
+def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="1_on_1"):
     """ Creates splitting ids to be used for test/train splitting """
 
     # Return 1 to 1 mapping
-    if split_mode == "none":
+    if split_mode == "1_on_1":
         split_ids = ids_orig
         split_labels = labels_orig
 

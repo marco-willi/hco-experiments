@@ -3,6 +3,14 @@ git clone https://github.com/marco-willi/hco-experiments.git ~/code/hco-experime
 cp ~/code/credentials.ini ~/code/hco-experiments/transfer_learning/config/credentials.ini
 cd ~/code/hco-experiments/transfer_learning/config/
 
+
+# get specific branch
+sudo rm -r ~/code/hco-experiments
+git clone -b subject_set_enhancement https://github.com/marco-willi/hco-experiments.git ~/code/hco-experiments
+cp ~/code/credentials.ini ~/code/hco-experiments/transfer_learning/config/credentials.ini
+cd ~/code/hco-experiments/transfer_learning/config/
+
+
 # run submodule
 # python3 -m module.submodule
 

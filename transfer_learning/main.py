@@ -55,7 +55,7 @@ def main():
     exp.createExpDataSet(link_only=bool(eval(config['general']['link_only'])),
                          clear_old_files=False,
                          splits=cfg_model['experiment_data'],
-                         split_mode="location_date_time")
+                         split_mode=cfg_model['split_mode'])
 
     ########################
     # Define Model

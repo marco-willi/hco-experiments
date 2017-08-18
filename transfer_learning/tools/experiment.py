@@ -303,7 +303,7 @@ class Experiment(object):
 
         return ids_final, labels_final
 
-    def createTrainTestSplit(self, save_to_disk=False, split_mode="none"):
+    def createTrainTestSplit(self, save_to_disk=False, split_mode="1_on_1"):
         """ create Test / Train / Validation splits """
 
         # get random seed
