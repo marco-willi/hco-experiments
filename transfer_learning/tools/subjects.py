@@ -517,6 +517,9 @@ class Subject(object):
     def getMetaData(self):
         return self.meta_data
 
+    def getNumLabels(self):
+        return self.n_labels
+
 
 class Image(object):
     """ Defines a single image, which is part of a subject """
