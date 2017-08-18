@@ -42,10 +42,15 @@ def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="1_on_1"):
         for ii in ids_orig:
             meta = meta_data[ii]
             # get attrs and store in list
+            dummy_loc_id = 0
             for tag, ll in zip(['location', 'date', 'time'],
                                [locations, dates, times]):
                 if tag in meta:
-                    ll.append(meta[tag])
+                    if (tag == 'location') & (meta[tag] == 'unknown'):
+                        ll.append('unknown' + str(dummy_loc_id))
+                        dummy_loc_id += 1
+                    else:
+                        ll.append(meta[tag])
                 else:
                     ll.append('unknown')
 
