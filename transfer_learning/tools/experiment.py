@@ -384,13 +384,14 @@ class Experiment(object):
 
         # print size of classes
         debuggy = dict()
+        logging.debug("Class distribution overall on splitting ids")
         for dd in split_labels_unique:
             if dd not in debuggy:
                 debuggy[dd] = 1
             else:
                 debuggy[dd] += 1
         for k, v in debuggy.items():
-            print("Class %s has %s Obs" % (k, v))
+            logging.debug("Class %s has %s Obs" % (k, v))
 
         # training and test split
         id_train_s, id_test_s = train_test_split(split_ids_unique,
@@ -404,13 +405,14 @@ class Experiment(object):
 
         # print size of classes
         debuggy = dict()
+        logging.debug("Class distribution test/val on splitting ids")
         for dd in labels_s_val:
             if dd not in debuggy:
                 debuggy[dd] = 1
             else:
                 debuggy[dd] += 1
         for k, v in debuggy.items():
-            print("Class %s has %s Obs" % (k, v))
+            logging.debug("Class %s has %s Obs" % (k, v))
 
         id_test_s, id_val_s = train_test_split(id_test_s,
                                                train_size=0.5,
