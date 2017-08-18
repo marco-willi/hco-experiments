@@ -271,11 +271,11 @@ subject_set = SubjectSet(labels=list(labels_all.keys()))
 
 for key, value in subs_all_data.items():
     subject = Subject(identifier=key,
-                      label=value['label'],
+                      labels=value['label'],
                       meta_data=value['meta_data'],
                       urls=value['url']
                       )
-    subject_set.addSubject(str(key), subject)
+    subject_set.addSubject(subject)
 
 # save to disk
 subject_set.save(cfg_path['db'] + 'subject_set.json')

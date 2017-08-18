@@ -57,6 +57,21 @@ class Experiment(object):
             self.classes = list(classes_all)
         self.classes.sort()
 
+        # create experiment specific subject set
+        self.subject_set = SubjectSet(self.project.classes)
+        project_set = self.project.subject_set
+        subject_ids = project_set.getAllIDs()
+
+        # if max labels per subject is restricted remove all
+        # that exceed that threshold
+        if self.max_labels_per_subject is not None:
+            for ii in subject_ids:
+                n_labels = project_set.getSubject(ii).getNumLabels()
+                if n_labels <= self.max_labels_per_subject:
+                    self.subject_set.addSubject(project_set.getSubject(ii))
+        else:
+            self.subject_set = project_set
+
     def _classMapper(self, ids, labels):
         """ Map Classes """
 
@@ -188,16 +203,6 @@ class Experiment(object):
             # get all relevant subject ids
             subject_ids = sub_set.getAllIDs()
 
-            # if max labels per subject is restricted remove all
-            # that exceed that threshold
-            if self.max_labels_per_subject is not None:
-                subject_ids_allowed = list()
-                for ii in subject_ids:
-                    n_labels = sub_set.getSubject(ii).getNumLabels()
-                    if n_labels <= self.max_labels_per_subject:
-                        subject_ids_allowed.append(ii)
-                subject_ids = subject_ids_allowed
-
             # check if some already exist and keep them
             if not clear_old_files:
                 # get all files already on disk
@@ -310,12 +315,12 @@ class Experiment(object):
         rand = self.random_state
 
         # get all subject ids and their labels
-        ids, labels = self.project.subject_set.getAllIDsLabels()
+        ids, labels = self.subject_set.getAllIDsLabels()
 
         # prepare meta data dictionary for all subjects
         meta_data = dict()
         for i in ids:
-            meta_data[i] = self.project.subjec_set.getSubject(i).getMetaData()
+            meta_data[i] = self.subject_set.getSubject(i).getMetaData()
 
         # create splitting id to split subjects on, using original, unmapped
         # labels
@@ -398,7 +403,7 @@ class Experiment(object):
         sets = [train_set, test_set, val_set]
         for si, s in zip(set_ids, sets):
             for i in si:
-                sub = self.project.subject_set.getSubject(i)
+                sub = self.subject_set.getSubject(i)
                 # change label
                 new_label = class_mapper_id[i]
                 sub.setLabel(new_label)
