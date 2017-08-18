@@ -12,6 +12,8 @@ from tools.subjects import SubjectSet, Subject
 import pickle
 import random
 from db.data_prep_functions import *
+from datetime import datetime
+import re
 
 
 ##########################
@@ -39,13 +41,14 @@ from db.data_prep_functions import *
 
 
 #########################
-# Process Subject Data
+# Import Subject Data
 #########################
 
 subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
+subs[list(subs.keys())[0]]
 
 ###############################
-# Process Classification Data
+# Import Classification Data
 ###############################
 
 cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
@@ -125,6 +128,70 @@ class_mapper = {
     'VHCL': 'vehicle'
 }
 
+###############################
+# Process Subject Data
+###############################
+
+# subset all subjects that were used
+sub_ids_in_cls = set(cls['subject_ids'])
+subs_used = dict()
+for k, v in subs.items():
+    if k in sub_ids_in_cls:
+        subs_used[k] = v
+
+subs_used[list(subs_used.keys())[0]]
+# extract location, date and time of subject
+# patterns: '2017-03-09_07-29-18-CAM40480.jpg'
+#  'Station22__Camera1__2012-05-14__23-14-29(6).JPG'
+# '2016-12-03_10_28_20-.jpg'
+
+# patterns in used subjects:
+# t1 = '2017-03-09_07-29-18-CAM40480.jpg'
+# t2 = '2016-12-03_10_28_20-.jpg'
+# t3 = 'C1940694.JPG'
+
+
+def extract_loc_date_time(tt):
+    # extract date
+    date_regexp = re.search(".*([0-9]{4}[_-][0-9]{2}[_-][0-9]{2}).*", tt)
+    if bool(date_regexp):
+        date_extracted = date_regexp.groups()[0]
+        date = re.sub('[_-]', '', date_extracted)
+    else:
+        date = "20010101"
+    # extract time of day
+    tod_regexp = re.search(".*([0-9]{2}[_-][0-9]{2}[_-][0-9]{2})[_-]\D.*", tt)
+    if bool(tod_regexp):
+        tod_extracted = tod_regexp.groups()[0]
+        time_of_day = re.sub('[_-]', '', tod_extracted)
+    else:
+        time_of_day = "000000"
+    # extract location
+    loc_regexp = re.search("(?:^.*[_-]|^)(\w+)\.jpg$", tt, re.IGNORECASE)
+    if bool(loc_regexp):
+        location = loc_regexp.groups()[0]
+    else:
+        location = "unknown"
+    date_time = date + time_of_day
+    return location, date, time_of_day, date_time
+
+
+for v in subs_used.values():
+    try:
+        location, date, time_of_day, date_time = \
+            extract_loc_date_time(v['metadata']['image_name'])
+    except:
+        print(v['metadata']['image_name'])
+    v['location'] = location
+    v['date'] = date
+    v['time'] = time_of_day
+    v['datetime'] = date_time
+
+#subs_used[list(subs_used.keys())[0]]
+
+###############################
+# Process Classification Data
+###############################
 
 # loop through all classifications and fill subject dictionary
 subs_res = dict()
@@ -164,10 +231,12 @@ subs_res[list(subs_res.keys())[0]]
 subs_res_final = dict()
 for k, v in subs_res.items():
     # blanks
-    blank_classes = ['nothing_here', 'VEGETATIONNOANIMAL', 'NOTHINGHERE','NTHNGHR']
+    blank_classes = ['nothing_here', 'VEGETATIONNOANIMAL',
+                     'NOTHINGHERE', 'NTHNGHR']
     # check retirement reason
-    if v['retirement_reason'] in ['Not Retired','classification_count', 'consensus', 'other', None]:
-        label = 'not_retired'
+    if v['retirement_reason'] in ['Not Retired', 'classification_count',
+                                  'consensus', 'other', None]:
+        label = 'unkwnown'
     else:
         label = v['retirement_reason']
     users = v['users']
@@ -182,10 +251,10 @@ for k, v in subs_res.items():
     top_n = Counter(species_all).most_common(int(n_species_med))
     # extract label
     label_plur = [x[0] for x in top_n]
-    if not label == 'not_retired':
-        label_final = label
-    else:
+    if label == 'unkwnown':
         label_final = label_plur
+    else:
+        label_final = label
     if type(label_final) is not list:
         label_final = [label_final]
     for i in range(0, len(label_final)):
@@ -209,13 +278,14 @@ for k, v in subs_res_final.items():
         lab = list()
         lab.append(v['label'])
     else:
-        #print(v['label'])
         lab = v['label']
     for l in lab:
         if l not in labels_all:
             labels_all[l] = 1
         else:
             labels_all[l] += 1
+for k, v in labels_all.items():
+    print("Label %s has %s obs" % (k, v))
 
 # prepare final dictionary that contains all relevant data
 subs_all_data = dict()
@@ -225,17 +295,23 @@ for k, v in subs_res_final.items():
     if label[0] is None:
         print(k)
         print(v)
-    if (len(label) == 1) & (label is not None):
-        label = label[0]
-    else:
+    # if (len(label) == 1) & (label is not None):
+    #     label = label[0]
+    # else:
+    #     continue
+    if label is None:
         continue
-    if k in subs.keys():
-        url = subs[k]['url']
-    else:
+    if k not in subs_used.keys():
         continue
+    # get subject meta data
+    current_sub = subs_used[k]
+    sub_meta = {'location': current_sub['location'],
+                'date': current_sub['date'],
+                'time': current_sub['time'],
+                'datetime': current_sub['datetime']}
     subs_all_data[k] = {'label': label,
-                        'url': url,
-                        'meta_data': v}
+                        'url': current_sub['url'],
+                        'meta_data': {**v, **sub_meta}}
 
 subs_all_data[list(subs_all_data.keys())[0]]
 
@@ -246,15 +322,14 @@ for k, v in subs_all_data.items():
         lab = list()
         lab.append(v['label'])
     else:
-        print(v['label'])
         lab = v['label']
     for l in lab:
         if l not in labels_all:
             labels_all[l] = 1
         else:
             labels_all[l] += 1
-
-labels_all
+for k, v in labels_all.items():
+    print("Label %s has %s obs" % (k, v))
 
 # write labels to disk
 file = open(cfg_path['db'] + 'classes.txt', "w")
@@ -268,7 +343,6 @@ file2.close()
 
 # create SubjectSet
 subject_set = SubjectSet(labels=list(labels_all.keys()))
-
 for key, value in subs_all_data.items():
     subject = Subject(identifier=key,
                       labels=value['label'],
@@ -276,7 +350,6 @@ for key, value in subs_all_data.items():
                       urls=value['url']
                       )
     subject_set.addSubject(subject)
-
 # save to disk
 subject_set.save(cfg_path['db'] + 'subject_set.json')
 

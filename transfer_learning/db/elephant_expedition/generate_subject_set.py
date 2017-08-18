@@ -232,8 +232,8 @@ for k, v in labels_all.items():
     print("Label %s has %s obs" % (k, v))
 
 # write labels to disk
-file = open(cfg_path['db'] + 'classes_v2.txt', "w")
-file2 = open(cfg_path['db'] + 'classes_numbers_v2.txt', "w")
+file = open(cfg_path['db'] + 'classes.txt', "w")
+file2 = open(cfg_path['db'] + 'classes_numbers.txt', "w")
 for k, v in labels_all.items():
     file.write(str(k) + ',')
     file2.write(str(k) + ',' + str(v) + "\n")
