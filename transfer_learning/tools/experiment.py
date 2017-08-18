@@ -379,6 +379,16 @@ class Experiment(object):
             else:
                 split_id_to_id_mapper[spl].append(ii)
 
+        # print size of classes
+        debuggy = dict()
+        for dd in split_labels_unique:
+            if dd not in debuggy:
+                debuggy[dd] = 1
+            else:
+                debuggy[dd] += 1
+        for k, v in debuggy.items():
+            print("Class %s has %s Obs" % (k, v))
+
         # training and test split
         id_train_s, id_test_s = train_test_split(split_ids_unique,
                                                  train_size=self.train_size,
@@ -388,6 +398,17 @@ class Experiment(object):
 
         # validation split
         labels_s_val = [class_mapper_split_id[x] for x in id_test_s]
+
+        # print size of classes
+        debuggy = dict()
+        for dd in labels_s_val:
+            if dd not in debuggy:
+                debuggy[dd] = 1
+            else:
+                debuggy[dd] += 1
+        for k, v in debuggy.items():
+            print("Class %s has %s Obs" % (k, v))
+
         id_test_s, id_val_s = train_test_split(id_test_s,
                                                train_size=0.5,
                                                stratify=labels_s_val,
