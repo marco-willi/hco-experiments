@@ -4,6 +4,7 @@ import os
 import shutil
 from tools.project import Project
 from tools.model import Model
+from tools.helpers import createSplitIDs
 from config.config import cfg_path, cfg_model, config
 from learning.model_components import create_class_mappings
 from config.config import logging
@@ -311,16 +312,23 @@ class Experiment(object):
         # get all subject ids and their labels
         ids, labels = self.project.subject_set.getAllIDsLabels()
 
-        # map labels & keep only relevant ids
+        # prepare meta data dictionary for all subjects
+        meta_data = dict()
+        for i in ids:
+            meta_data[i] = self.project.subjec_set.getSubject(i).getMetaData()
+
+        # create splitting id to split subjects on, using original, unmapped
+        # labels
+        ids_orig, split_ids, split_labels =\
+            createSplitIDs(ids, labels, meta_data=meta_data,
+                           split_mode=split_mode)
+
+        # map labels to classes & keep only relevant ids
         ids, labels = self._classMapper(ids, labels)
 
         # if equal class sizes, cut larger classes to size of smallest
         if self.equal_class_sizes:
             ids, labels = self._balancedSampling(ids, labels)
-
-        # create splitting id to split subjects on
-        ids_orig, split_ids, split_labels =\
-            self.project.subject_set.createSplitIDs(split_mode=split_mode)
 
         # create id to label mapper
         class_mapper_id = dict()
@@ -340,11 +348,28 @@ class Experiment(object):
             else:
                 split_id_mapper[split_ids[jj]].append(ids_orig[jj])
 
+        # mapper orig id to split id
+        id_to_split_id_mapper = dict()
+        for k, v in split_id_mapper.items():
+            for i in v:
+                id_to_split_id_mapper[i] = k
+
+        # get rid of all split ids of ids which have been removed by
+        # class mapper and balanced sampling
+        split_ids = [id_to_split_id_mapper[i] for i in ids]
+        split_labels = [class_mapper_split_id[i] for i in split_ids]
+
+        # deduplicate splitting ids to be used in creating test / train splits
+        split_ids_dedup, split_labels_dedup = list(), list()
+        for k, v in class_mapper_split_id.items():
+            split_ids_dedup.append(k)
+            split_labels_dedup.append(v)
+
         # training and test split
-        id_train_s, id_test_s = train_test_split(list(split_ids),
+        id_train_s, id_test_s = train_test_split(split_ids_dedup,
                                                  train_size=self.train_size,
                                                  test_size=self.test_size,
-                                                 stratify=split_labels,
+                                                 stratify=split_labels_dedup,
                                                  random_state=int(rand))
 
         # validation split
@@ -358,6 +383,11 @@ class Experiment(object):
         id_train = [[x for x in split_id_mapper[i]] for i in id_train_s]
         id_test = [[x for x in split_id_mapper[i]] for i in id_test_s]
         id_val = [[x for x in split_id_mapper[i]] for i in id_val_s]
+
+        # get rid of sublists
+        id_train = [item for sublist in id_train for item in sublist]
+        id_test = [item for sublist in id_test for item in sublist]
+        id_val = [item for sublist in id_val for item in sublist]
 
         # generate new subject sets
         train_set = SubjectSet(labels=self.classes)
