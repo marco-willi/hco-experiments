@@ -252,7 +252,7 @@ class Experiment(object):
                                       (c, len(subject_ids)))
                     sub = sub_set.getSubject(s_i)
                     imgs = sub.getImages()
-                    label = sub.getAllURLsLabelsIDsFnames()
+                    label = sub.getLabels()
 
                     for img in imgs.values():
                         img.createSymLink(dest_path=root_path + os.path.sep +
