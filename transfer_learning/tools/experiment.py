@@ -425,7 +425,7 @@ class Experiment(object):
                 sub = self.subject_set.getSubject(i)
                 # change label
                 new_label = class_mapper_id[i]
-                sub.setLabel(new_label)
+                sub.setLabels(new_label)
                 s.addSubject(i, sub)
 
         self.train_set = train_set

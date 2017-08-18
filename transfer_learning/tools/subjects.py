@@ -520,6 +520,9 @@ class Subject(object):
     def getNumLabels(self):
         return self.n_labels
 
+    def setLabels(self, labels):
+        self.labels = Labels(labels)
+
 
 class Image(object):
     """ Defines a single image, which is part of a subject """
