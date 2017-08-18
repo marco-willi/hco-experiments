@@ -338,6 +338,12 @@ class Experiment(object):
             else:
                 split_id_mapper[split_ids[jj]].append(ids_orig[jj])
 
+        # mapper orig id to split id
+        id_to_split_id_mapper = dict()
+        for k, v in split_id_mapper.items():
+            for i in v:
+                id_to_split_id_mapper[i] = k
+
         print('Key 10127334 in set: %s' % ('10127334' in set(ids_orig)))
 
         # map labels to classes & keep only relevant ids
@@ -363,22 +369,23 @@ class Experiment(object):
         for i, l in zip(split_ids, split_labels):
             class_mapper_split_id[i] = l
 
-        # deduplicate splitting ids to be used in creating test / train splits
-        split_ids_unique, split_labels_unique = list(), list()
-        for k, v in class_mapper_split_id.items():
-            split_ids_unique.append(k)
-            split_labels_unique.append(v)
-
-        # mapper orig id to split id
-        id_to_split_id_mapper = dict()
-        for k, v in split_id_mapper.items():
-            for i in v:
-                id_to_split_id_mapper[i] = k
-
         # get rid of all split ids of ids which have been removed by
         # class mapper and balanced sampling
         split_ids = [id_to_split_id_mapper[i] for i in ids]
         split_labels = [class_mapper_split_id[i] for i in split_ids]
+
+        # deduplicate splitting ids to be used in creating test / train splits
+        split_ids_unique = list(set(split_ids))
+        split_labels_unique = [class_mapper_split_id[x]
+                               for x in split_ids_unique]
+
+        # split id to id mapper after deduplication
+        split_id_to_id_mapper = dict()
+        for spl, ii in zip(split_ids, ids):
+            if spl not in split_id_to_id_mapper:
+                split_id_to_id_mapper[spl] = [ii]
+            else:
+                split_id_to_id_mapper[spl].append(ii)
 
         # training and test split
         id_train_s, id_test_s = train_test_split(split_ids_unique,
@@ -395,9 +402,9 @@ class Experiment(object):
                                                random_state=int(rand))
 
         # map split ids to original ids
-        id_train = [[x for x in split_id_mapper[i]] for i in id_train_s]
-        id_test = [[x for x in split_id_mapper[i]] for i in id_test_s]
-        id_val = [[x for x in split_id_mapper[i]] for i in id_val_s]
+        id_train = [[x for x in split_id_to_id_mapper[i]] for i in id_train_s]
+        id_test = [[x for x in split_id_to_id_mapper[i]] for i in id_test_s]
+        id_val = [[x for x in split_id_to_id_mapper[i]] for i in id_val_s]
 
         # get rid of sublists
         id_train = [item for sublist in id_train for item in sublist]
