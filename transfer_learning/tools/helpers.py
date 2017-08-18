@@ -39,30 +39,37 @@ def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="1_on_1"):
         locations = list()
         dates = list()
         times = list()
+        dummy_secs = list()
+        dummy_loc_id = 0
+        dummy_sec_id = 0
         for ii in ids_orig:
             meta = meta_data[ii]
             # get attrs and store in list
-            dummy_loc_id = 0
             for tag, ll in zip(['location', 'date', 'time'],
                                [locations, dates, times]):
                 if tag in meta:
                     if (tag == 'location') & (meta[tag] == 'unknown'):
                         ll.append('unknown' + str(dummy_loc_id))
                         dummy_loc_id += 1
+                    elif (tag == 'date') & (meta[tag] == "20010101"):
+                        ll.append(meta[tag])
+                        dummy_secs.append(dummy_sec_id)
+                        dummy_sec_id += 1
                     else:
                         ll.append(meta[tag])
+                        dummy_secs.append(0)
                 else:
                     ll.append('unknown')
 
         # create date time seconds
         seconds = list()
-        for dat, tm in zip(dates, times):
+        for dat, tm, ds in zip(dates, times, dummy_secs):
             try:
                 dtm = datetime.strptime(dat + tm, '%Y%m%d%H%M%S')
                 secs = dtm.timestamp()
             except:
                 secs = 0
-            seconds.append(secs)
+            seconds.append(secs+ds)
 
         # divide data into different locations
         loc_dat = dict()

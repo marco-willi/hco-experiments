@@ -344,25 +344,17 @@ class Experiment(object):
             for i in v:
                 id_to_split_id_mapper[i] = k
 
-        print('Key 10127334 in set: %s' % ('10127334' in set(ids_orig)))
-
         # map labels to classes & keep only relevant ids
         ids, labels = self._classMapper(ids, labels)
-
-        print('Key 10127334 in set: %s' % ('10127334' in set(ids)))
 
         # if equal class sizes, cut larger classes to size of smallest
         if self.equal_class_sizes:
             ids, labels = self._balancedSampling(ids, labels)
 
-        print('Key 10127334 in set: %s' % ('10127334' in set(ids)))
-
         # create id to label mapper
         class_mapper_id = dict()
         for i, l in zip(ids, labels):
             class_mapper_id[i] = l
-
-        print('Key 10127334 in set: %s' % ('10127334' in class_mapper_id.keys()))
 
         # create split id to label mapper
         class_mapper_split_id = dict()
