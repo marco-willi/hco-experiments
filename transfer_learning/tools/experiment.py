@@ -351,6 +351,9 @@ class Experiment(object):
         if self.equal_class_sizes:
             ids, labels = self._balancedSampling(ids, labels)
 
+        # map split ids to mapped labels
+        split_ids, split_labels = self._classMapper(split_ids, split_labels)
+
         # create id to label mapper
         class_mapper_id = dict()
         for i, l in zip(ids, labels):
