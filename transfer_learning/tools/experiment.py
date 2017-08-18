@@ -419,14 +419,12 @@ class Experiment(object):
         set_ids = [id_train, id_test, id_val]
         sets = [train_set, test_set, val_set]
         for si, s in zip(set_ids, sets):
-            print("Set length: %s, IDs length %s" % (len(s.getAllIDs()),
-                                                     len(si)))
             for i in si:
                 sub = self.subject_set.getSubject(i)
                 # change label
                 new_label = class_mapper_id[i]
                 sub.setLabels(new_label)
-                s.addSubject(i, sub)
+                s.addSubject(sub)
 
         self.train_set = train_set
         self.test_set = test_set
