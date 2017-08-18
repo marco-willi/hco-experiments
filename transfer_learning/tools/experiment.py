@@ -330,6 +330,14 @@ class Experiment(object):
             createSplitIDs(ids, labels, meta_data=meta_data,
                            split_mode=split_mode)
 
+        # mapper split ids to orig ids
+        split_id_mapper = dict()
+        for jj in range(0, len(split_ids)):
+            if split_ids[jj] not in split_id_mapper:
+                split_id_mapper[split_ids[jj]] = [ids_orig[jj]]
+            else:
+                split_id_mapper[split_ids[jj]].append(ids_orig[jj])
+
         print('Key 10127334 in set: %s' % ('10127334' in set(ids_orig)))
 
         # map labels to classes & keep only relevant ids
@@ -356,18 +364,10 @@ class Experiment(object):
             class_mapper_split_id[i] = l
 
         # deduplicate splitting ids to be used in creating test / train splits
-        split_ids, split_labels = list(), list()
+        split_ids_unique, split_labels_unique = list(), list()
         for k, v in class_mapper_split_id.items():
-            split_ids.append(k)
-            split_labels.append(v)
-
-        # mapper split ids to orig ids
-        split_id_mapper = dict()
-        for jj in range(0, len(split_ids)):
-            if split_ids[jj] not in split_id_mapper:
-                split_id_mapper[split_ids[jj]] = [ids_orig[jj]]
-            else:
-                split_id_mapper[split_ids[jj]].append(ids_orig[jj])
+            split_ids_unique.append(k)
+            split_labels_unique.append(v)
 
         # mapper orig id to split id
         id_to_split_id_mapper = dict()
@@ -381,10 +381,10 @@ class Experiment(object):
         split_labels = [class_mapper_split_id[i] for i in split_ids]
 
         # training and test split
-        id_train_s, id_test_s = train_test_split(split_ids,
+        id_train_s, id_test_s = train_test_split(split_ids_unique,
                                                  train_size=self.train_size,
                                                  test_size=self.test_size,
-                                                 stratify=split_labels,
+                                                 stratify=split_labels_unique,
                                                  random_state=int(rand))
 
         # validation split
