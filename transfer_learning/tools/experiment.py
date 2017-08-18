@@ -317,6 +317,8 @@ class Experiment(object):
         # get all subject ids and their labels
         ids, labels = self.subject_set.getAllIDsLabels()
 
+        print('Key 10127334 in set: %s' % ('10127334' in set(ids)))
+
         # prepare meta data dictionary for all subjects
         meta_data = dict()
         for i in ids:
@@ -328,17 +330,25 @@ class Experiment(object):
             createSplitIDs(ids, labels, meta_data=meta_data,
                            split_mode=split_mode)
 
+        print('Key 10127334 in set: %s' % ('10127334' in set(ids_orig)))
+
         # map labels to classes & keep only relevant ids
         ids, labels = self._classMapper(ids, labels)
+
+        print('Key 10127334 in set: %s' % ('10127334' in set(ids)))
 
         # if equal class sizes, cut larger classes to size of smallest
         if self.equal_class_sizes:
             ids, labels = self._balancedSampling(ids, labels)
 
+        print('Key 10127334 in set: %s' % ('10127334' in set(ids)))
+
         # create id to label mapper
         class_mapper_id = dict()
         for i, l in zip(ids, labels):
             class_mapper_id[i] = l
+
+        print('Key 10127334 in set: %s' % ('10127334' in class_mapper_id.keys()))
 
         # create split id to label mapper
         class_mapper_split_id = dict()
@@ -402,6 +412,8 @@ class Experiment(object):
         set_ids = [id_train, id_test, id_val]
         sets = [train_set, test_set, val_set]
         for si, s in zip(set_ids, sets):
+            print("Set length: %s, IDs length %s" % (len(s.getAllIDs()),
+                                                     len(si)))
             for i in si:
                 sub = self.subject_set.getSubject(i)
                 # change label

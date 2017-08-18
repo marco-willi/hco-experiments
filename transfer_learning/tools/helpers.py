@@ -174,6 +174,7 @@ if __name__ == '__main__':
               (i, s, lo, l))
 
     from sklearn.model_selection import train_test_split
+    from tools.subjects import SubjectSet
     labels = labels_orig
     # create id to label mapper
     class_mapper_id = dict()
@@ -237,6 +238,16 @@ if __name__ == '__main__':
     set(id_train) & set(id_test)
     set(id_train) & set(id_val)
     set(id_val) & set(id_test)
+
+
+
+    set_ids = [id_train, id_test, id_val]
+
+    for si in set_ids:
+        for i in si:
+            # change label
+            new_label = class_mapper_id[i]
+
 
 
     # get_most_rescent_file_with_string('D:\\Studium_GD\\Zooniverse\\Data\\' +
