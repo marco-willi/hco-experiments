@@ -355,6 +355,12 @@ class Experiment(object):
         for i, l in zip(split_ids, split_labels):
             class_mapper_split_id[i] = l
 
+        # deduplicate splitting ids to be used in creating test / train splits
+        split_ids, split_labels = list(), list()
+        for k, v in class_mapper_split_id.items():
+            split_ids.append(k)
+            split_labels.append(v)
+
         # mapper split ids to orig ids
         split_id_mapper = dict()
         for jj in range(0, len(split_ids)):
@@ -374,17 +380,11 @@ class Experiment(object):
         split_ids = [id_to_split_id_mapper[i] for i in ids]
         split_labels = [class_mapper_split_id[i] for i in split_ids]
 
-        # deduplicate splitting ids to be used in creating test / train splits
-        split_ids_dedup, split_labels_dedup = list(), list()
-        for k, v in class_mapper_split_id.items():
-            split_ids_dedup.append(k)
-            split_labels_dedup.append(v)
-
         # training and test split
-        id_train_s, id_test_s = train_test_split(split_ids_dedup,
+        id_train_s, id_test_s = train_test_split(split_ids,
                                                  train_size=self.train_size,
                                                  test_size=self.test_size,
-                                                 stratify=split_labels_dedup,
+                                                 stratify=split_labels,
                                                  random_state=int(rand))
 
         # validation split
