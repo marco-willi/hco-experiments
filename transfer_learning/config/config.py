@@ -68,9 +68,12 @@ def _extract_configs(key, value):
         splitted = value.replace("\n", "").split(",")
         return splitted
     elif key in ['image_size_save', 'image_size_model']:
-        size = value.split(',')
-        size = tuple([int(x) for x in size])
-        return size
+        if value in ['', None, 'None']:
+            return None
+        else:
+            size = value.split(',')
+            size = tuple([int(x) for x in size])
+            return size
     elif key in ['load_model'] and value not in ['', None]:
         return os.path.normpath(value)
     else:
