@@ -301,11 +301,15 @@ class SubjectSet(object):
         logging.info("Saving %s data ...." % set_name)
         time_s = time.time()
         urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
+        if cfg['image_size_save'] is not None:
+            save_size = cfg['image_size_save'][0:2]
+        else:
+            save_size = None
         res = data_loader.storeOnDisk(urls=urls,
                                       labels=labels,
                                       fnames=fnames,
                                       path=cfg_path['images'] + set_name,
-                                      target_size=cfg['image_size_save'][0:2],
+                                      target_size=save_size,
                                       chunk_size=100,
                                       zooniverse_imgproc=False)
         logging.info("Finished saving on disk after %s minutes" %

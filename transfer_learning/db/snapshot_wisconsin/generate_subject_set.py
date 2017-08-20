@@ -38,15 +38,15 @@ import re
 #create_path(cfg_path['db'] + 'subjects')
 #path_to_file = get_url(link_cl, cfg_path['db'] + 'subjects.zip')
 
-
 #########################
-# Process Subject Data
+# Import Subject Data
 #########################
 
 subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
+subs[list(subs.keys())[0]]
 
 ###############################
-# Process Classification Data
+# Import Classification Data
 ###############################
 
 cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
@@ -115,6 +115,43 @@ class_mapper = {
     'WLVRN': 'WOLVERINE'
 }
 
+###############################
+# Process Subject Data
+###############################
+
+# subset all subjects that were used
+sub_ids_in_cls = set(cls['subject_ids'])
+subs_used = dict()
+for k, v in subs.items():
+    if k in sub_ids_in_cls:
+        subs_used[k] = v
+
+subs_used[list(subs_used.keys())[0]]
+
+for v in subs_used.values():
+    try:
+        location = v['metadata']['#dnr_grid_id']
+        date = v['metadata']['date']
+        time = v['metadata']['time']
+        date = date.replace("/", "")
+        date = date[-4:] + date[0:2] + date[2:4]
+        time_of_day = time.replace(":", "") + "00"
+        date_time = date + time_of_day
+    except:
+        print(v['metadata']['image_name'])
+    v['location'] = location
+    v['date'] = date
+    v['time'] = time_of_day
+    v['datetime'] = date_time
+
+#subs_used[list(subs_used.keys())[0]]
+
+
+###############################
+# Process Classification Data
+###############################
+
+
 # loop through all classifications and fill subject dictionary
 subs_res = dict()
 for i in range(0, cls.shape[0]):
@@ -158,7 +195,7 @@ for k, v in subs_res.items():
     # check retirement reason
     if v['retirement_reason'] in ['Not Retired', 'classification_count',
                                   'consensus', None]:
-        label = 'not_retired'
+        label = 'unknown'
     else:
         label = v['retirement_reason']
     users = v['users']
@@ -173,10 +210,10 @@ for k, v in subs_res.items():
     top_n = Counter(species_all).most_common(int(n_species_med))
     # extract label
     label_plur = [x[0] for x in top_n]
-    if not label == 'not_retired':
-        label_final = label
-    else:
+    if label == 'unknown':
         label_final = label_plur
+    else:
+        label_final = label
     if type(label_final) is not list:
         label_final = [label_final]
     for i in range(0, len(label_final)):
@@ -200,13 +237,14 @@ for k, v in subs_res_final.items():
         lab = list()
         lab.append(v['label'])
     else:
-        #print(v['label'])
         lab = v['label']
     for l in lab:
         if l not in labels_all:
             labels_all[l] = 1
         else:
             labels_all[l] += 1
+for k, v in labels_all.items():
+    print("Label %s has %s obs" % (k, v))
 
 
 # prepare final dictionary that contains all relevant data
@@ -217,17 +255,19 @@ for k, v in subs_res_final.items():
     if label[0] is None:
         print(k)
         print(v)
-    if (len(label) == 1) & (label is not None):
-        label = label[0]
-    else:
+    if label is None:
         continue
-    if k in subs.keys():
-        url = subs[k]['url']
-    else:
+    if k not in subs_used.keys():
         continue
+    # get subject meta data
+    current_sub = subs_used[k]
+    sub_meta = {'location': current_sub['location'],
+                'date': current_sub['date'],
+                'time': current_sub['time'],
+                'datetime': current_sub['datetime']}
     subs_all_data[k] = {'label': label,
-                        'url': url,
-                        'meta_data': v}
+                        'url': current_sub['url'],
+                        'meta_data': {**v, **sub_meta}}
 
 subs_all_data[list(subs_all_data.keys())[0]]
 
@@ -238,14 +278,15 @@ for k, v in subs_all_data.items():
         lab = list()
         lab.append(v['label'])
     else:
-        print(v['label'])
         lab = v['label']
     for l in lab:
         if l not in labels_all:
             labels_all[l] = 1
         else:
             labels_all[l] += 1
-labels_all
+
+for k, v in labels_all.items():
+    print("Label %s has %s obs" % (k, v))
 
 # write labels to disk
 file = open(cfg_path['db'] + 'classes.txt', "w")
@@ -258,24 +299,18 @@ file2.close()
 
 # create SubjectSet
 subject_set = SubjectSet(labels=list(labels_all.keys()))
-
 for key, value in subs_all_data.items():
     subject = Subject(identifier=key,
-                      label=value['label'],
+                      labels=value['label'],
                       meta_data=value['meta_data'],
                       urls=value['url']
                       )
-    subject_set.addSubject(str(key), subject)
-
+    subject_set.addSubject(subject)
 # save to disk
 subject_set.save(cfg_path['db'] + 'subject_set.json')
 
-#pickle.dump(subject_set, open(cfg_path['db'] + 'subject_set2.pkl',
-#                              "wb"), protocol=4)
-
 # checks
 urls, labels, ids = subject_set.getAllURLsLabelsIDs()
-
 for i in range(0, 50):
     ii = random.randint(0, len(urls))
     print("%s is a %s on: %s" % (ids[ii], labels[ii], urls[ii]))
