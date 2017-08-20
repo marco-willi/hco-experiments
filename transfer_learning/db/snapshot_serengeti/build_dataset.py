@@ -78,7 +78,7 @@ def main():
                           label=value['y_label'],
                           meta_data=value['info'],
                           urls=value['url'])
-        subject_set.addSubject(str(key), subject)
+        subject_set.addSubject(subject)
 
     # save data
     subject_set.save(db_path + 'subject_set.json')

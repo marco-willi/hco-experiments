@@ -25,7 +25,9 @@ def get_most_rescent_file_with_string(dirpath, in_str='', excl_str='!'):
 
 
 def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="1_on_1"):
-    """ Creates splitting ids to be used for test/train splitting """
+    """ Creates splitting ids to be used for test/train splitting
+        Uses meta_data dictionary with ids_orig as key
+    """
 
     # Return 1 to 1 mapping
     if split_mode == "1_on_1":
@@ -39,22 +41,30 @@ def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="1_on_1"):
         locations = list()
         dates = list()
         times = list()
+        # create some dummy data for fields that are missing / have Default
+        # values
         dummy_secs = list()
         dummy_loc_id = 0
         dummy_sec_id = 0
+        # loop over all ids
         for ii in ids_orig:
             meta = meta_data[ii]
             # get attrs and store in list
             for tag, ll in zip(['location', 'date', 'time'],
                                [locations, dates, times]):
+                # handle different types of meta data
                 if tag in meta:
+                    # if location is unkown create a dummy location id
                     if (tag == 'location') & (meta[tag] == 'unknown'):
                         ll.append('unknown' + str(dummy_loc_id))
                         dummy_loc_id += 1
-                    elif (tag == 'date') & (meta[tag] == "20010101"):
+                    # if date is unkown add a dummy second
+                    elif (tag == 'date') & (meta[tag] in
+                                            ["20010101", "unknown"]):
                         ll.append(meta[tag])
                         dummy_secs.append(dummy_sec_id)
                         dummy_sec_id += 1
+                    # append time as is
                     else:
                         ll.append(meta[tag])
                         dummy_secs.append(0)
@@ -69,6 +79,8 @@ def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="1_on_1"):
                 secs = dtm.timestamp()
             except:
                 secs = 0
+            # add dummy seconds to distinguish unknown times / dates to ensure
+            # they don't all end up with the same splitting id
             seconds.append(secs+ds)
 
         # divide data into different locations
@@ -92,32 +104,36 @@ def createSplitIDs(ids_orig, labels_orig, meta_data=None, split_mode="1_on_1"):
                 loc_dat[loc][tag].append(ll)
 
         # now we have a dictionary entry for each location with all its
-        # ids, labels, dates and times, now create ids for each location
+        # ids, labels, dates and times, now create splitting
+        # ids for each location
         for k, v in loc_dat.items():
             loc_labels = v['labels']
             loc_seconds = v['seconds']
 
-            # define temporal ordering
+            # define temporal ordering of capture events
             time_order_ids = sorted(range(len(loc_seconds)),
                                     key=lambda x: loc_seconds[x])
 
-            # reorder all attributes
+            # reorder all attributes according to time ordering
             loc_labels_order = [loc_labels[i] for i in time_order_ids]
             loc_seconds_order = [loc_seconds[i] for i in time_order_ids]
 
-            # calculate time diffs and label diffs
+            # calculate time diffs and label diffs among subsequent
+            # capture events
             time_diffs = [b - a for (a, b) in zip(loc_seconds_order[0:-1],
                                                   loc_seconds_order[1:])]
             label_diffs = [a != b for (a, b) in zip(loc_labels_order[0:-1],
                                                     loc_labels_order[1:])]
 
-            # insert dummy data for first observation
+            # insert dummy data for first observation to ensure correct length
             time_diffs.insert(0, 0.0)
             label_diffs.insert(0, True)
 
             # assign ids
             split_ids_loc = list()
             run_id = -1
+            # min. minutes difference for capture events of the same class
+            # at the same location getting different splitting ids
             minutes_diff = 30
             new_id = k + '_' + str(run_id)
             # loop over all label and time diffs

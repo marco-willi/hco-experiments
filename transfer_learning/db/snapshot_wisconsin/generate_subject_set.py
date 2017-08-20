@@ -102,7 +102,7 @@ class_mapper = {
     'BVR': 'BEAVER',
     'WSL': 'WEASEL',
     'CTDMSTC': 'CATDOMESTIC',
-    'PSSM': 'PSSM',
+    'PSSM': 'OPOSSUM',
     'MRTN': 'MARTEN',
     'PGFRL': 'PIGFERAL',
     'FSHR': 'FISHER',
@@ -110,7 +110,8 @@ class_mapper = {
     'MSKRT': 'MUSKRAT',
     'LNX': 'LYNX',
     'WDCHCK': 'WOODCHUCK',
-    'THRSMLLMMML': 'OTHERSMALLMAMMAL'
+    'THRSMLLMMML': 'OTHERSMALLMAMMAL',
+    'WLVRN': 'WOLVERINE'
 }
 
 # loop through all classifications and fill subject dictionary
