@@ -2,13 +2,16 @@
 title: "`r params$title`"
 author: "`r params$author`"
 date: "`r params$date`"
-graphics: yes
 ---
 
 ```{r setup, include=FALSE}
+library(knitr)
+#opts_chunk$set(cache=TRUE, echo = FALSE, fig.width=7, fig.height=7)
+#knit_hooks$set(optipng = hook_optipng)
 # output: html_document
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(fig.width=10, fig.height=10)
+knitr::opts_chunk$set(echo = FALSE, fig.width=7, fig.height=7)
+#knitr::knit_hooks$set(optipng = hook_optipng)
+# knitr::opts_chunk$set(dev = 'pdf')
 # knitr::opts_chunk$set(dev = 'pdf')
 # Options
 path_main <- params$path_main 
@@ -18,8 +21,26 @@ log_file <- paste(params$model_id,"_",params$ts_id,"_training",sep="")
 model <- params$model_id
 project_name <- params$project_name
 subject_set <- paste("val_subject_set_",params$model_id,sep="")
-```
+n_classes <- params$n_classes
 
+# fig.height=width_large, fig.width=width_large
+width_large <- 12
+height_large <- 12
+height_very_large <- 18
+
+# fig.height=width_med, fig.width=width_med
+width_med <- 10
+height_med <- 10
+
+# fig.height=width_small, fig.width=width_small
+width_small <- 6
+height_small <- 6
+
+width_variable <- width_small + min(n_classes/width_small, width_small)
+height_variable <- height_small + min(n_classes/height_small, width_small)
+
+
+```
 
 
 ```{r, include=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
@@ -36,39 +57,162 @@ library(jpeg)
 library(grid)
 library(gridExtra)
 
+# source("analyses/plot_functions.R")
+# 
+# # Load Functions
+# source("analyses/plot_functions.R")
+# 
+# # Load data
+# source("analyses/load_data.R")
 ```
 
 ## Introduction
 
-This report shows some results obtained from training and evaluating a convolutional neural network (CNN) on images from `r params$project_name`. The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is completely independent and is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model calculates pseudo probabilities for each class (values between 0 and 1, while the sum over all classes is 1, originates from a softmax transformation). We assign the class with the highest output value to each image.
+This report shows results obtained from training and evaluating a convolutional neural network (CNN) using images from `r params$project_name`. The goal is to automatically identify different types of camera-trap images. 
 
-The labels from which the CNN learns from have been obtained by annotations of users on Zooniverse. We have used the plurality algorithm to assign labels to individual camera-trap events. Whenever most users think there is only one species in an image (median number of species is 1), we have assigned the most frequent annotation as class label. Images where most users have identified multiple species have been excluded to reduce complexity in the training process. The number of annotations per image can vary significantly, in extreme cases only 1 person might have annotated an image.
+The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model estimates probabilities for each class/species (values between 0 and 1, while the sum over all classes is 1). To each image we assign the class with the highest output value.
+
+The labels from which the CNN learns from have been obtained by annotations of users on Zooniverse. We have used the plurality algorithm to assign labels to individual camera-trap events. Whenever most users think there is only one species in an image (median number of species is 1), we have assigned the most frequent annotation as class label. Images where most users have identified multiple species have been excluded to reduce complexity in the training process. The number of annotations per image can vary significantly, in extreme cases only 1 person might have annotated an image. Where available, the retirement reason as defined by the project logic has been used to generate labels (e.g. if an image was retired early because of annotations indicating an empty image).
+\newpage
 
 ## Overview
 
-A short overview on the number of classes & their distribution.
+An overview on the number of classes & their distribution.
 
 ### Class distribution Validation Set
-```{r class_dist, echo=FALSE, message=FALSE}
-
-plot_class_dist <- function(preds, model){
-  class_dist <- dplyr::group_by(preds,y_true) %>%
-    summarise(n_obs = n()) %>%
-    mutate(p_obs=n_obs / sum(n_obs))
-  
-  gg <- ggplot(class_dist, aes(x=reorder(y_true, n_obs), y=n_obs)) + geom_bar(stat="identity") +
-    theme_light() +
-    ggtitle(paste("Class Distribution \nmodel: ", model,sep="")) +
-    ylab("# of samples") +
-    xlab("") +
-    coord_flip() +
-    geom_text(aes(label=paste(" ",round(p_obs,4)*100," %",sep="")), hjust="left") +
-    scale_y_continuous(limits=c(0,max(class_dist$n_obs) * 1.1)) +
-    theme(axis.text = element_text(size=12),
-          axis.title = element_text(size=14),
-          strip.text.x = element_text(size = 14, colour = "white", face="bold"))
-  return(gg)
-}
-plot_class_dist(preds, model)
+```{r, echo=FALSE, fig.height=height_variable, fig.width=width_variable}
+gg <- plot_class_dist(preds, model)
+gg
 ```
+
+\newpage
+## Training Progress
+
+Some metrics which visualize the progress of training the CNN. Shown are metrics on the training- and validation data.
+
+* Training Epoch: The number of full passes over the whole training set.
+* Top-1 Accuracy: Percent of all images when the image corresponds to the class the model deems to be the most likely class.
+* Top-5 Accuracy: Percent of all images when the image corresponds to the class the model predicts in its top 5 classes (common metric in machine learning)
+* Loss: This is the metric, the algorithm tries to minimize during training. Validation loss is used to decide when to stop training the model.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_large, fig.width=width_large}
+############### -
+# Plot LOG File
+############### -
+gg <- plot_log(log, model)
+gg
+```
+\newpage
+
+## Accuracy Measurements
+
+### Accuracy per Class on Validation set
+
+The accuracy per class normaly depends on a) how many training images are available, and b) how visually distinct a class is. Shown is the accuracy achieved on the validation set and the number of observations used to calculate it.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable, fig.width=width_variable}
+# accuracy per true class
+gg <- plot_class_acc(preds, model)
+gg
+```
+\newpage
+
+### Accuracy per Class - only high confidence predictions
+
+In this figure, only images which were assigned an estimated probability of at least 0.95 have been taken into account, resembling predictions when the model indicates high confidence in its prediction. Additionally, for each class the share and number of images that pass the threshold is shown.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable, fig.width=width_variable}
+# take only with most confidence and Threshold
+gg <- plot_class_most_conf_95th_acc(preds, model)
+gg
+```
+
+\newpage
+
+### Accuracy for different model thresholds
+
+Following plots show the accuracy and the number of images when we only consider images that surpass a certain threshold (x axis). The tradeoff is clearly visible: The higher the threshold, the higher the accuracy, however, the less images can be scored by the model.
+
+#### Overall
+
+Over all classes.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_small, fig.width=width_small}
+# Overall View
+gg <- plot_threshold_vs_acc_overall(preds, model)
+gg
+```
+\newpage
+
+#### Per Class
+
+Shown is the effect for all classes.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable*1.4, fig.width=width_variable}
+gg <- plot_threshold_vs_acc_class(preds, model)
+gg
+```
+\newpage
+
+## Confusion Matrix
+
+Predicted labels vs true labels. Colour indicates the share of the true labels and how they are distributed along the predicted classes (sum over each row is 1). This figure is ideal to see which classes get confused with one another.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable, fig.width=width_variable}
+# empty confusion matrix
+gg <- plot_cm(preds, model)
+gg
+```
+\newpage
+
+## Distribution of Predicted Values
+
+This plot visualizes the density distribution of the different classes' predicted probabilities. Shown are two distributions for each class: when the prediction was correct, and when it was wrong. Generally speaking, when the model is highly confident in predicting a particular class, the mode of the distribution will be close to 1 and the distribution will be narrow causing the density to spike. For classes the model is generally uncertain, the distribution tends to span a wider range. Note that a very low number of predicted values can lead to unreliable density distributions.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable*1.4, fig.width=width_variable}
+gg <- plot_dist_pred(preds, model)
+gg
+```
+
+\newpage
+
+## Examples
+
+Below are some randomly selected correct / missclassified predictions. Included is the predicted probability for the top classes (bars and values). The true label is above each image and indicated with a green bar (if in the top predictions of the model).
+
+
+### Correct Predictions
+
+Shown are some randomly selected correct classifications.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small, dpi=56, out.width="450px", out.height="450px"}
+
+############################ -
+# Find some correct classifications ----
+############################ -
+
+random_wrongs <- dplyr::filter(preds,correct==1)
+set.seed(23)
+random_wrongs <- random_wrongs[sample(size = 10,x=dim(random_wrongs)[1]),]
+
+
+############################ -
+# Plot correct classifications ----
+############################ -
+
+for (ii in 1:10){
+  id <- paste(random_wrongs[ii,"subject_id"])
+  preds_sel <- random_wrongs[ii,"preds_all"]
+  gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
+  print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
+  #grid.arrange(gg1,gg2,top=title)
+  grid.draw(gg[[1]])
+  grid.draw(gg[[2]])
+  grid.newpage()
+}
+
+```
+
+
 

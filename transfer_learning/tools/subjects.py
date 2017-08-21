@@ -613,6 +613,7 @@ class Labels(object):
         """ Return number of labels """
         return self.n_labels
 
+
 if __name__ == "__main__":
     sset = SubjectSet(labels=["monkey", "elephant"])
     s1 = Subject(identifier="1", labels="monkey")

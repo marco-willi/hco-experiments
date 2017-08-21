@@ -43,18 +43,25 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Blank vs Vehicle vs Species"
 
 # Camera Catalogue - Blank vs Vehicle vs Species (no dups)
-project_id <- "camera_catalogue"
-model <- "cc_blank_vehicle_species_v2"
-project_name <- "Camera Catalogue"
-ts_id <- "201708200608"
-model_name <- "Blank vs Vehicle vs Species"
+# project_id <- "camera_catalogue"
+# model <- "cc_blank_vehicle_species_v2"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708200608"
+# model_name <- "Blank vs Vehicle vs Species"
 
-# Camera Catalogue - Species
+# Camera Catalogue - Species OLD
 # project_id <- "camera_catalogue"
 # model <- "cc_species"
 # project_name <- "Camera Catalogue"
 # ts_id <- "201708072308"
 # model_name <- "Species"
+
+# Camera Catalogue - Species NEW
+project_id <- "camera_catalogue"
+model <- "cc_species_v2"
+project_name <- "Camera Catalogue"
+ts_id <- "201708210308"
+model_name <- "Species"
 
 # Camera Catalogue - Species Fine Tune SS 51 all
 # project_id <- "camera_catalogue"
@@ -171,9 +178,9 @@ params = list(
   n_classes=length(levels(preds$y_true))
 )
 
-output <- "html"
+output <- "pdf"
 
-rmarkdown::render(input="analyses/report_template.Rmd", 
+rmarkdown::render(input="analyses/report_template_debug.Rmd", 
                   params=params,
                   output_format = paste(output,"_document",sep=""),
                   output_file = paste(path_output_report,project_id,"_",model,".",output,sep=""))
