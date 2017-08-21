@@ -69,7 +69,7 @@ library(gridExtra)
 
 ## Introduction
 
-This report shows results obtained from training and evaluating a convolutional neural network (CNN) using images from `r params$project_name`. The goal is to automatically identify animal species in camera-trap images. 
+This report shows results obtained from training and evaluating a convolutional neural network (CNN) using images from `r params$project_name`. The goal is to automatically identify different types of camera-trap images. 
 
 The data has been divided into a training, a validation and a test set. The model has only seen the training set, while the validation set was used to monitor the model during training time. The test set is only used to report final results (this report is not final, hence contains results from the validation set). For each image the model estimates probabilities for each class/species (values between 0 and 1, while the sum over all classes is 1). To each image we assign the class with the highest output value.
 

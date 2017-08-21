@@ -42,6 +42,13 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # ts_id <- "201708052008"
 # model_name <- "Blank vs Vehicle vs Species"
 
+# Camera Catalogue - Blank vs Vehicle vs Species (no dups)
+project_id <- "camera_catalogue"
+model <- "cc_blank_vehicle_species_v2"
+project_name <- "Camera Catalogue"
+ts_id <- "201708200608"
+model_name <- "Blank vs Vehicle vs Species"
+
 # Camera Catalogue - Species
 # project_id <- "camera_catalogue"
 # model <- "cc_species"
@@ -93,11 +100,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Species - Last Layer SS51 only"
 
 # Elephant Expedition - Species no dups
-project_id <- "elephant_expedition"
-model <- "ee_nonblank_no_cannotidentify_new_subject"
-ts_id <- "201708180508"
-project_name <- "Elephant Expedition"
-model_name <- "Species (excl. Cannotidentify & no duplicates)"
+# project_id <- "elephant_expedition"
+# model <- "ee_nonblank_no_cannotidentify_new_subject"
+# ts_id <- "201708180508"
+# project_name <- "Elephant Expedition"
+# model_name <- "Species (excl. Cannotidentify & no duplicates)"
 
 # Snapshot Wisconsin - blank vs non-blank
 # project_id <- "snapshot_wisconsin"
