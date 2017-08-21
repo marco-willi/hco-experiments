@@ -232,8 +232,8 @@ for k, v in labels_all.items():
     print("Label %s has %s obs" % (k, v))
 
 # write labels to disk
-file = open(cfg_path['db'] + 'classes_v2.txt', "w")
-file2 = open(cfg_path['db'] + 'classes_numbers_v2.txt', "w")
+file = open(cfg_path['db'] + 'classes.txt', "w")
+file2 = open(cfg_path['db'] + 'classes_numbers.txt', "w")
 for k, v in labels_all.items():
     file.write(str(k) + ',')
     file2.write(str(k) + ',' + str(v) + "\n")
@@ -244,11 +244,11 @@ file2.close()
 subject_set = SubjectSet(labels=list(labels_all.keys()))
 for key, value in subs_all_data.items():
     subject = Subject(identifier=key,
-                      label=value['label'],
+                      labels=value['label'],
                       meta_data=value['meta_data'],
                       urls=value['url']
                       )
-    subject_set.addSubject(str(key), subject)
+    subject_set.addSubject(subject)
 # save to disk
 subject_set.save(cfg_path['db'] + 'subject_set_v2.json')
 

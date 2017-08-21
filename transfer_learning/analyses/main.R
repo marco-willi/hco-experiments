@@ -42,6 +42,13 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # ts_id <- "201708052008"
 # model_name <- "Blank vs Vehicle vs Species"
 
+# Camera Catalogue - Blank vs Vehicle vs Species (no dups)
+project_id <- "camera_catalogue"
+model <- "cc_blank_vehicle_species_v2"
+project_name <- "Camera Catalogue"
+ts_id <- "201708200608"
+model_name <- "Blank vs Vehicle vs Species"
+
 # Camera Catalogue - Species
 # project_id <- "camera_catalogue"
 # model <- "cc_species"
@@ -50,11 +57,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Species"
 
 # Camera Catalogue - Species Fine Tune SS 51 all
-project_id <- "camera_catalogue"
-model <- "cc_species_ss51_finetune_all"
-project_name <- "Camera Catalogue"
-ts_id <- "201708160208"
-model_name <- "Species - Fine Tune SS51 All"
+# project_id <- "camera_catalogue"
+# model <- "cc_species_ss51_finetune_all"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708160208"
+# model_name <- "Species - Fine Tune SS51 All"
 
 # Camera Catalogue - Species Retrain SS 51 last layer
 # project_id <- "camera_catalogue"
@@ -91,6 +98,13 @@ model_name <- "Species - Fine Tune SS51 All"
 # ts_id <- "201708142208"
 # project_name <- "Elephant Expedition"
 # model_name <- "Species - Last Layer SS51 only"
+
+# Elephant Expedition - Species no dups
+# project_id <- "elephant_expedition"
+# model <- "ee_nonblank_no_cannotidentify_new_subject"
+# ts_id <- "201708180508"
+# project_name <- "Elephant Expedition"
+# model_name <- "Species (excl. Cannotidentify & no duplicates)"
 
 # Snapshot Wisconsin - blank vs non-blank
 # project_id <- "snapshot_wisconsin"

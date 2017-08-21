@@ -13,6 +13,7 @@ import time
 import shutil
 from config.config import logging
 import json
+from datetime import datetime
 
 
 class SubjectSet(object):
@@ -24,8 +25,8 @@ class SubjectSet(object):
         self.le.fit(self.labels)
         self.labels_num = self.le.transform(self.labels)
 
-    def addSubject(self, subject_id, subject):
-        self.subjects[str(subject_id)] = subject
+    def addSubject(self, subject):
+        self.subjects[subject.getID()] = subject
 
     def getSubject(self, subject_id):
         return self.subjects[str(subject_id)]
@@ -52,8 +53,13 @@ class SubjectSet(object):
 
         # iterate over all ids and get label
         for i in all_ids:
-            ids.append(i)
-            labels.append(self.subjects[i].getLabel())
+            # get all labels
+            labs_sub = self.subjects[i].getLabels(mode="concat")
+            if type(labs_sub) is str:
+                labs_sub = [labs_sub]
+            for label in labs_sub:
+                ids.append(i)
+                labels.append(label)
 
         return ids, labels
 
@@ -68,9 +74,15 @@ class SubjectSet(object):
 
         for i in all_ids:
             sub = self.subjects[i]
-            for url in sub.getURLs():
-                labels.append(sub.getLabel())
-                urls.append(url)
+            # get all labels
+            labs_sub = sub.getLabels(mode="concat")
+            if type(labs_sub) == str:
+                labs_sub = [labs_sub]
+            for label in labs_sub:
+                # get all urls
+                for url in sub.getURLs():
+                    labels.append(label)
+                    urls.append(url)
         return urls, labels
 
     def getAllURLsLabelsIDs(self):
@@ -85,10 +97,16 @@ class SubjectSet(object):
 
         for i in all_ids:
             sub = self.subjects[i]
-            for url in sub.getURLs():
-                labels.append(sub.getLabel())
-                urls.append(url)
-                ids.append(i)
+            # get all labels
+            labs_sub = sub.getLabels(mode="concat")
+            if type(labs_sub) is str:
+                labs_sub = [labs_sub]
+            for label in labs_sub:
+                # get all urls
+                for url in sub.getURLs():
+                    labels.append(label)
+                    urls.append(url)
+                    ids.append(i)
         return urls, labels, ids
 
     def getAllURLsLabelsIDsFnames(self):
@@ -104,12 +122,135 @@ class SubjectSet(object):
 
         for i in all_ids:
             sub = self.subjects[i]
-            for url, fname in zip(sub.getURLs(), sub.getFileNames()):
-                labels.append(sub.getLabel())
-                urls.append(url)
-                ids.append(i)
-                fnames.append(fname)
+            # get all labels
+            labs_sub = sub.getLabels(mode="concat")
+            if type(labs_sub) is str:
+                labs_sub = [labs_sub]
+            for label in labs_sub:
+                # get all urls
+                for url, fname in zip(sub.getURLs(), sub.getFileNames()):
+                    labels.append(label)
+                    urls.append(url)
+                    ids.append(i)
+                    fnames.append(fname)
         return urls, labels, ids, fnames
+
+    def createSplitIDs(self, split_mode="none"):
+        """ Creates splitting ids to be used for test/train splitting """
+        # original ids
+        ids_orig, labels_orig = self.getAllIDsLabels()
+
+        # Return 1 to 1 mapping
+        if split_mode == "none":
+            split_ids = ids_orig
+            split_labels = labels_orig
+
+        # return a mapping based on splitting along locations
+        # and interval between subsequent images
+        elif split_mode == "location_date_time":
+            # loop through all subjects and get relevant attributes
+            locations = list()
+            dates = list()
+            times = list()
+            for ii in ids_orig:
+                meta = self.getSubject(ii).getMetaData()
+                # get attrs and store in list
+                for tag, ll in zip(['location', 'date', 'time'],
+                                   [locations, dates, times]):
+                    if tag in meta:
+                        ll.append(meta[tag])
+                    else:
+                        ll.append('unknown')
+
+            # create date time seconds
+            seconds = list()
+            for dat, tm in zip(dates, times):
+                try:
+                    dtm = datetime.strptime(dat + tm, '%Y%m%d%H%M%S')
+                    secs = dtm.timestamp()
+                except:
+                    secs = 0
+                seconds.append(secs)
+
+            # divide data into different locations
+            loc_dat = dict()
+            for loc, dd, tt, ii, lab in zip(locations, dates, times,
+                                            ids_orig, labels_orig):
+                # prepare location dictionary
+                if loc not in loc_dat:
+                    current_loc = {'ids': list(),
+                                   'labels': list(),
+                                   'dates': list(),
+                                   'times': list(),
+                                   'seconds': list()}
+                    loc_dat[loc] = current_loc
+
+                # add all information
+                for tag, ll in zip(['ids', 'labels', 'dates',
+                                    'times', 'seconds'],
+                                   [ii, lab, dd, tt]):
+                    loc_dat[loc][tag].append(ll)
+
+            # now we have a dictionary entry for each location with all its
+            # ids, labels, dates and times, now create ids for each location
+            for k, v in loc_dat.items():
+                loc_labels = v['labels']
+                loc_times = v['times']
+                loc_seconds = v['seconds']
+
+                # define temporal ordering
+                time_order_ids = sorted(range(len(loc_seconds)),
+                                        key=lambda x: loc_seconds[x])
+
+                # reorder all attributes
+                loc_labels_order = [loc_labels[i] for i in time_order_ids]
+                loc_times_order = [loc_times[i] for i in time_order_ids]
+
+                # calculate time diffs and label diffs
+                time_diffs = [b - a for (a, b) in zip(loc_times_order[0:-1],
+                                                      loc_times_order[1:])]
+                label_diffs = [a != b for (a, b) in zip(loc_labels_order[0:-1],
+                                                        loc_labels_order[1:])]
+
+                # insert dummy data for first observation
+                time_diffs.insert(0, 0)
+                label_diffs.insert(0, True)
+
+                # assign ids
+                split_ids_loc = list()
+                run_id = 0
+                minutes_diff = 30
+                # loop over all label and time diffs
+                for lab_diff, time_diff in zip(label_diffs, time_diffs):
+                    if run_id == 0:
+                        new_id = k + '_' + str(run_id)
+                    else:
+                        if (lab_diff or (time_diff > (60*minutes_diff))):
+                            run_id += 1
+                            new_id = k + '_' + str(run_id)
+                    split_ids_loc.append(new_id)
+                # save new split ids in dictionary
+                jj = [time_order_ids.index(j) for j in
+                      range(0, len(time_order_ids))]
+                split_ids_loc_ord = [split_ids_loc[i] for i in jj]
+                loc_dat[k]['split_ids'] = split_ids_loc_ord
+
+            # map old ids on new split ids
+            ids_map_old_new = dict()
+            for k, v in loc_dat.items():
+                for ii in range(0, len(v['ids'])):
+                    ids_map_old_new[v['ids'][ii]] = \
+                     {'id': v['split_ids'][ii],
+                      'lab': v['split_labels'][ii]}
+
+            # retrieve new split ids in correct order
+            split_ids = list()
+            split_labels = list()
+            for ii in ids_orig:
+                split_ids.append(ids_map_old_new[ii]['id'])
+                split_labels.append(ids_map_old_new[ii]['lab'])
+
+        return ids_orig, split_ids, split_labels
 
     def printLabelDistribution(self):
         """ print distribution of labels to stdout / logging module """
@@ -160,11 +301,15 @@ class SubjectSet(object):
         logging.info("Saving %s data ...." % set_name)
         time_s = time.time()
         urls, labels, ids, fnames = self.getAllURLsLabelsIDsFnames()
+        if cfg['image_size_save'] is not None:
+            save_size = cfg['image_size_save'][0:2]
+        else:
+            save_size = None
         res = data_loader.storeOnDisk(urls=urls,
                                       labels=labels,
                                       fnames=fnames,
                                       path=cfg_path['images'] + set_name,
-                                      target_size=cfg['image_size_save'][0:2],
+                                      target_size=save_size,
                                       chunk_size=100,
                                       zooniverse_imgproc=False)
         logging.info("Finished saving on disk after %s minutes" %
@@ -190,7 +335,7 @@ class SubjectSet(object):
         for sub_id in self.getAllIDs():
             sub = self.getSubject(sub_id)
             imgs = sub.getImages()
-            label = sub.getLabel()
+            label = sub.getLabels(mode="concat")
             for img in imgs.values():
                 try:
                     img.setPath(path + label + "/")
@@ -259,7 +404,7 @@ class SubjectSet(object):
         # loop through subjects and create dict for each subject
         for i in ids:
             s = self.getSubject(i)
-            sub_d = {'label': s.getLabel(),
+            sub_d = {'label': s.getLabels(mode="all"),
                      'urls': s.getURLs(),
                      'fnames': s.getFileNames(),
                      'file_paths': s.getFilePaths(),
@@ -281,14 +426,14 @@ class SubjectSet(object):
 
         for k, v in res.items():
             # create subject
-            s = Subject(identifier=k, label=v['label'],
+            s = Subject(identifier=k, labels=v['label'],
                         meta_data=v['meta_data'], urls=v['urls'])
             imgs = s.getImages()
 
             for img, p in zip(list(imgs.keys()), v['file_paths']):
                 imgs[img].setPath(p)
 
-            self.addSubject(k, s)
+            self.addSubject(s)
 
         # Log / Print Information
         logging.info("SubjectSet %s Loaded" % path)
@@ -298,22 +443,23 @@ class SubjectSet(object):
 
 class Subject(object):
     """ Subject definition """
-    def __init__(self, identifier, label, meta_data=None, urls=None):
+    def __init__(self, identifier, labels, meta_data=None, urls=""):
         self.identifier = str(identifier)
-        self.label = label
+        self.labels = Labels(labels)
+        self.n_labels = self.labels.getNumLabels()
         self.meta_data = meta_data
         self.images = dict()
+        self.urls = urls
 
         # handle urls
-        if isinstance(urls, list):
-            self.urls = urls
-        else:
-            self.urls = [urls]
-        # sort urls in reverse order
-        self.urls = [x[::-1] for x in sorted([x[::-1] for x in self.urls])]
+        if urls is not "":
+            if isinstance(urls, list):
+                self.urls = urls
+            else:
+                self.urls = [urls]
+            # sort urls in reverse order
+            self.urls = [x[::-1] for x in sorted([x[::-1] for x in self.urls])]
 
-        # create image objects
-        if urls is not None:
             for i in range(0, len(self.urls)):
                 # idd = np.array_str(self.identifier) + '_' + str(i)
                 idd = self.identifier + '_' + str(i)
@@ -321,8 +467,21 @@ class Subject(object):
                             url=self.urls[i])
                 self.images[idd] = img
 
-    def getLabel(self):
-        return self.label
+    def getID(self):
+        """ get identifier """
+        return self.identifier
+
+    def getLabels(self, mode="first"):
+        """ Get labels """
+
+        if mode == "first":
+            return self.labels.getLabelsFirstOnly()
+
+        elif mode == "all":
+            return self.labels.getLabels()
+
+        elif mode == "concat":
+            return self.labels.getLabelsOneString()
 
     def getURLs(self):
         return self.urls
@@ -352,10 +511,6 @@ class Subject(object):
         """ get all images """
         return self.images
 
-    def setLabel(self, label):
-        """ Set label """
-        self.label = label
-
     def checkImageFiles(self):
         """ Check if all images are stored on disk """
         for img in self.getImages().values():
@@ -365,6 +520,12 @@ class Subject(object):
 
     def getMetaData(self):
         return self.meta_data
+
+    def getNumLabels(self):
+        return self.n_labels
+
+    def setLabels(self, labels):
+        self.labels = Labels(labels)
 
 
 class Image(object):
@@ -409,3 +570,63 @@ class Image(object):
             return False
         else:
             return os.path.isfile(path + fname)
+
+
+class Labels(object):
+    """ Defines the labels of a subject """
+
+    def __init__(self, labels):
+        self.labels = None
+        self.n_labels = None
+
+        # check input and set labels
+        self._setLabels(labels)
+
+    def _setLabels(self, labels):
+        """ Set labels and check input """
+        # check input
+        assert type(labels) in (str, list),\
+            "Label is not of type str/list, instead is %s" % type(labels)
+
+        # convert label to list
+        if type(labels) is str:
+            labels = [labels]
+
+        # set number of labels
+        self.n_labels = len(labels)
+
+        self.labels = labels
+
+    def getLabels(self):
+        """ Returns list of labels """
+        return self.labels
+
+    def getLabelsOneString(self):
+        """ Returns one string with concatenated labels """
+        return "_".join(self.labels)
+
+    def getLabelsFirstOnly(self):
+        """ Returns first label """
+        return self.labels[0]
+
+    def getNumLabels(self):
+        """ Return number of labels """
+        return self.n_labels
+
+if __name__ == "__main__":
+    sset = SubjectSet(labels=["monkey", "elephant"])
+    s1 = Subject(identifier="1", labels="monkey")
+    s2 = Subject(identifier="2", labels="elephant")
+    s3 = Subject(identifier="3", labels=["elephant", "monkey"])
+    subs = [s1, s2, s3]
+    for s in subs:
+        sset.addSubject(subject=s)
+        print(sset.getSubject(s.getID()).getLabels())
+        print(sset.getSubject(s.getID()).getLabels(mode="all"))
+        print(sset.getSubject(s.getID()).getLabels(mode="concat"))
+
+    sset.save(path="D:\\Studium_GD\\Zooniverse\Data\\transfer_learning_project\\scratch\\test.json")
+    sset2 = SubjectSet(labels=["monkey", "elephant"])
+    sset2.load(path="D:\\Studium_GD\\Zooniverse\Data\\transfer_learning_project\\scratch\\test.json")
+    sset2.getSubject("3").getLabels()
+    sset2.getAllIDsLabels()

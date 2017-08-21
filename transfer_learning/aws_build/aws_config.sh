@@ -3,6 +3,14 @@ git clone https://github.com/marco-willi/hco-experiments.git ~/code/hco-experime
 cp ~/code/credentials.ini ~/code/hco-experiments/transfer_learning/config/credentials.ini
 cd ~/code/hco-experiments/transfer_learning/config/
 
+
+# get specific branch
+sudo rm -r ~/code/hco-experiments
+git clone -b subjec_set_enhancement https://github.com/marco-willi/hco-experiments.git ~/code/hco-experiments
+cp ~/code/credentials.ini ~/code/hco-experiments/transfer_learning/config/credentials.ini
+cd ~/code/hco-experiments/transfer_learning/config/
+
+
 # run submodule
 # python3 -m module.submodule
 
@@ -37,7 +45,7 @@ pip install dill requests panoptes_client pillow aiohttp keras h5py
 ssh -i ~/keys/zv_test_key.pem ubuntu@ec2-34-207-210-160.compute-1.amazonaws.com
 
 # transfer files from lucifer to aws instance
-scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/camera_catalogue/* ubuntu@ec2-52-90-191-127.compute-1.amazonaws.com:~/data_hdd/db/camera_catalogue/
+scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/elephant_expedition/classifications.csv ubuntu@ec2-54-88-211-7.compute-1.amazonaws.com:~/data_hdd/db//elephant_expedition/
 
 # transfer files from aws to aws instance
 sudo chmod -R 777 snapshot_wisconsin/

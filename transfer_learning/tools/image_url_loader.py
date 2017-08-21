@@ -200,8 +200,8 @@ class ImageUrlLoader(object):
             NameError("Path not Found")
 
         # ensure / at end of path
-        if path[-1] != '/':
-            path = path + '/'
+        if path[-1] != os.path.sep:
+            path = path + os.path.sep
 
         # create dictionary for convenience
         data_dict = dict()
@@ -284,7 +284,7 @@ class ImageUrlLoader(object):
             for c_id, c_y in zip(chunk_ids, chunk_y):
 
                 # define path
-                path_img = path + str(c_y) + "/" + \
+                path_img = path + str(c_y) + os.path.sep + \
                            str(c_id)
 
                 # check if exists

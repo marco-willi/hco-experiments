@@ -47,13 +47,15 @@ def main():
                      train_size=cfg_model['train_size'],
                      test_size=cfg_model['test_size'],
                      equal_class_sizes=bool(cfg_model['balanced_classes']),
-                     random_state=cfg_model['random_seed'])
+                     random_state=cfg_model['random_seed'],
+                     max_labels_per_subject=1)
 
     # create separate directories with image data for this experiment
     # use only links to original images to save space
     exp.createExpDataSet(link_only=bool(eval(config['general']['link_only'])),
                          clear_old_files=False,
-                         splits=cfg_model['experiment_data'])
+                         splits=cfg_model['experiment_data'],
+                         split_mode=cfg_model['split_mode'])
 
     ########################
     # Define Model
