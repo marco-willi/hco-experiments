@@ -83,11 +83,12 @@ class Model(object):
             out_name = model_id
 
         # check path
-        if not os.path.exists(path_to_save) & create_dir:
-            os.mkdir(path_to_save)
-        else:
-            raise NameError("Path not Found")
-
+        if not os.path.exists(path_to_save):
+            if create_dir:
+                os.mkdir(path_to_save)
+            else:
+                raise FileNotFoundError("Path does not exist")
+            
         self.model.save(path_to_save + out_name + '.hdf5')
         logging.info("Saved model %s" % (path_to_save + out_name + '.hdf5'))
 
