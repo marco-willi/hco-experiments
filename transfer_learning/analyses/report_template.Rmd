@@ -172,7 +172,7 @@ gg
 
 This plot visualizes the density distribution of the different classes' predicted probabilities. Shown are two distributions for each class: when the prediction was correct, and when it was wrong. Generally speaking, when the model is highly confident in predicting a particular class, the mode of the distribution will be close to 1 and the distribution will be narrow causing the density to spike. For classes the model is generally uncertain, the distribution tends to span a wider range. Note that a very low number of predicted values can lead to unreliable density distributions.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable*1.4, fig.width=width_variable}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results="hide", fig.height=height_variable*1.4, fig.width=width_variable}
 gg <- plot_dist_pred(preds, model)
 gg
 ```
@@ -188,31 +188,34 @@ Below are some randomly selected correct / missclassified predictions. Included 
 
 Shown are some randomly selected correct classifications.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small, dpi=56, out.width="450px", out.height="450px"}
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=height_very_large, fig.width=width_large, dpi=56, out.width="950px", out.height="950px", results="hide"}
+# ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=height_very_large, fig.width=width_large, results="hide"}
 ############################ -
 # Find some correct classifications ----
 ############################ -
 
 random_wrongs <- dplyr::filter(preds,correct==1)
 set.seed(23)
-random_wrongs <- random_wrongs[sample(size = 10,x=dim(random_wrongs)[1]),]
+random_wrongs <- random_wrongs[sample(size = 12,x=dim(random_wrongs)[1]),]
 
+gg <- plot_subject_image_set(pred_set=random_wrongs, subjects, path_scratch, n_samples=12, ncol=3, nrow=4)
+gg
 
 ############################ -
 # Plot correct classifications ----
 ############################ -
 
-for (ii in 1:10){
-  id <- paste(random_wrongs[ii,"subject_id"])
-  preds_sel <- random_wrongs[ii,"preds_all"]
-  gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
-  print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
-  #grid.arrange(gg1,gg2,top=title)
-  grid.draw(gg[[1]])
-  grid.draw(gg[[2]])
-  grid.newpage()
-}
+# for (ii in 1:10){
+#   id <- paste(random_wrongs[ii,"subject_id"])
+#   preds_sel <- random_wrongs[ii,"preds_all"]
+#   gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
+#   print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
+#   #grid.arrange(gg1,gg2,top=title)
+#   grid.draw(gg[[1]])
+#   grid.draw(gg[[2]])
+#   grid.newpage()
+# }
 
 ```
 
@@ -222,29 +225,29 @@ for (ii in 1:10){
 Shown are some randomly selected missclassifications.
 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small, dpi=56, out.width="450px", out.height="450px"}
-# ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small, optipng=''}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=height_very_large, fig.width=width_large, dpi=56, out.width="950px", out.height="950px", results="hide"}
+ #```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=height_very_large, fig.width=width_large, results="hide"}
 ############################ -
 # Find some Missclassificationss ----
 ############################ -
 
 random_wrongs <- dplyr::filter(preds,correct==0)
 set.seed(23)
-random_wrongs <- random_wrongs[sample(size = 10,x=dim(random_wrongs)[1]),]
+random_wrongs <- random_wrongs[sample(size = 12,x=dim(random_wrongs)[1]),]
+
+gg <- plot_subject_image_set(pred_set=random_wrongs, subjects, path_scratch, n_samples=12, ncol=3, nrow=4)
+gg
 
 
-############################ -
-# Plot Missclassifications ----
-############################ -
-
-for (ii in 1:10){
-  id <- paste(random_wrongs[ii,"subject_id"])
-  preds_sel <- random_wrongs[ii,"preds_all"]
-  gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
-  print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
-  #grid.arrange(gg1,gg2,top=title)
-  grid.draw(gg[[1]])
-  grid.draw(gg[[2]])
-  grid.newpage()
-}
+# for (ii in 1:10){
+#   id <- paste(random_wrongs[ii,"subject_id"])
+#   preds_sel <- random_wrongs[ii,"preds_all"]
+#   gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
+#   print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
+#   #grid.arrange(gg1,gg2,top=title)
+#   grid.draw(gg[[1]])
+#   grid.draw(gg[[2]])
+#   grid.newpage()
+# }
 ```

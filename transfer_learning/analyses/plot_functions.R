@@ -443,3 +443,79 @@ plot_subject_image <- function(preds, subjects, id, path_scratch, ii){
 
   return(gg_comb)
 }
+
+
+################################################ -
+# Plot subject image set
+################################################ -
+
+
+plot_subject_image_set <- function(pred_set, subjects, path_scratch, n_samples=10, ncol=2, nrow=3, save_graph=FALSE){
+  
+  # list of all figures
+  grobs <- list()
+  
+  for (ii in 1:n_samples){
+    id <- paste(pred_set[ii,"subject_id"])
+    preds <- pred_set[ii,"preds_all"]
+    
+    
+    preds0 <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
+    preds0 <- melt(preds0,value.name = "prob",variable.name = "class")
+    sub <- subjects[id]
+    url <- unlist(sub[[id]]['urls'])[1]
+    label <- unlist(sub[[id]]['label'])
+    file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
+    download.file(url, destfile = file_name, mode = 'wb')
+    
+    img <- readJPEG(file_name)
+    
+    
+    gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
+      annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
+                        -Inf, Inf, -Inf, Inf) + theme_minimal() +
+      theme(axis.title = element_blank(), axis.text = element_blank()) +
+      theme(plot.margin = unit(c(0.7,0.9,0,0.9), "cm"))
+    
+    # keep only top 5
+    preds0 <- preds0[order(preds0$prob, decreasing = TRUE)[1:min(5,dim(preds0)[1])],]
+    
+    # identify correct one and color differently
+    hit_id <- which(preds0$class == label)
+    colours <- rep("lightblue",dim(preds0)[1])
+    # colours[hit_id] <- "salmon"
+    colours[hit_id] <- "springgreen"
+    
+    gg2 <- ggplot(preds0, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill=rev(colours)) +
+      coord_flip() +
+      theme_light() +
+      ylab("Model Output") +
+      xlab("") +
+      ggtitle("Model Predictions (ordered)") +
+      theme(axis.text.y=element_blank(), axis.text.x=element_text(size=16),
+            axis.title.x=element_text(size=16),
+            axis.title.y=element_text(size=16),
+            plot.title = element_text(size=16),
+            axis.ticks.y = element_blank()) +
+      geom_text(aes(label=paste(class," (",round(prob,3)*100," %)",sep=""), y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
+      theme(plot.margin = unit(c(0.7,0.9,0.5,0.9), "cm"), panel.border=element_rect(fill=NA)) +
+      scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
+      labs(x=NULL)
+    
+    title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=20,fontface="bold"), vjust=1)
+    
+    ga <- arrangeGrob(gg1,gg2,top=title)
+    
+    gb <- rectGrob(height = .98, width = .98, gp = gpar(lwd = 1.5, col = "blue",  fill=rgb(1, 1, 1, 0))) # border
+    gt <- gTree(children = gList(ga, gb))
+    
+    grobs[[ii]] <- gt
+  }
+  ml <- marrangeGrob(grobs, nrow=nrow, ncol=ncol, top="")
+  
+  if (save_graph){
+    ggsave(paste(path_scratch,"subject_set.pdf",sep=""), ml, dpi=50, width = 20, height = 40, units = "cm")
+  }
+  return(ml)
+}
+  

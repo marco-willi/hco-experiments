@@ -149,6 +149,7 @@ subs_used[list(subs_used.keys())[0]]
 # t1 = '2017-03-09_07-29-18-CAM40480.jpg'
 # t2 = '2016-12-03_10_28_20-.jpg'
 # t3 = 'C1940694.JPG'
+# t4 = '12_CS4_41628_20160608_094310.jpg'
 
 
 def extract_loc_date_time(tt):

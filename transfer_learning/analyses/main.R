@@ -57,11 +57,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Species"
 
 # Camera Catalogue - Species NEW
-project_id <- "camera_catalogue"
-model <- "cc_species_v2"
-project_name <- "Camera Catalogue"
-ts_id <- "201708210308"
-model_name <- "Species"
+# project_id <- "camera_catalogue"
+# model <- "cc_species_v2"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708210308"
+# model_name <- "Species"
 
 # Camera Catalogue - Species Fine Tune SS 51 all
 # project_id <- "camera_catalogue"
@@ -71,11 +71,11 @@ model_name <- "Species"
 # model_name <- "Species - Fine Tune SS51 All"
 
 # Camera Catalogue - Species Retrain SS 51 last layer
-# project_id <- "camera_catalogue"
-# model <- "cc_species_ss51_last_layer_only"
-# project_name <- "Camera Catalogue"
-# ts_id <- "201708151508"
-# model_name <- "Species - Last Layer SS51 only"
+project_id <- "camera_catalogue"
+model <- "cc_species_ss51_last_layer_only"
+project_name <- "Camera Catalogue"
+ts_id <- "201708212308"
+model_name <- "Species - Last Layer SS51 only"
 
 
 # Elephant Expedition - blank vs non-blank
@@ -178,9 +178,9 @@ params = list(
   n_classes=length(levels(preds$y_true))
 )
 
-output <- "pdf"
+output <- "html"
 
-rmarkdown::render(input="analyses/report_template_debug.Rmd", 
+rmarkdown::render(input="analyses/report_template.Rmd", 
                   params=params,
                   output_format = paste(output,"_document",sep=""),
                   output_file = paste(path_output_report,project_id,"_",model,".",output,sep=""))

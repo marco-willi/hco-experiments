@@ -21,9 +21,11 @@ for (ii in 1:10){
   
   gg <- plot_subject_image(preds, subjects, id, path_scratch, ii)
   
+  
+  
   print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
   pdf(file = paste(print_name,".pdf",sep=""), height=8, width=8)
-  grid.arrange(gg1,gg2,top=title)
+  #grid.arrange(gg1,gg2,top=title)
   # grobs <- c(grobs,gg[[1]])
  
   grid.draw(gg[[1]])

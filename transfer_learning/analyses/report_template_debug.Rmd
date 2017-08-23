@@ -12,7 +12,8 @@ library(knitr)
 knitr::opts_chunk$set(echo = FALSE, fig.width=7, fig.height=7)
 #knitr::knit_hooks$set(optipng = hook_optipng)
 # knitr::opts_chunk$set(dev = 'pdf')
-# knitr::opts_chunk$set(dev = 'pdf')
+knitr::opts_chunk$set(dev = 'jpeg')
+
 # Options
 path_main <- params$path_main 
 project_id <- params$project_id
@@ -77,116 +78,11 @@ The labels from which the CNN learns from have been obtained by annotations of u
 
 ## Overview
 
-An overview on the number of classes & their distribution.
-
-### Class distribution Validation Set
-```{r, echo=FALSE, fig.height=height_variable, fig.width=width_variable}
-gg <- plot_class_dist(preds, model)
-gg
-```
-
-\newpage
-## Training Progress
-
-Some metrics which visualize the progress of training the CNN. Shown are metrics on the training- and validation data.
-
-* Training Epoch: The number of full passes over the whole training set.
-* Top-1 Accuracy: Percent of all images when the image corresponds to the class the model deems to be the most likely class.
-* Top-5 Accuracy: Percent of all images when the image corresponds to the class the model predicts in its top 5 classes (common metric in machine learning)
-* Loss: This is the metric, the algorithm tries to minimize during training. Validation loss is used to decide when to stop training the model.
-
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=width_large, fig.width=width_large}
-############### -
-# Plot LOG File
-############### -
-gg <- plot_log(log, model)
-gg
-```
-\newpage
-
-## Accuracy Measurements
-
-### Accuracy per Class on Validation set
-
-The accuracy per class normaly depends on a) how many training images are available, and b) how visually distinct a class is. Shown is the accuracy achieved on the validation set and the number of observations used to calculate it.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable, fig.width=width_variable}
-# accuracy per true class
-gg <- plot_class_acc(preds, model)
-gg
-```
-\newpage
-
-### Accuracy per Class - only high confidence predictions
-
-In this figure, only images which were assigned an estimated probability of at least 0.95 have been taken into account, resembling predictions when the model indicates high confidence in its prediction. Additionally, for each class the share and number of images that pass the threshold is shown.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable, fig.width=width_variable}
-# take only with most confidence and Threshold
-gg <- plot_class_most_conf_95th_acc(preds, model)
-gg
-```
-
-\newpage
-
-### Accuracy for different model thresholds
-
-Following plots show the accuracy and the number of images when we only consider images that surpass a certain threshold (x axis). The tradeoff is clearly visible: The higher the threshold, the higher the accuracy, however, the less images can be scored by the model.
-
-#### Overall
-
-Over all classes.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_small, fig.width=width_small}
-# Overall View
-gg <- plot_threshold_vs_acc_overall(preds, model)
-gg
-```
-\newpage
-
-#### Per Class
-
-Shown is the effect for all classes.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable*1.4, fig.width=width_variable}
-gg <- plot_threshold_vs_acc_class(preds, model)
-gg
-```
-\newpage
-
-## Confusion Matrix
-
-Predicted labels vs true labels. Colour indicates the share of the true labels and how they are distributed along the predicted classes (sum over each row is 1). This figure is ideal to see which classes get confused with one another.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable, fig.width=width_variable}
-# empty confusion matrix
-gg <- plot_cm(preds, model)
-gg
-```
-\newpage
-
-## Distribution of Predicted Values
-
-This plot visualizes the density distribution of the different classes' predicted probabilities. Shown are two distributions for each class: when the prediction was correct, and when it was wrong. Generally speaking, when the model is highly confident in predicting a particular class, the mode of the distribution will be close to 1 and the distribution will be narrow causing the density to spike. For classes the model is generally uncertain, the distribution tends to span a wider range. Note that a very low number of predicted values can lead to unreliable density distributions.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable*1.4, fig.width=width_variable}
-gg <- plot_dist_pred(preds, model)
-gg
-```
-
-\newpage
-
-## Examples
-
-Below are some randomly selected correct / missclassified predictions. Included is the predicted probability for the top classes (bars and values). The true label is above each image and indicated with a green bar (if in the top predictions of the model).
-
-
 ### Correct Predictions
 
 Shown are some randomly selected correct classifications.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=width_small, fig.width=width_small, dpi=56, out.width="450px", out.height="450px"}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=height_very_large, fig.width=width_large}
 
 ############################ -
 # Find some correct classifications ----
@@ -196,21 +92,27 @@ random_wrongs <- dplyr::filter(preds,correct==1)
 set.seed(23)
 random_wrongs <- random_wrongs[sample(size = 10,x=dim(random_wrongs)[1]),]
 
+gg <- plot_subject_image_set(pred_set=random_wrongs, subjects, path_scratch, n_samples=dim(random_wrongs)[1], ncol=2, nrow=5)
+gg
 
 ############################ -
 # Plot correct classifications ----
 ############################ -
 
-for (ii in 1:10){
-  id <- paste(random_wrongs[ii,"subject_id"])
-  preds_sel <- random_wrongs[ii,"preds_all"]
-  gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
-  print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
-  #grid.arrange(gg1,gg2,top=title)
-  grid.draw(gg[[1]])
-  grid.draw(gg[[2]])
-  grid.newpage()
-}
+# for (ii in 1:10){
+#   id <- paste(random_wrongs[ii,"subject_id"])
+#   preds_sel <- random_wrongs[ii,"preds_all"]
+#   gg <- plot_subject_image(preds_sel, subjects, id, path_scratch, ii)
+#   print_name = paste(path_figures,model,"_sample_wrong_",ii,sep="")
+#   #grid.arrange(gg1,gg2,top=title)
+#   grid.draw(gg[[1]])
+#   grid.draw(gg[[2]])
+#   grid.newpage()
+# }
+
+```
+
+
 
 ```
 
