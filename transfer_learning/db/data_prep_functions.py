@@ -9,6 +9,20 @@ import numpy as np
 # Functions
 #########################
 
+
+def read_subject_data1(path_csv):
+    subs_df = pd.read_csv(path_csv)
+    # subject ids / urls / metadata
+    subject_ids = subs_df['subject_id']
+    subject_urls = [json.loads(x)['0'] for x in subs_df['locations']]
+    subject_meta = [json.loads(x) for x in subs_df['metadata']]
+    # fill dictionary
+    subs_dir = dict()
+    for i in range(0, len(subject_ids)):
+        subs_dir[subject_ids[i]] = {'url': subject_urls[i],
+                                    'metadata': subject_meta[i]}
+    return subs_dir
+
 # retrieve file from url
 def get_url(url, fname):
     """ Retrieves file from url and returns path to file """
