@@ -122,13 +122,17 @@ if 'experiment_id' in cfg_model:
 else:
     exp_id = ''
 
-# handlers to log stuff to (file and stdout)
-file_handler = logging.FileHandler(
-    filename=cfg_path['logs'] + exp_id + ts + '_run.log')
+# logging handlers
+handlers = list()
+
+if cfg_model['logging_to_disk'] == 1:
+    # handlers to log stuff to (file and stdout)
+    file_handler = logging.FileHandler(
+        filename=cfg_path['logs'] + exp_id + ts + '_run.log')
+    handlers.append(file_handler)
 
 stdout_handler = logging.StreamHandler(sys.stdout)
-
-handlers = [file_handler, stdout_handler]
+handlers.append(stdout_handler)
 
 # logger configuration
 logging.basicConfig(level=logging.DEBUG,

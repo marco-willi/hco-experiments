@@ -12,7 +12,7 @@ from collections import Counter
 from tools.subjects import SubjectSet, Subject
 import pickle
 from datetime import datetime
-
+from db.data_prep_functions import *
 
 #########################
 # Parameters
@@ -42,7 +42,7 @@ from datetime import datetime
 # Get Data
 #########################
 
-subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
+subs = read_subject_data2(cfg_path['db'] + 'subjects.csv')
 subs[list(subs.keys())[0]]
 
 cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
@@ -58,46 +58,71 @@ cls.groupby(['workflow_name']).size()
 
 # workflow_name
 # Angola               553147
-# Empty Or Not              3
+# Empty Or Not         361505
 # Gabon (1)             61848
 # Namibia (1)          292281
-# SE Asia (1)          240096
+# SE Asia (1)          265923
 # SW Angola           1835325
-# South Africa (3)    1303327
-# Tajikistan (1)       408101
+# South Africa (4)    1718643
+# Tajikistan (1)       408102
+# Vehicle Or Not       227717
 # test                     39
+
+cls.groupby(['workflow_id', 'workflow_name']).size()
+# workflow_id  workflow_name
+# 1643         SW Angola           1835325
+# 1986         test                     39
+# 2647         South Africa (4)    1718643
+# 2672         Angola               553147
+# 2731         Namibia (1)          292281
+# 2863         Gabon (1)             61848
+# 3206         SE Asia (1)          265923
+# 3210         Tajikistan (1)       408102
+# 4403         Empty Or Not         361505
+# 4636         Vehicle Or Not       227717
+
 
 # workflow versions
 cls.groupby(['workflow_version']).size()
 
 # filter on workflow
-cls = cls[cls.workflow_name == 'South Africa (3)']
+cls = cls[cls.workflow_name.isin(['South Africa (4)', 'Vehicle Or Not', 'Empty Or Not'])]
 
 # filter classifications without a choice
-cls = cls[cls.annotations.str.contains('choice')]
+cls = cls[cls.annotations.str.contains('choice') | cls.annotations.str.contains('value')]
+
+#[{"task":"T0","task_label":"Are there any animals, people, or vehicles in this photo?","value":"Yes"}]
+
+# get all workflow ids
+work_ids = cls['workflow_id'].unique()
+# array([2647, 4403, 4636])
+
 
 # filter classifications without most recent workflow_version
-work_v = cls.groupby(['workflow_version']).size()
-# workflow_version
-# 311.3     142783
-# 318.4    1160544
-most_recent_wf = work_v.index[-1]
-cls = cls[cls.workflow_version == most_recent_wf]
+# work_v = cls.groupby(['workflow_version']).size()
+# # workflow_version
+# # 311.3     142783
+# # 318.4    1160544
+# most_recent_wf = work_v.index[-1]
+# cls = cls[cls.workflow_version == most_recent_wf]
 
 # subject id
 print("number of subjects %s" % len(cls['subject_ids'].unique()))
-
+print("number of subjects %s" % len(subs['subject_ids'].unique()))
 
 # look for multiple choices per classification
 choic = list()
 for i in range(0, cls['annotations'].shape[0]):
     tt = json.loads(cls['annotations'].iloc[i])
-    choices = [x['choice'] for x in tt[0]['value']]
+    if type(tt[0]['value']) is list:
+        choices = [x['choice'] for x in tt[0]['value']]
+    else:
+        choices = tt[0]['value']
     choic.append(choices)
 
 # print answers with multiple choices
 for i in range(0, len(choic)):
-    if len(choic[i]) >1:
+    if (type(choic[i]) is list) and (len(choic[i]) >1):
         print("----------------------------")
         print(i)
         print(choic[i])
@@ -107,6 +132,156 @@ idd = 1159980
 cls.iloc[idd]
 cls.iloc[idd]['subject_data']
 subs[int(list(json.loads(cls.iloc[idd]['subject_data']).keys())[0])]
+
+# get unique choices
+labels_all = dict()
+for ii in choic:
+    lab = list()
+    if type(ii) is not list:
+        lab.append(ii)
+    else:
+        lab = lab + ii
+    for l in lab:
+        if l not in labels_all:
+            labels_all[l] = 1
+        else:
+            labels_all[l] += 1
+for k, v in labels_all.items():
+    print("Label %s has %s obs" % (k, v))
+
+# Label NTHNGHR has 197125 obs
+# Label 0 has 33 obs
+# Label BUFFALO has 1728 obs
+# Label WLDDG has 2584 obs
+# Label NOTHINGHERE has 149372 obs
+# Label RDBCK has 6519 obs
+# Label FIRE has 60 obs
+# Label DKRSTNBK has 12888 obs
+# Label RNSBL has 1659 obs
+# Label LND has 17635 obs
+# Label WILDEBEEST has 4618 obs
+# Label NSCT has 3402 obs
+# Label PORCUPINE has 2281 obs
+# Label MNGS has 3346 obs
+# Label ELEPHANT has 3564 obs
+# Label JACKALBLACKBACKED has 1248 obs
+# Label WLDCT has 1276 obs
+# Label ELAND has 632 obs
+# Label LN has 6861 obs
+# Label HYRAX has 19 obs
+# Label ROAN has 27 obs
+# Label TTR has 154 obs
+# Label BTRDFX has 580 obs
+# Label GMSBK has 11539 obs
+# Label HUMANNOTVEHICLES has 10695 obs
+# Label HRTBSTTSSSB has 9148 obs
+# Label ZBR has 71622 obs
+# Label RDVRK has 2234 obs
+# Label WILDCAT has 47 obs
+# Label HYAENASPOTTED has 138 obs
+# Label JCKL has 16861 obs
+# Label AARDWOLF has 615 obs
+# Label MPL has 157953 obs
+# Label RDNT has 1009 obs
+# Label GENET has 387 obs
+# Label SMALLASIANMONGOOSE has 1 obs
+# Label POLECAT has 35 obs
+# Label HONEYBADGER has 183 obs
+# Label KLIPSPRINGER has 90 obs
+# Label RDWLF has 1717 obs
+# Label unknown answer label has 39 obs
+# Label SERVAL has 385 obs
+# Label KD has 33015 obs
+# Label RODENT has 53 obs
+# Label VEHICLE has 62569 obs
+# Label LPHNT has 41928 obs
+# Label JACKALSIDESTRIPED has 138 obs
+# Label HNBRWN has 14910 obs
+# Label INSECT has 1030 obs
+# Label WLDBST has 50065 obs
+# Label BUSHPIG has 1236 obs
+# Label LEOPARD has 345 obs
+# Label DOMESTICDOG has 2 obs
+# Label CARACAL has 105 obs
+# Label HPPPTMS has 2943 obs
+# Label PANGOLIN has 4 obs
+# Label DOMESTICCATTLE has 2 obs
+# Label AARDVARK has 172 obs
+# Label WARTHOG has 24691 obs
+# Label PLCT has 91 obs
+# Label RHN has 19392 obs
+# Label ZEBRA has 3371 obs
+# Label ROANSABLE has 3 obs
+# Label BSHPG has 5115 obs
+# Label KLPSPRNGR has 2788 obs
+# Label RABBITHARE has 1427 obs
+# Label LION has 870 obs
+# Label REEDBUCKRHEBOK has 228 obs
+# Label RPTL has 236 obs
+# Label GNT has 1814 obs
+# Label BIRD has 3633 obs
+# Label GRFF has 40669 obs
+# Label BUSHBUCK has 877 obs
+# Label HARTEBEEST has 251 obs
+# Label PRCPN has 8634 obs
+# Label NL has 31284 obs
+# Label BRD has 23719 obs
+# Label OTTER has 18 obs
+# Label AFRICANCIVET has 21 obs
+# Label GIRAFFE has 3113 obs
+# Label Yes has 302486 obs
+# Label BSHBCK has 6571 obs
+# Label HORSE has 1 obs
+# Label BFFL has 13210 obs
+# Label MACAQUE has 10 obs
+# Label SRVL has 742 obs
+# Label No has 286697 obs
+# Label VHCL has 293288 obs
+# Label BSHBB has 412 obs
+# Label HYAENABROWN has 506 obs
+# Label 1 has 30 obs
+# Label BABOON has 12351 obs
+# Label HMNNTVHCLS has 73593 obs
+# Label RBBTHR has 13355 obs
+# Label MNKBBN has 92176 obs
+# Label MONGOOSE has 330 obs
+# Label WATERBUCK has 1101 obs
+# Label DUIKER has 833 obs
+# Label BAT has 14 obs
+# Label NYALA has 5560 obs
+# Label BT has 409 obs
+# Label WRTHG has 63559 obs
+# Label CHTH has 1335 obs
+# Label WILDBOAR has 1 obs
+# Label BATEAREDFOX has 328 obs
+# Label TSESSEBE has 92 obs
+# Label IMPALA has 20982 obs
+# Label HNBDGR has 1978 obs
+# Label GEMSBOK has 201 obs
+# Label BUSHBABY has 12 obs
+# Label BADGER has 1 obs
+# Label PNGLN has 82 obs
+# Label CRCL has 751 obs
+# Label SPRINGBOK has 365 obs
+# Label LPRD has 7483 obs
+# Label CHEETAH has 216 obs
+# Label DOMESTICANIMAL has 269 obs
+# Label MONKEY has 4740 obs
+# Label WTRBCK has 9105 obs
+# Label ARGALIMARCOPOLOSHEEP has 2 obs
+# Label FRCNCVT has 3587 obs
+# Label HNSPTTD has 7544 obs
+# Label SABLE has 19 obs
+# Label KUDU has 2830 obs
+# Label WILDDOG has 320 obs
+# Label GRYSBOK has 80 obs
+# Label HIPPOPOTAMUS has 159 obs
+# Label RHINO has 2602 obs
+# Label WILDPIGEURASIAN has 1 obs
+# Label STEENBOK has 242 obs
+# Label DMSTCNML has 7121 obs
+# Label REPTILE has 64 obs
+
 
 # retirement reasons
 subd = dict()
@@ -124,12 +299,12 @@ tt = pd.DataFrame(retirement_reasons, columns=['retirement_reason'])
 tt.groupby(['retirement_reason']).size()
 
 # retirement_reason
-# Not Retired              75601
-# classification_count    238450
-# consensus                   53
-# nothing_here            146492
-# other                   270239
-# dtype: int64
+# Not Retired             326987
+# classification_count    592214
+# consensus               214594
+# nothing_here            326815
+# other                   309439
+
 
 
 # check number of entries per subject and user

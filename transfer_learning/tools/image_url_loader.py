@@ -144,7 +144,13 @@ class ImageUrlLoader(object):
                     chunk_size=1000, overwrite=False, create_path=True,
                     zooniverse_imgproc=False
                     ):
-        """ store all images on disk in class specific folders """
+        """ store all images on disk in class specific folders
+            urls: list of urls
+            labels: list of folder-names in which image is going to be stored
+            fnames: list of file names of images
+            path: parent folder where to store image label folders and images
+            
+        """
 
         # filenames as identifiers
         ids = fnames

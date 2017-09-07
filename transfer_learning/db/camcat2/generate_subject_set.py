@@ -44,7 +44,7 @@ import re
 # Import Subject Data
 #########################
 
-subs = read_subject_data(cfg_path['db'] + 'subjects.csv')
+subs = read_subject_data2(cfg_path['db'] + 'subjects.csv')
 subs[list(subs.keys())[0]]
 
 ###############################
@@ -55,77 +55,144 @@ cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
 cls.head
 
 # filter on workflow
-cls = cls[cls.workflow_name == 'South Africa (3)']
+cls = cls[cls.workflow_name.isin(['South Africa (4)', 'Vehicle Or Not', 'Empty Or Not'])]
 
 # filter classifications without a choice
-cls = cls[cls.annotations.str.contains('choice')]
+cls = cls[cls.annotations.str.contains('choice') | cls.annotations.str.contains('value')]
 
-# filter classifications without most recent workflow_version
-work_v = cls.groupby(['workflow_version']).size()
-# workflow_version
-# 311.3     142783
-# 318.4    1160544
-most_recent_wf = work_v.index[-1]
-cls = cls[cls.workflow_version == most_recent_wf]
+#[{"task":"T0","task_label":"Are there any animals, people, or vehicles in this photo?","value":"Yes"}]
+
+# get all workflow ids
+work_ids = cls['workflow_id'].unique()
 
 
 class_mapper = {
+    'ARGALIMARCOPOLOSHEEP': 'ARGALIMARCOPOLOSHEEP',
     'GRFF': 'giraffe',
+    'GIRAFFE': 'giraffe',
     'BSHBCK': 'bushbuck',
+    'BUSHBUCK': 'bushbuck',
     'BSHBB': 'bushbaby',
+    'BUSHBABY': 'bushbaby',
     'PRCPN': 'porcupine',
+    'PORCUPINE': 'porcupine',
     'HRTBSTTSSSB': 'hartebeest',
+    'HARTEBEEST': 'hartebeest',
     'CHTH': 'cheetah',
+    'CHEETAH': 'cheetah',
     'HMNNTVHCLS': 'human',
-    'RDBCK': 'reedbuck',
-    'RDVRK': 'aardvark',
-    'MNKBBN': 'monkeybaboon',
-    'FRCNCVT': 'africancivet',
-    'BRD': 'bird',
     'HUMANNOTVEHICLES': 'human',
+    'RDBCK': 'reedbuck',
+    'REEDBUCKRHEBOK': 'reedbuck',
+    'RDVRK': 'aardvark',
+    'AARDVARK': 'aardvark',
+    'MNKBBN': 'monkeybaboon',
+    'BABOON': 'baboon',
+    'MONKEY': 'monkey',
+    'FRCNCVT': 'africancivet',
+    'AFRICANCIVET': 'africancivet',
+    'BRD': 'bird',
+    'BIRD': 'bird',
     'BSHPG': 'bushpig',
+    'BUSHPIG': 'bushpig',
     'HPPPTMS': 'hippopotamus',
+    'HIPPOPOTAMUS': 'hippopotamus',
     'DKRSTNBK': 'duikersteenbok',
+    'DUIKER': 'duikersteenbok',
+    'STEENBOK': 'steenbok',
     'WLDCT': 'wildcat',
+    'WILDCAT': 'wildcat',
     'LPHNT': 'elephant',
+    'ELEPHANT': 'elephant',
     'KD': 'kudu',
+    'KUDU': 'kudu',
     'LPRD': 'leopard',
+    'LEOPARD': 'leopard',
+    'GEMSBOK': 'GEMSBOK',
     'JCKL': 'jackal',
+    'JACKALBLACKBACKED': 'jackalblackbacked',
+    'JACKALSIDESTRIPED': 'jackalsidestriped',
     'RBBTHR': 'rabbithare',
+    'RABBITHARE': 'rabbithare',
     'HNBRWN': 'hyaenabrown',
+    'HYAENABROWN': 'hyaenabrown',
     'DMSTCNML': 'domesticanimal',
+    'DOMESTICANIMAL': 'domesticanimal',
     'LND': 'eland',
+    'ELAND': 'eland',
     'TTR': 'otter',
+    'OTTER': 'otter',
+    'HORSE': 'HORSE',
     'WTRBCK': 'waterbuck',
+    'WATERBUCK': 'waterbuck',
     'SRVL': 'serval',
+    'SERVAL': 'serval',
     'RDWLF': 'aardwolf',
+    'AARDWOLF': 'aardwolf',
+    'HYRAX': 'hyrax',
     'GNT': 'genet',
+    'GENET': 'genet',
+    'GRYSBOK': 'GRYSBOK',
     'NSCT': 'insect',
+    'INSECT': 'insect',
     'HNSPTTD': 'hyaenaspotted',
+    'HYAENASPOTTED': 'hyaenaspotted',
     'GMSBK': 'gemsbock',
     'RHN': 'rhino',
+    'RHINO': 'rhino',
     'PLCT': 'polecat',
+    'POLECAT': 'polecat',
     'WLDBST': 'wildebeest',
+    'WILDEBEEST': 'wildebeest',
     'HNBDGR': 'honeyBadger',
+    'HONEYBADGER': 'honeyBadger',
+    'BADGER': 'BADGER',
     'WRTHG': 'warthog',
+    'WARTHOG': 'warthog',
     'LN': 'lion',
+    'LION': 'lion',
     'KLPSPRNGR': 'klipspringer',
+    'KLIPSPRINGER': 'klipspringer',
     'BT': 'bat',
+    'BAT': 'bat',
     'MACAQUE': 'MACAQUE',
     'PNGLN': 'pangolin',
+    'PANGOLIN': 'pangolin',
     'ZBR': 'zebra',
+    'ZEBRA': 'zebra',
     'RPTL': 'reptile',
+    'REPTILE': 'reptile',
     'VEHICLE': 'vehicle',
     'NL': 'nyala',
+    'NYALA': 'nyala',
     'RDNT': 'rodent',
+    'RODENT': 'rodent',
     'MPL': 'impala',
+    'IMPALA': 'impala',
     'RNSBL': 'roansable',
+    'ROANSABLE': 'roansable',
+    'ROAN': 'roan',
+    'SABLE': 'sable',
+    'SMALLASIANMONGOOSE': 'SMALLASIANMONGOOSE',
+    'SPRINGBOK': 'SPRINGBOK',
+    'TSESSEBE': 'TSESSEBE',
     'BFFL': 'buffalo',
+    'BUFFALO': 'buffalo',
     'BTRDFX': 'batEaredFox',
+    'BATEAREDFOX': 'batEaredFox',
     'MNGS': 'mongoose',
+    'MONGOOSE': 'mongoose',
     'WLDDG': 'wilddog',
+    'WILDDOG': 'wilddog',
+    'WILDPIGEURASIAN': 'WILDPIGEURASIAN',
+    'DOMESTICDOG': 'domesticdog',
+    'DOMESTICCATTLE': 'domesticcattle',
     'CRCL': 'caracal',
-    'VHCL': 'vehicle'
+    'CARACAL': 'caracal',
+    'VHCL': 'vehicle',
+    'FIRE': 'fire',
+    'WILDBOAR': 'WILDBOAR',
+    'unknown answer': 'unknown'
 }
 
 ###############################
@@ -133,10 +200,10 @@ class_mapper = {
 ###############################
 
 # subset all subjects that were used
-sub_ids_in_cls = set(cls['subject_ids'])
+# sub_ids_in_cls = set(cls['subject_ids'])
 subs_used = dict()
 for k, v in subs.items():
-    if k in sub_ids_in_cls:
+    if v['workflow_id'] in work_ids:
         subs_used[k] = v
 
 subs_used[list(subs_used.keys())[0]]
@@ -151,24 +218,28 @@ subs_used[list(subs_used.keys())[0]]
 # t3 = 'C1940694.JPG'
 # t4 = '12_CS4_41628_20160608_094310.jpg'
 
+# t5 = 'S2__Station46__Camera1__CAM43291__2017-04-09__07-30-35.JPG'
+# t6 = '2017-03-09_07-29-18-CAM40480.jpg'
+# extract_loc_date_time(t5)
 
 def extract_loc_date_time(tt):
     # extract date
-    date_regexp = re.search(".*([0-9]{4}[_-][0-9]{2}[_-][0-9]{2}).*", tt)
+    date_regexp = re.search(".*([0-9]{4}[_-]+[0-9]{2}[_-]+[0-9]{2}).*", tt)
     if bool(date_regexp):
         date_extracted = date_regexp.groups()[0]
         date = re.sub('[_-]', '', date_extracted)
     else:
-        date = "20010101"
+        date = "unkwnown"
     # extract time of day
-    tod_regexp = re.search(".*([0-9]{2}[_-][0-9]{2}[_-][0-9]{2})[_-]\D.*", tt)
+    tod_regexp = re.search(".*(\D[0-9]{2}[_-]+[0-9]{2}[_-]+[0-9]{2})\D.*", tt)
     if bool(tod_regexp):
         tod_extracted = tod_regexp.groups()[0]
         time_of_day = re.sub('[_-]', '', tod_extracted)
     else:
         time_of_day = "000000"
     # extract location
-    loc_regexp = re.search("(?:^.*[_-]|^)(\w+)\.jpg$", tt, re.IGNORECASE)
+    loc_regexp = re.search("(CAM[0-9]+)", tt, re.IGNORECASE)
+    # loc_regexp = re.search("(?:^.*[_-]|^)(\w+)\.jpg$", tt, re.IGNORECASE)
     if bool(loc_regexp):
         location = loc_regexp.groups()[0]
     else:
@@ -178,16 +249,25 @@ def extract_loc_date_time(tt):
 
 
 for v in subs_used.values():
-    try:
-        location, date, time_of_day, date_time = \
-            extract_loc_date_time(v['metadata']['image_name'])
-    except:
-        print(v['metadata']['image_name'])
+    if 'image_name' in v['metadata']:
+        try:
+            location, date, time_of_day, date_time = \
+                extract_loc_date_time(v['metadata']['image_name'])
+        except:
+            print(v['metadata']['image_name'])
+    elif 'Filename' in v['metadata']:
+        try:
+            location, date, time_of_day, date_time = \
+                extract_loc_date_time(v['metadata']['Filename'])
+        except:
+            print(v['metadata']['Filename'])
     v['location'] = location
     v['date'] = date
     v['time'] = time_of_day
     v['datetime'] = date_time
 
+subs_used[list(subs.keys())[0]]
+subs_used[list(subs.keys())[1000]]
 #subs_used[list(subs_used.keys())[0]]
 
 ###############################
@@ -207,8 +287,13 @@ for i in range(0, cls.shape[0]):
     else:
         ret_res = ret[key]['retired']['retirement_reason']
     # classifications
-    cls_usr = [x['choice'] for x in json.loads(current_c['annotations']
-                                               )[0]['value']]
+    cl_extract = json.loads(current_c['annotations'])[0]['value']
+    if type(cl_extract) not in (list, str):
+        cls_usr = [str(cl_extract)]
+    elif 'choice' in cl_extract[0]:
+        cls_usr = [x['choice'] for x in cl_extract]
+    else:
+        cls_usr = [cl_extract]
     # map correct classes
     for ii in range(0, len(cls_usr)):
         if cls_usr[ii] in class_mapper.keys():
@@ -290,7 +375,12 @@ for k, v in labels_all.items():
 
 # prepare final dictionary that contains all relevant data
 subs_all_data = dict()
-for k, v in subs_res_final.items():
+for k in subs_used.keys():
+    if k in subs_res_final:
+        v = subs_res_final[k]
+    else:
+        v = dict()
+        v['label'] = ['unknown']
     # remove all multi label stuff
     label = v['label']
     if label[0] is None:
@@ -301,8 +391,6 @@ for k, v in subs_res_final.items():
     # else:
     #     continue
     if label is None:
-        continue
-    if k not in subs_used.keys():
         continue
     # get subject meta data
     current_sub = subs_used[k]

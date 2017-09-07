@@ -10,18 +10,7 @@ import numpy as np
 #########################
 
 
-def read_subject_data1(path_csv):
-    subs_df = pd.read_csv(path_csv)
-    # subject ids / urls / metadata
-    subject_ids = subs_df['subject_id']
-    subject_urls = [json.loads(x)['0'] for x in subs_df['locations']]
-    subject_meta = [json.loads(x) for x in subs_df['metadata']]
-    # fill dictionary
-    subs_dir = dict()
-    for i in range(0, len(subject_ids)):
-        subs_dir[subject_ids[i]] = {'url': subject_urls[i],
-                                    'metadata': subject_meta[i]}
-    return subs_dir
+
 
 # retrieve file from url
 def get_url(url, fname):
@@ -50,6 +39,33 @@ def read_subject_data(path_csv):
                                     'metadata': subject_meta[i]}
     return subs_dir
 
+def read_subject_data1(path_csv):
+    subs_df = pd.read_csv(path_csv)
+    # subject ids / urls / metadata
+    subject_ids = subs_df['subject_id']
+    subject_urls = [json.loads(x)['0'] for x in subs_df['locations']]
+    subject_meta = [json.loads(x) for x in subs_df['metadata']]
+    # fill dictionary
+    subs_dir = dict()
+    for i in range(0, len(subject_ids)):
+        subs_dir[subject_ids[i]] = {'url': subject_urls[i],
+                                    'metadata': subject_meta[i]}
+    return subs_dir
+
+def read_subject_data2(path_csv):
+    subs_df = pd.read_csv(path_csv)
+    # subject ids / urls / metadata
+    subject_ids = subs_df['subject_id']
+    subject_urls = [json.loads(x)['0'] for x in subs_df['locations']]
+    subject_meta = [json.loads(x) for x in subs_df['metadata']]
+    subject_workflow_ids = subs_df['workflow_id']
+    # fill dictionary
+    subs_dir = dict()
+    for i in range(0, len(subject_ids)):
+        subs_dir[subject_ids[i]] = {'url': subject_urls[i],
+                                    'metadata': subject_meta[i],
+                                    'workflow_id': subject_workflow_ids[i]}
+    return subs_dir
 
 def read_classification_data(path_csv):
     # read csv
