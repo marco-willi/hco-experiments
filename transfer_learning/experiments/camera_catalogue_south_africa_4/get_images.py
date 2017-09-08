@@ -34,7 +34,7 @@ assert len(fnames) == len(urls) == len(labels)
 img_loader = ImageUrlLoader()
 
 # store images on disk
-n_trials = 2
+n_trials = 100
 for i in range(0, n_trials):
     try:
         imgs = img_loader.storeOnDisk(
