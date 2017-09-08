@@ -56,13 +56,18 @@ def process_images(image_seq_files, image_path, output_path,
             # difference between image and average image
             diff = 1-abs(np.squeeze(img) - np.squeeze(avg_img))
             # calculate threshold using isodata algorithm
-            thresh = threshold_isodata(diff)
-            # create binary image according to thresholded values
-            binary = diff < thresh
-            binary_img = diff
-            binary_img[binary] = 1
-            binary_img[binary == False] = 0
-            imgs_threshold[ii] = binary_img
+            try:
+                thresh = threshold_isodata(diff)
+                # create binary image according to thresholded values
+                binary = diff < thresh
+                binary_img = diff
+                binary_img[binary] = 1
+                binary_img[binary == False] = 0
+                imgs_threshold[ii] = binary_img
+            except:
+                print("Thresholding Image %s failed" % ii)
+                binary_img = np.ones(shape=diff.shape)
+                imgs_threshold[ii] = binary_img
 
             if algo == 'rectangle_mass':
                 # calculate center point of difference image
