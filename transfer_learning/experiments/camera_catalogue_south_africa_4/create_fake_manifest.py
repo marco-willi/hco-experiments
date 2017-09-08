@@ -22,10 +22,10 @@ classes = [
     "wilddog", "wildebeest", "zebra"]
 
 non_experiment_classes = ["insect", "bushbaby", "bat", "serval", "wildcat"]
-experiment_flag = [0, 1]
+experiment_groups = [0, 1]
+non_experiment_group = 2
 
-random.seed(12)
-random.choice(experiment_flag)
+
 # open file
 file_in = open(path + file_name_in, "r")
 file_out = open(path + file_name_out, "w", newline='')
@@ -36,7 +36,7 @@ write_lines = 10000
 for row in file_in_reader:
     # modify header
     if counter == 0:
-        row = row + ['#experiment_flag', '#machine_probability',
+        row = row + ['#experiment_group', '#machine_probability',
                      '#machine_prediction']
     else:
         # choose class
@@ -49,10 +49,10 @@ for row in file_in_reader:
             cl = cl_p
         # choose experiment
         if cl in non_experiment_classes:
-            exp = 0
+            exp = non_experiment_group
         else:
             random.seed(counter)
-            exp = random.choice(experiment_flag)
+            exp = random.choice(experiment_groups)
         # probability
         prop = random.uniform(0, 1)
         row = row + [exp, prop, cl]

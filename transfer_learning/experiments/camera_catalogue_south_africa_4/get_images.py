@@ -23,14 +23,18 @@ data.head
 # extract necessary data
 urls = list(data.link)
 labels = ['unknown' for x in range(0, len(urls))]
-fnames = [str(x) + '.jpeg' for x in list(data.subject_id)]
+fnames = [str(i) + '_' + str(x) + '_' + str(y) for i, x, y in zip(
+            range(0, len(urls)),
+            list(data.subject_id),
+            list(data.image_name))]
 assert len(fnames) == len(urls) == len(labels)
+
 
 # create url loader
 img_loader = ImageUrlLoader()
 
 # store images on disk
-n_trials = 100
+n_trials = 2
 for i in range(0, n_trials):
     try:
         imgs = img_loader.storeOnDisk(
