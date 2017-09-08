@@ -48,7 +48,7 @@ ssh -i ~/keys/zv_test_key.pem ubuntu@ec2-34-207-210-160.compute-1.amazonaws.com
 scp -i ~/keys/zv_test_key.pem ~/data_hdd/db/elephant_expedition/classifications.csv ubuntu@ec2-54-88-211-7.compute-1.amazonaws.com:~/data_hdd/db//elephant_expedition/
 
 # transfer files from new lucifer to aws instance
-scp -i ~/keys/zv_test_key.pem /data/lucifer1.2/users/will5448/data_hdd/db/camcat2/classifications.csv ubuntu@ec2-34-226-206-40.compute-1.amazonaws.com:~/data_hdd/db/camcat2/
+scp -i ~/keys/zv_test_key.pem /data/lucifer1.2/users/will5448/data_hdd/images/camera_catalogue/* ubuntu@ec2-204-236-210-147.compute-1.amazonaws.com:~/data_hdd/images/camera_catalogue/
 
 # transfer files from aws to aws instance
 sudo chmod -R 777 snapshot_wisconsin/

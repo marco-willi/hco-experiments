@@ -60,8 +60,8 @@ class PredictorExternal(object):
             raise IOError("Path and output_path have to be specified")
 
         # check output_path
-        if output_path[-1] != "/":
-            output_path = output_path + "/"
+        if output_path[-1] != os.path.sep:
+            output_path = output_path + os.path.sep
 
         # prediction batch sizes
         batch_size = 256

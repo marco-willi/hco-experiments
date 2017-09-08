@@ -126,7 +126,7 @@ In this figure, only images which were assigned an estimated probability of at l
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.height=height_variable, fig.width=width_variable}
 # take only with most confidence and Threshold
-gg <- plot_class_most_conf_95th_acc(preds, model)
+gg <- plot_class_most_conf(preds, model, p_conf = 0.95)
 gg
 ```
 

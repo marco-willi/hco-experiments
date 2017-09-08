@@ -160,7 +160,7 @@ plot_class_most_conf_acc <- function(preds, model){
 # only if above 95% model score
 ################################################ -
 
-plot_class_most_conf_95th_acc<- function(preds, model){
+plot_class_most_conf<- function(preds, model, p_conf=0.95){
   
   # take only with most confidence and Threshold
   preds_max_p <- dplyr::group_by(preds, subject_id) %>% summarise(max_p=max(p)) 
@@ -168,7 +168,7 @@ plot_class_most_conf_95th_acc<- function(preds, model){
   # only take one image
   preds_min_image_id <- group_by(preds_0, subject_id) %>% summarise(image_id=min(image_id))
   preds_0 <- inner_join(preds_0,preds_min_image_id,by=c("subject_id","image_id"))
-  preds_1 <- left_join(preds_0, preds_max_p, by="subject_id") %>% filter(p>0.95)
+  preds_1 <- left_join(preds_0, preds_max_p, by="subject_id") %>% filter(p>=p_conf)
   
   # accuracy per true class
   preds_class <- dplyr::group_by(preds_1,y_true) %>% summarise(matches = sum(y_true == y_pred), n = n()) %>%
@@ -178,11 +178,11 @@ plot_class_most_conf_95th_acc<- function(preds, model){
   class_numbers <- dplyr::group_by(preds, y_true) %>% summarise(n_total=n_distinct(subject_id))
   
   preds_class <- left_join(preds_class, class_numbers, by="y_true") %>% mutate(p_high_threshold=round(n/n_total,2)*100)
-  
+  browser()
   gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy)) + 
     geom_bar(stat="identity", fill="wheat") +
     theme_light() +
-    ggtitle(paste("Validation Accuracy\nmodel: ", model,"\nsubject level and only > 0.95 model output",sep="")) +
+    ggtitle(paste("Validation Accuracy\nmodel: ", model,"\nsubject level and only > ",p_conf," model output",sep="")) +
     xlab("") +
     ylab("Accuracy") +
     coord_flip() +

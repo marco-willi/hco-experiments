@@ -31,10 +31,10 @@ assert len(fnames) == len(urls) == len(labels)
 
 
 # create url loader
-img_loader = ImageUrlLoader()
+img_loader = ImageUrlLoader(parallel=True)
 
 # store images on disk
-n_trials = 100
+n_trials = 10
 for i in range(0, n_trials):
     try:
         imgs = img_loader.storeOnDisk(
@@ -50,7 +50,9 @@ for i in range(0, n_trials):
 
 
 # score images
-# model_file = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/models/3663/mnist_testing_201708021008_model_04_0.40.hdf5"
+model_file = cfg_path['save'] + 'cc_species_v2_201708210308.hdf5'
+#model_file = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/models/3663/mnist_testing_201708021008_model_04_0.40.hdf5"
+
 # pre_processing = ImageDataGenerator(rescale=1./255)
 # pred_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown"
 # output_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown/"
