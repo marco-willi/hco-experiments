@@ -192,7 +192,7 @@ class ImageUrlLoader(object):
             if len(existing_files) > 0:
                 for k in dict_ids:
                     if k in existing_files:
-                        data_dict.pop(k, None)
+                        data_dict.pop(k)
 
         # get relevant data from dictionary
         dict_ids = list(data_dict.keys())

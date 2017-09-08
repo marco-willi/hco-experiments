@@ -1,13 +1,6 @@
 # Test Motion Detection
 import numpy as np
-import os
-from keras.preprocessing.image import img_to_array,  load_img, array_to_img
-from scipy import ndimage
-from skimage.filters import threshold_isodata, threshold_otsu, threshold_local
-from skimage.draw import (line, polygon, circle,
-                          circle_perimeter,
-                          ellipse, ellipse_perimeter)
-import collections
+from skimage.filters import threshold_otsu
 
 
 def find_max_mass(img, window_shape, step_size=50, result="corners"):

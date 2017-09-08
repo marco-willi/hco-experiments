@@ -5,18 +5,16 @@ from keras.preprocessing.image import img_to_array,  load_img, array_to_img
 from scipy import ndimage
 from config.config import cfg_path
 from config.config import logging
-from skimage.filters import threshold_isodata, threshold_otsu, threshold_local
-from skimage.draw import (line, polygon, circle,
-                          circle_perimeter,
-                          ellipse, ellipse_perimeter)
+from skimage.filters import threshold_isodata
+# from skimage.draw import (line, circle)
 import collections
 from sandbox.motion_detection_funcs import\
     (find_max_mass,
-     rectangle_coordinates_from_center, motion_share, rectangle_proposal,
-     correct_for_aspect_ratio)
+     rectangle_coordinates_from_center, motion_share, rectangle_proposal)
 
 
-def process_images(image_seq_files):
+def process_images(image_seq_files, image_path, output_path,
+                   algo, target_shape, grayscale=True):
     # read and process images
     for img_seq in image_seq_files:
         # get all images
@@ -115,30 +113,30 @@ def process_images(image_seq_files):
                 points[ii] = center
 
         # add shape to original images
-        img_dict_shapes = dict()
-        for ii, img in img_dict.items():
-            if ii == 'avg':
-                continue
-            if res_type == 'rectangle':
-                # calculate and add lines
-                rec = points[ii]
-                l1 = line(r0=rec['lower'], c0=rec['left'],
-                          r1=rec['lower'], c1=rec['right'])
-                l2 = line(rec['lower'], rec['left'], rec['upper'], rec['left'])
-                l3 = line(rec['upper'], rec['left'], rec['upper'], rec['right'])
-                l4 = line(rec['upper'], rec['right'], rec['lower'], rec['right'])
-                img_circle = np.copy(img)
-                for ll in zip([l1, l2, l3, l4]):
-                    img_circle[ll[0][0], ll[0][1], 0] = 1
-                img_dict_shapes[ii] = img_circle
-            elif res_type == 'circle':
-                center = points[ii]
-                # calculate circle points
-                rr, cc = circle(c=center[0], r=center[1], radius=30,
-                                shape=img.shape)
-                img_circle = np.copy(img)
-                img_circle[rr, cc, 0] = 1
-                img_dict_shapes[ii] = img_circle
+        # img_dict_shapes = dict()
+        # for ii, img in img_dict.items():
+        #     if ii == 'avg':
+        #         continue
+        #     if res_type == 'rectangle':
+        #         # calculate and add lines
+        #         rec = points[ii]
+        #         l1 = line(r0=rec['lower'], c0=rec['left'],
+        #                   r1=rec['lower'], c1=rec['right'])
+        #         l2 = line(rec['lower'], rec['left'], rec['upper'], rec['left'])
+        #         l3 = line(rec['upper'], rec['left'], rec['upper'], rec['right'])
+        #         l4 = line(rec['upper'], rec['right'], rec['lower'], rec['right'])
+        #         img_circle = np.copy(img)
+        #         for ll in zip([l1, l2, l3, l4]):
+        #             img_circle[ll[0][0], ll[0][1], 0] = 1
+        #         img_dict_shapes[ii] = img_circle
+        #     elif res_type == 'circle':
+        #         center = points[ii]
+        #         # calculate circle points
+        #         rr, cc = circle(c=center[0], r=center[1], radius=30,
+        #                         shape=img.shape)
+        #         img_circle = np.copy(img)
+        #         img_circle[rr, cc, 0] = 1
+        #         img_dict_shapes[ii] = img_circle
 
         # crop images from original images
         img_dict_crops = dict()
@@ -148,8 +146,6 @@ def process_images(image_seq_files):
             if res_type == 'rectangle':
                 # crop
                 rec = points[ii]
-                width = rec['left'] - rec['left']
-                height = rec['upper'] - rec['lower']
                 img_crop = np.array(img[rec['lower']:rec['upper'],
                                         rec['left']:rec['right'], :])
                 # img_crop = np.zeros(shape=(height, width, img.shape[2]))
@@ -173,22 +169,20 @@ def process_images(image_seq_files):
 def run_motion_detection():
     # Parameters
     image_path_overall = cfg_path['images'] + 'all' + os.path.sep
-    image_path_overall = cfg_path['images'] + 'all_cropped' + os.path.sep
+    image_path_output = cfg_path['images'] + 'all_cropped' + os.path.sep
     algo = 'mixer'
-    grayscale = allTrue
+    grayscale = True
     target_shape = (330, 330)
     seq_length = 3
-    interval = 5
 
     # loop over all subfolders
     subfolders = [f.path for f in os.scandir(image_path_overall) if f.is_dir()]
 
     for dd in subfolders:
         logging.info("Starting with dir %s" % dd)
-        image_path = dd
-        output_path = image_path
-        output_path = output_path.replace("all", "all_cropped")
-
+        image_path = dd + os.path.sep
+        output_path = image_path_output + dd.split(os.path.sep)[-1] +\
+            os.path.sep
         # create output directory
         if not os.path.exists(output_path):
             logging.debug("Creating %s" % output_path)
@@ -225,12 +219,17 @@ def run_motion_detection():
         inter.append(len(all_imgs)+1)
 
         for i in range(0, len(inter)-1):
+            logging.info("Starting with batch %s/%s" % (i, len(inter)-1))
             current_images = set(all_imgs[inter[i]:inter[i+1]])
             image_seq_files_batch = {k: v for k, v in image_seq_files.items()
                                      if k in current_images}
             # process file sequence
-            process_images(image_seq_files_batch)
-
+            process_images(image_seq_files=image_seq_files_batch,
+                           image_path=image_path,
+                           output_path=output_path,
+                           algo=algo,
+                           target_shape=target_shape,
+                           grayscale=grayscale)
 
 if __name__ == '__main__':
     run_motion_detection()
