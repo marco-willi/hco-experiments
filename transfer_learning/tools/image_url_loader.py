@@ -5,7 +5,7 @@ Class that implements functions to load images from urls
 """
 
 # import modules
-from PIL import Image
+from PIL import Image, ImageFile
 import requests
 from io import BytesIO
 import aiohttp
@@ -14,6 +14,10 @@ import time
 import os
 from config.config import logging
 from tools.helpers import second_to_str
+
+
+# set option to avoid errors while opening images with PIL
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 # Class to get images from URLs
@@ -111,7 +115,9 @@ class ImageUrlLoader(object):
 
         # if to use the zooniverse imgproc server to pre-process images
         if (zooniverse_imgproc) & (target_size is not None):
-            imgproc_url = "https://imgproc.zooniverse.org/resize?o=!&w=%s&h=%s&u=" % (target_size[0], target_size[1])
+            imgproc_url = (
+                "https://imgproc.zooniverse.org/resize?o=!&w=%s&h=%s&u=" %
+                (target_size[0], target_size[1]))
 
             for i in range(0, size):
                 urls[i] = imgproc_url + urls[i].replace('https://', '')
@@ -275,7 +281,14 @@ class ImageUrlLoader(object):
                         continue
 
                 # save to disk
-                img.save(path_img)
+                try:
+                    img.save(path_img)
+                except:
+                    logging.warn("Could not save image %s - skipping..."
+                                 % c_id)
+                    failures_savings[c_id] = img_id
+                    continue
+
                 img_id += 1
 
                 # count processed images
