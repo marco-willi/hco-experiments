@@ -265,18 +265,21 @@ class PredictorExternal2(object):
         # prediction batch sizes
         batch_size = 256
 
-        print("Initializing generator")
-        generator = self.keras_datagen.flow_from_directory(
-                path,
-                target_size=self.model.input_shape[1:3],
-                color_mode=self.color_mode,
-                batch_size=batch_size,
-                class_mode='sparse',
-                seed=123,
-                shuffle=False)
+
 
         # fit data generator on input data
         if self.pre_processing is None:
+
+            print("Initializing generator")
+            generator = self.keras_datagen.flow_from_directory(
+                    path,
+                    target_size=self.model.input_shape[1:3],
+                    color_mode=self.color_mode,
+                    batch_size=batch_size,
+                    class_mode='sparse',
+                    seed=123,
+                    shuffle=False)
+
             # Fit data generator if required
             if any([self.keras_datagen.featurewise_std_normalization,
                     self.keras_datagen.samplewise_std_normalization,
@@ -299,6 +302,17 @@ class PredictorExternal2(object):
 
         # use pre-defined pre_processing options and add to generator
         else:
+            print("Initializing generator")
+            gen = ImageDataGenerator(rescale=1./255)
+            generator = gen.flow_from_directory(
+                    path,
+                    target_size=self.model.input_shape[1:3],
+                    color_mode=self.color_mode,
+                    batch_size=batch_size,
+                    class_mode='sparse',
+                    seed=123,
+                    shuffle=False)
+
             for k, v in self.pre_processing.items():
                 setattr(generator, k, v)
 
