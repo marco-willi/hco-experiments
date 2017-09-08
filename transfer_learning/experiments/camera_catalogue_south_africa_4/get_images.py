@@ -2,7 +2,7 @@
 import csv
 import pandas as pd
 from tools.image_url_loader import ImageUrlLoader
-from tools.predictor_external import PredictorExternal
+from tools.predictor_external import PredictorExternal2
 from config.config import cfg_model, cfg_path
 import os
 
@@ -52,15 +52,16 @@ for i in range(0, n_trials):
 # score images
 model_file = cfg_path['save'] + 'cc_species_v2_201708210308.hdf5'
 #model_file = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/models/3663/mnist_testing_201708021008_model_04_0.40.hdf5"
+#pre_processing = ImageDataGenerator(rescale=1./255)
+pred_path = cfg_path['images'] + 'exp_south_africa_4'
+#pred_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown"
+output_path = cfg_path['save']
+#output_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown/"
+#class_list = [str(i) for i in range(0,10)]
+model_cfg_json = cfg_path['save'] + 'cc_species_v2_201708210308_cfg.json'
 
-# pre_processing = ImageDataGenerator(rescale=1./255)
-# pred_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown"
-# output_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown/"
-# class_list = [str(i) for i in range(0,10)]
-#
-# predictor = PredictorExternal(
-#     path_to_model=model_file,
-#     keras_datagen=pre_processing,
-#     class_list=class_list)
-#
-# predictor.predict_path(path=pred_path, output_path=output_path)
+predictor = PredictorExternal2(
+    path_to_model=model_file,
+    model_cfg_json=model_cfg_json)
+
+predictor.predict_path(path=pred_path, output_path=output_path)

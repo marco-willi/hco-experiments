@@ -9,6 +9,7 @@ from keras.preprocessing.image import ImageDataGenerator
 import numpy as np
 import pandas as pd
 import sys
+import json
 
 
 class PredictorExternal(object):
@@ -169,11 +170,206 @@ class PredictorExternal(object):
             if image_directory == '':
                 image_path = ''
             else:
-                image_path = image_directory + "/" + class_dir + "/" + fname
+                image_path = image_directory + os.path.sep + class_dir +\
+                             os.path.sep + fname
 
             # replace forward slash on windows platforms
             if platform == 'win32':
                 image_path.replace('/', '\\')
+
+            res.loc[i] = [fname, y_pred, p, preds_all,
+                          image_path]
+
+        return res
+
+
+class PredictorExternal2(object):
+    """ class to implement a predictor, completely independent of the specific
+        project infrastructure - to be used for researches who want to apply
+        one of the models
+    """
+    def __init__(self,
+                 path_to_model=None,
+                 model_cfg_json=None,
+                 keras_datagen=None,
+                 class_list=None):
+
+        self.path_to_model = path_to_model
+        self.keras_datagen = keras_datagen
+        self.class_list = class_list
+        self.model_cfg_json = model_cfg_json
+        self.model = None
+        self.preds = None
+        self.pre_processing = None
+        self.color_mode = "rgb"
+
+        if path_to_model is None:
+            raise IOError("Path to model has to be specified")
+
+        if model_cfg_json is None:
+            if keras_datagen is None:
+                raise IOError("Specify keras ImageDataGenerator")
+
+            if class_list is None:
+                raise IOError("Specify class list to map predictions\
+                               to classes")
+
+        if model_cfg_json is not None:
+            if (keras_datagen is not None) or (class_list is not None):
+                raise IOError("Specify only one of model_cfg_json or\
+                               (keras_datagen and class_list)")
+
+        if not os.path.isfile(self.path_to_model):
+            raise FileNotFoundError("Model File %s not found" %
+                                    self.path_to_model)
+
+        # Load model from disk
+        print("Loading model from disk: %s" % self.path_to_model)
+        self.model = load_model(self.path_to_model)
+
+        # handle color mode
+        if self.model.input_shape[3] == 1:
+            self.color_mode = 'grayscale'
+        else:
+            self.color_mode = 'rgb'
+
+        # Load cfg from json file
+        if model_cfg_json is not None:
+            cfg_file = open(model_cfg_json, 'r')
+            model_cfg = json.load(cfg_file)
+            # check model_cfg
+            assert 'class_mapper' in model_cfg.keys()
+            assert 'pre_processing' in model_cfg.keys()
+
+            # extract class mapping and order
+            class_list = list()
+            for i in range(0, len(model_cfg['class_mapper'].keys())):
+                class_list.append(model_cfg['class_mapper'][str(i)])
+                self.class_list = class_list
+
+            # add pre_processing
+            self.pre_processing = model_cfg['pre_processing']
+
+    def predict_path(self, path, output_path):
+        """ Predict class for images in a directory with subdirectories that
+            contain the images """
+
+        # check input
+        if any([x is None for x in [path, output_path]]):
+            raise IOError("Path and output_path have to be specified")
+
+        # check output_path
+        if output_path[-1] != os.path.sep:
+            output_path = output_path + os.path.sep
+
+        # prediction batch sizes
+        batch_size = 256
+
+        print("Initializing generator")
+        generator = self.keras_datagen.flow_from_directory(
+                path,
+                target_size=self.model.input_shape[1:3],
+                color_mode=self.color_mode,
+                batch_size=batch_size,
+                class_mode='sparse',
+                seed=123,
+                shuffle=False)
+
+        # fit data generator on input data
+        if self.pre_processing is None:
+            # Fit data generator if required
+            if any([self.keras_datagen.featurewise_std_normalization,
+                    self.keras_datagen.samplewise_std_normalization,
+                    self.keras_datagen.zca_whitening]):
+
+                print("Fitting data generator")
+                # create a generator to randomly select images to calculate
+                # image statistics for data pre-processing
+                generator_fit = self.keras_datagen.flow_from_directory(
+                        path,
+                        target_size=self.model.input_shape[1:3],
+                        color_mode=self.color_mode,
+                        batch_size=2000,
+                        class_mode='sparse',
+                        seed=123,
+                        shuffle=True)
+
+                # fit the generator with a batch of sampled data
+                generator.fit(generator_fit.next())
+
+        # use pre-defined pre_processing options and add to generator
+        else:
+            for k, v in self.pre_processing.items():
+                setattr(generator, k, v)
+
+        # predict whole set
+        print("Starting to predict images in path")
+
+        # calculate number of iterations to make
+        steps_remainder = generator.n % batch_size
+        if steps_remainder > 0:
+            extra_step = 1
+        else:
+            extra_step = 0
+
+        preds = self.model.predict_generator(
+            generator,
+            steps=(generator.n // batch_size) + extra_step,
+            workers=1,
+            use_multiprocessing=False)
+
+        print("Finished predicting %s of %s images" %
+              (preds.shape[0], generator.n))
+        # check size and log critical
+        if preds.shape[0] != generator.n:
+            print("Number of Preds %s don't match" +
+                  "number of images %s" % (preds.shape[0], generator.n))
+
+        # save predictions
+        self.preds = preds
+
+        # Create a data frame with all predictions
+        print("Creating Result DF")
+        res = self._create_result_df(generator.filenames,
+                                     generator.directory)
+
+        # write DF to disk
+        res.to_csv(output_path + 'predictions.csv', index=False)
+
+    def _create_result_df(self, filenames,
+                          image_directory=""):
+        """ Create Data Frame with Predictions """
+
+        # get max predictions & class ids
+        id_max = np.argmax(self.preds, axis=1)
+        max_pred = np.amax(self.preds, axis=1)
+
+        # map class names and indices
+        n_classes = len(self.class_list)
+
+        # create result data frame
+        res = pd.DataFrame(columns=('file_name', 'predicted_class',
+                                    'predicted_probability', 'predictions_all',
+                                    'image_path'))
+
+        # loop over all files / predictions
+        for i in range(0, len(filenames)):
+            fname = filenames[i].split(os.path.sep)[1]
+            class_dir = filenames[i].split(os.path.sep)[0]
+
+            p = max_pred[i]
+            y_pred = self.class_list[id_max[i]]
+
+            # store predictions for all classes
+            p_all = self.preds[i, :]
+            preds_all = {self.class_list[j]: p_all[j] for j in
+                         range(0, n_classes)}
+
+            if image_directory == '':
+                image_path = ''
+            else:
+                image_path = image_directory + os.path.sep + class_dir +\
+                             os.path.sep + fname
 
             res.loc[i] = [fname, y_pred, p, preds_all,
                           image_path]
@@ -197,6 +393,13 @@ if __name__ == '__main__':
 
     predictor.predict_path(path=pred_path, output_path=output_path)
 
+    from config.config import cfg_path
+    model_cfg_json = cfg_path['save'] + 'cc_species_v2_201708210308_cfg.json'
+    model_cfg_json
+    cfg_file = open(model_cfg_json, 'r')
+    model_cfg = json.load(cfg_file)
+    model_cfg.keys()
+    model_cfg['pre_processing']
 
     # preds.shape
     # preds.shape
