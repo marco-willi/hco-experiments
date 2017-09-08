@@ -149,7 +149,7 @@ class ImageUrlLoader(object):
             labels: list of folder-names in which image is going to be stored
             fnames: list of file names of images
             path: parent folder where to store image label folders and images
-            
+
         """
 
         # filenames as identifiers
@@ -192,7 +192,7 @@ class ImageUrlLoader(object):
             if len(existing_files) > 0:
                 for k in dict_ids:
                     if k in existing_files:
-                        data_dict.pop(k)
+                        data_dict.pop(k, None)
 
         # get relevant data from dictionary
         dict_ids = list(data_dict.keys())

@@ -30,14 +30,19 @@ assert len(fnames) == len(urls) == len(labels)
 img_loader = ImageUrlLoader()
 
 # store images on disk
-imgs = img_loader.storeOnDisk(
-    urls=urls,
-    labels=labels,
-    fnames=fnames,
-    path=path_images,
-    target_size=None,
-    chunk_size=50, overwrite=False, create_path=True,
-    zooniverse_imgproc=False)
+n_trials = 100
+for i in range(0, n_trials):
+    try:
+        imgs = img_loader.storeOnDisk(
+            urls=urls,
+            labels=labels,
+            fnames=fnames,
+            path=path_images,
+            target_size=None,
+            chunk_size=100, overwrite=False, create_path=True,
+            zooniverse_imgproc=False)
+    except:
+        print("Next Trial %s/%s" % (i, n_trials))
 
 
 # score images
