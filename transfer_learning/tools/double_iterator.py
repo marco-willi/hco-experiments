@@ -17,13 +17,15 @@ class DoubleIterator(Iterator):
         - outer_generator: Iterator that returns images
            typically ImageDataGenerator.flow_from_directory()
     """
-    def __init__(self, outer_generator, batch_size, seed=None):
+    def __init__(self, outer_generator, batch_size, seed=None,
+                 inner_shuffle=True):
         self.outer_generator = outer_generator
         self.batch_size = batch_size
         self.n_on_stack = 0
         self.inner = None
         self.n = outer_generator.n
         self.seed = seed
+        self.inner_shuffle = inner_shuffle
 
     def next(self):
         """ Get next batch """
@@ -39,7 +41,7 @@ class DoubleIterator(Iterator):
             self.inner = ImageDataGenerator().flow(
                 X_outer, y_outer,
                 batch_size=self.batch_size,
-                seed=self.seed)
+                seed=self.seed, shuffle=self.inner_shuffle)
 
         # get next batch
         X_inner, y_inner = self.inner.next()
@@ -53,6 +55,7 @@ class DoubleIterator(Iterator):
 if __name__ == '__main__':
 
 
+    from config.config import cfg_path
     path = cfg_path['images'] + 'train/'
 
     datagen_train = ImageDataGenerator(
@@ -66,7 +69,7 @@ if __name__ == '__main__':
             path,
             target_size=(150, 150),
             color_mode='rgb',
-            batch_size=3200,
+            batch_size=500,
             class_mode='sparse',
             seed=123)
 

@@ -27,7 +27,7 @@ sudo nvidia-docker run -it -v ~/:/host tensorflow/tensorflow:nightly-devel-gpu-p
 # sudo nvidia-docker run -it -v ~/:/host root/tensorflow:latest-devel-gpu-py3 bash
 
 # install python packages (missing in official tensorflow docker)
-pip install dill requests panoptes_client pillow aiohttp keras
+pip install dill requests panoptes_client pillow aiohttp keras scikit-image
 
 # save changes
 # sudo docker commit docker_id tensorflow/tensorflow:nightly-devel-gpu-py3

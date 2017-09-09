@@ -6,6 +6,7 @@ Class to implement a Predictor for applying a model on new images
 import os
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
+from tools.double_iterator import DoubleIterator
 import numpy as np
 import pandas as pd
 import sys
@@ -65,14 +66,14 @@ class PredictorExternal(object):
             output_path = output_path + os.path.sep
 
         # prediction batch sizes
-        batch_size = 256
+        batch_size = 20
 
         print("Initializing generator")
         generator = self.keras_datagen.flow_from_directory(
                 path,
                 target_size=self.model.input_shape[1:3],
                 color_mode=self.color_mode,
-                batch_size=batch_size,
+                batch_size=2000,
                 class_mode='sparse',
                 seed=123,
                 shuffle=False)
@@ -107,11 +108,28 @@ class PredictorExternal(object):
         else:
             extra_step = 0
 
+        # preds = self.model.predict_generator(
+        #     generator,
+        #     steps=(generator.n // batch_size) + extra_step,
+        #     workers=1,
+        #     use_multiprocessing=False,
+        #     verbose=1)
+
+        # generator = self.keras_datagen.flow_from_directory(
+        #         path,
+        #         target_size=self.model.input_shape[1:3],
+        #         color_mode=self.color_mode,
+        #         batch_size=500,
+        #         class_mode='sparse',
+        #         seed=123,
+        #         shuffle=False)
+        gen_double = DoubleIterator(generator, batch_size=batch_size, inner_shuffle=False)
         preds = self.model.predict_generator(
-            generator,
+            gen_double,
             steps=(generator.n // batch_size) + extra_step,
             workers=1,
-            use_multiprocessing=False)
+            use_multiprocessing=False,
+            verbose=1)
 
         print("Finished predicting %s of %s images" %
               (preds.shape[0], generator.n))
@@ -265,8 +283,6 @@ class PredictorExternal2(object):
         # prediction batch sizes
         batch_size = 256
 
-
-
         # fit data generator on input data
         if self.pre_processing is None:
 
@@ -275,7 +291,7 @@ class PredictorExternal2(object):
                     path,
                     target_size=self.model.input_shape[1:3],
                     color_mode=self.color_mode,
-                    batch_size=batch_size,
+                    batch_size=2000,
                     class_mode='sparse',
                     seed=123,
                     shuffle=False)
@@ -308,7 +324,7 @@ class PredictorExternal2(object):
                     path,
                     target_size=self.model.input_shape[1:3],
                     color_mode=self.color_mode,
-                    batch_size=batch_size,
+                    batch_size=2000,
                     class_mode='sparse',
                     seed=123,
                     shuffle=False)
@@ -326,12 +342,23 @@ class PredictorExternal2(object):
         else:
             extra_step = 0
 
+        # use double iterator to speed up training
+        gen_double = DoubleIterator(generator, batch_size=batch_size,
+                                    inner_shuffle=False)
+
         preds = self.model.predict_generator(
-            generator,
+            gen_double,
             steps=(generator.n // batch_size) + extra_step,
             workers=1,
             use_multiprocessing=False,
             verbose=1)
+
+        # preds = self.model.predict_generator(
+        #     generator,
+        #     steps=(generator.n // batch_size) + extra_step,
+        #     workers=1,
+        #     use_multiprocessing=False,
+        #     verbose=1)
 
         print("Finished predicting %s of %s images" %
               (preds.shape[0], generator.n))
@@ -395,7 +422,7 @@ class PredictorExternal2(object):
 if __name__ == '__main__':
     pass
 
-    model_file = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/models/3663/mnist_testing_201708021008_model_04_0.40.hdf5"
+    model_file = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/models/3663/mnist_testing_201708141308_model_best.hdf5"
     pre_processing = ImageDataGenerator(rescale=1./255)
     pred_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown"
     output_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown/"
