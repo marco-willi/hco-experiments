@@ -330,7 +330,8 @@ class PredictorExternal2(object):
             generator,
             steps=(generator.n // batch_size) + extra_step,
             workers=1,
-            use_multiprocessing=False)
+            use_multiprocessing=False,
+            verbose=1)
 
         print("Finished predicting %s of %s images" %
               (preds.shape[0], generator.n))
