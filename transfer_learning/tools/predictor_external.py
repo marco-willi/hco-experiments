@@ -282,7 +282,7 @@ class PredictorExternal2(object):
                     path,
                     target_size=self.model.input_shape[1:3],
                     color_mode=self.color_mode,
-                    batch_size=2000,
+                    batch_size=batch_size,
                     class_mode='sparse',
                     seed=123,
                     shuffle=False)
@@ -315,7 +315,7 @@ class PredictorExternal2(object):
                     path,
                     target_size=self.model.input_shape[1:3],
                     color_mode=self.color_mode,
-                    batch_size=2000,
+                    batch_size=batch_size,
                     class_mode='sparse',
                     seed=123,
                     shuffle=False)
@@ -334,11 +334,11 @@ class PredictorExternal2(object):
             extra_step = 0
 
         # use double iterator to speed up training
-        gen_double = DoubleIterator(generator, batch_size=batch_size,
-                                    inner_shuffle=False)
+        # gen_double = DoubleIterator(generator, batch_size=batch_size,
+        #                             inner_shuffle=False)
 
         preds = self.model.predict_generator(
-            gen_double,
+            generator,
             steps=(generator.n // batch_size) + extra_step,
             workers=1,
             use_multiprocessing=False,
