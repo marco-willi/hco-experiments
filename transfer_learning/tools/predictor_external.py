@@ -10,7 +10,6 @@ from tools.double_iterator import DoubleIterator
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
-import sys
 import json
 
 
@@ -402,9 +401,11 @@ class PredictorExternal2(object):
                 image_path = image_directory + os.path.sep + class_dir +\
                              os.path.sep + fname
 
-            res[i] = {'file_name': fname, 'predicted_class': y_pred,
-                      'predicted_probability': p, 'predictions_all': preds_all,
-                      'image_path': image_path}
+            res[i] = OrderedDict([('file_name', fname),
+                                  ('predicted_class', y_pred),
+                                  ('predicted_probability', p),
+                                  ('predictions_all', preds_all),
+                                  ('image_path', image_path)])
 
         res_df = pd.DataFrame.from_dict(res, orient="index")
 
