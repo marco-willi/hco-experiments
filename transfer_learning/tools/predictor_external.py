@@ -7,6 +7,7 @@ import os
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
 from tools.double_iterator import DoubleIterator
+from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import sys
@@ -160,22 +161,13 @@ class PredictorExternal(object):
         # map class names and indices
         n_classes = len(self.class_list)
 
-        # determine platform for output file path format
-        platform = sys.platform
-
-        # create result data frame
-        res = pd.DataFrame(columns=('file_name', 'predicted_class',
-                                    'predicted_probability', 'predictions_all',
-                                    'image_path'))
+        # create result data frame via dictionary
+        res = OrderedDict()
 
         # loop over all files / predictions
         for i in range(0, len(filenames)):
-            if '\\' in filenames[i]:
-                fname = filenames[i].split('\\')[1]
-                class_dir = filenames[i].split('\\')[0]
-            else:
-                fname = filenames[i].split('/')[1]
-                class_dir = filenames[i].split('/')[0]
+            fname = filenames[i].split(os.path.sep)[1]
+            class_dir = filenames[i].split(os.path.sep)[0]
 
             p = max_pred[i]
             y_pred = self.class_list[id_max[i]]
@@ -188,17 +180,16 @@ class PredictorExternal(object):
             if image_directory == '':
                 image_path = ''
             else:
-                image_path = image_directory + os.path.sep + class_dir +\
-                             os.path.sep + fname
+                image_path = image_directory + os.path.sep +\
+                             class_dir + os.path.sep + fname
 
-            # replace forward slash on windows platforms
-            if platform == 'win32':
-                image_path.replace('/', '\\')
+            res[i] = {'file_name': fname, 'predicted_class': y_pred,
+                      'predicted_probability': p, 'predictions_all': preds_all,
+                      'image_path': image_path}
 
-            res.loc[i] = [fname, y_pred, p, preds_all,
-                          image_path]
+        res_df = pd.DataFrame.from_dict(res, orient="index")
 
-        return res
+        return res_df
 
 
 class PredictorExternal2(object):
@@ -389,10 +380,8 @@ class PredictorExternal2(object):
         # map class names and indices
         n_classes = len(self.class_list)
 
-        # create result data frame
-        res = pd.DataFrame(columns=('file_name', 'predicted_class',
-                                    'predicted_probability', 'predictions_all',
-                                    'image_path'))
+        # create result data frame via dictionary
+        res = OrderedDict()
 
         # loop over all files / predictions
         for i in range(0, len(filenames)):
@@ -413,10 +402,13 @@ class PredictorExternal2(object):
                 image_path = image_directory + os.path.sep + class_dir +\
                              os.path.sep + fname
 
-            res.loc[i] = [fname, y_pred, p, preds_all,
-                          image_path]
+            res[i] = {'file_name': fname, 'predicted_class': y_pred,
+                      'predicted_probability': p, 'predictions_all': preds_all,
+                      'image_path': image_path}
 
-        return res
+        res_df = pd.DataFrame.from_dict(res, orient="index")
+
+        return res_df
 
 
 if __name__ == '__main__':
@@ -425,7 +417,7 @@ if __name__ == '__main__':
     model_file = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/models/3663/mnist_testing_201708141308_model_best.hdf5"
     pre_processing = ImageDataGenerator(rescale=1./255)
     pred_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown"
-    output_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown/"
+    output_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/save/3663/"
     class_list = [str(i) for i in range(0,10)]
 
     predictor = PredictorExternal(
