@@ -46,9 +46,8 @@ from db.data_prep_functions import *
 subs = read_subject_data_camcat(cfg_path['db'] + 'subjects.csv')
 subs[list(subs.keys())[0]]
 
-cls2 = read_classification_data_camcat(cfg_path['db'] + 'classifications.csv')
-cls2.head
-cls2s[list(cls2.keys())[0]]
+cls = read_classification_data_camcat(cfg_path['db'] + 'classifications.csv')
+cls[list(cls.keys())[0]]
 
 
 ###############################
@@ -57,7 +56,7 @@ cls2s[list(cls2.keys())[0]]
 
 # workflows
 dd = dict()
-for v in cls2.values():
+for v in cls.values():
     if v['workflow_name'] not in dd:
         dd[v['workflow_name']] = 1
     else:
@@ -78,7 +77,7 @@ for k, v in dd.items():
 # Key: Empty Or Not         Value: 361505
 
 dd = dict()
-for v in cls2.values():
+for v in cls.values():
     key = v['workflow_name'] + '_' + v['workflow_id']
     if key not in dd:
         dd[key] = 1
@@ -101,7 +100,7 @@ for k, v in dd.items():
 
 # workflow versions
 dd = dict()
-for v in cls2.values():
+for v in cls.values():
     key = v['workflow_version']
     if key not in dd:
         dd[key] = 1
@@ -110,20 +109,20 @@ for v in cls2.values():
 for k, v in dd.items():
     print("Key: %s Value: %s" % ("{:<20}".format(k), v))
 
-for k in list(cls2.keys()):
-    v = cls2[k]
+for k in list(cls.keys()):
+    v = cls[k]
     if v['workflow_name'] not in ['South Africa (4)', 'Vehicle Or Not',
                                   'Empty Or Not']:
-        del cls2[k]
+        del cls[k]
     elif ('choice' not in v['annotations']) and\
          ('value' not in v['annotations']):
-        del cls2[k]
+        del cls[k]
 
 #[{"task":"T0","task_label":"Are there any animals, people, or vehicles in this photo?","value":"Yes"}]
 
 # get all workflow ids
 dd = dict()
-for v in cls2.values():
+for v in cls.values():
     key = v['workflow_id']
     if key not in dd:
         dd[key] = 1
@@ -145,7 +144,7 @@ work_ids = list(dd.keys())
 # cls = cls[cls.workflow_version == most_recent_wf]
 
 dd = dict()
-for v in cls2.values():
+for v in cls.values():
     key = v['subject_ids']
     if key not in dd:
         dd[key] = 1
@@ -157,43 +156,43 @@ print("number of subjects %s" % len(dd.keys()))
 print("number of subjects %s" % len(subs.keys()))
 
 # look for multiple choices per classification
-choic = list()
-for i in range(0, cls['annotations'].shape[0]):
-    tt = json.loads(cls['annotations'].iloc[i])
-    if type(tt[0]['value']) is list:
-        choices = [x['choice'] for x in tt[0]['value']]
-    else:
-        choices = tt[0]['value']
-    choic.append(choices)
-
-# print answers with multiple choices
-for i in range(0, len(choic)):
-    if (type(choic[i]) is list) and (len(choic[i]) >1):
-        print("----------------------------")
-        print(i)
-        print(choic[i])
-
-# take a look at an individual multiple choice answer
-idd = 1159980
-cls.iloc[idd]
-cls.iloc[idd]['subject_data']
-subs[int(list(json.loads(cls.iloc[idd]['subject_data']).keys())[0])]
-
-# get unique choices
-labels_all = dict()
-for ii in choic:
-    lab = list()
-    if type(ii) is not list:
-        lab.append(ii)
-    else:
-        lab = lab + ii
-    for l in lab:
-        if l not in labels_all:
-            labels_all[l] = 1
-        else:
-            labels_all[l] += 1
-for k, v in labels_all.items():
-    print("Label %s has %s obs" % (k, v))
+# choic = list()
+# for i in range(0, cls['annotations'].shape[0]):
+#     tt = json.loads(cls['annotations'].iloc[i])
+#     if type(tt[0]['value']) is list:
+#         choices = [x['choice'] for x in tt[0]['value']]
+#     else:
+#         choices = tt[0]['value']
+#     choic.append(choices)
+#
+# # print answers with multiple choices
+# for i in range(0, len(choic)):
+#     if (type(choic[i]) is list) and (len(choic[i]) >1):
+#         print("----------------------------")
+#         print(i)
+#         print(choic[i])
+#
+# # take a look at an individual multiple choice answer
+# idd = 1159980
+# cls.iloc[idd]
+# cls.iloc[idd]['subject_data']
+# subs[int(list(json.loads(cls.iloc[idd]['subject_data']).keys())[0])]
+#
+# # get unique choices
+# labels_all = dict()
+# for ii in choic:
+#     lab = list()
+#     if type(ii) is not list:
+#         lab.append(ii)
+#     else:
+#         lab = lab + ii
+#     for l in lab:
+#         if l not in labels_all:
+#             labels_all[l] = 1
+#         else:
+#             labels_all[l] += 1
+# for k, v in labels_all.items():
+#     print("Label %s has %s obs" % (k, v))
 
 # Label NTHNGHR has 197125 obs
 # Label 0 has 33 obs
@@ -330,19 +329,19 @@ for k, v in labels_all.items():
 
 
 # retirement reasons
-subd = dict()
-retirement_reasons = list()
-for i in range(0, cls['subject_data'].shape[0]):
-    tt = json.loads(cls['subject_data'].iloc[i])
-    key = list(tt.keys())[0]
-    if tt[key]['retired'] is None:
-        subd[key] = 'Not Retired'
-    else:
-        subd[key] = tt[key]['retired']['retirement_reason']
-    retirement_reasons.append(subd[key])
-
-tt = pd.DataFrame(retirement_reasons, columns=['retirement_reason'])
-tt.groupby(['retirement_reason']).size()
+# subd = dict()
+# retirement_reasons = list()
+# for i in range(0, cls['subject_data'].shape[0]):
+#     tt = json.loads(cls['subject_data'].iloc[i])
+#     key = list(tt.keys())[0]
+#     if tt[key]['retired'] is None:
+#         subd[key] = 'Not Retired'
+#     else:
+#         subd[key] = tt[key]['retired']['retirement_reason']
+#     retirement_reasons.append(subd[key])
+#
+# tt = pd.DataFrame(retirement_reasons, columns=['retirement_reason'])
+# tt.groupby(['retirement_reason']).size()
 
 # retirement_reason
 # Not Retired             326987
@@ -354,32 +353,32 @@ tt.groupby(['retirement_reason']).size()
 
 
 # check number of entries per subject and user
-cls.columns
-tt = cls.groupby(['subject_ids', 'user_name']).size()
-tt = tt[tt > 1]
-#tt = cls[(cls.subject_ids == 10444100) & (cls.user_name == 'cmdctrl')]
-
-for i in range(0, tt.shape[0]):
-    tt2 = cls[(cls.subject_ids == tt.index[i][0]) & (cls.user_name == tt.index[i][1])]
-    time.sleep(3)
-    print("--------------------------------")
-    for ii in range(0, tt2.shape[0]):
-        print("Classification ID " + str(tt2.iloc[ii, :]['classification_id']))
-        print("User name         " + str(tt2.iloc[ii, :]['user_name']))
-        print("Annotations       " + str(tt2.iloc[ii, :]['annotations']))
-        print("Subject Data      " + str(tt2.iloc[ii, :]['subject_data']))
-
-
-# check number of entries per subject and user
-cls.columns
-tt = cls.groupby(['subject_ids', 'user_name', 'classification_id']).size()
-tt = tt[tt > 1]
-
-
-
-# workflows
-cls.iloc[1672081,:]['metadata']
-
-for i in range(500, 550):
-    print("%s: ------------------" % i)
-    print(cls.iloc[i,:]['annotations'])
+# cls.columns
+# tt = cls.groupby(['subject_ids', 'user_name']).size()
+# tt = tt[tt > 1]
+# #tt = cls[(cls.subject_ids == 10444100) & (cls.user_name == 'cmdctrl')]
+#
+# for i in range(0, tt.shape[0]):
+#     tt2 = cls[(cls.subject_ids == tt.index[i][0]) & (cls.user_name == tt.index[i][1])]
+#     time.sleep(3)
+#     print("--------------------------------")
+#     for ii in range(0, tt2.shape[0]):
+#         print("Classification ID " + str(tt2.iloc[ii, :]['classification_id']))
+#         print("User name         " + str(tt2.iloc[ii, :]['user_name']))
+#         print("Annotations       " + str(tt2.iloc[ii, :]['annotations']))
+#         print("Subject Data      " + str(tt2.iloc[ii, :]['subject_data']))
+#
+#
+# # check number of entries per subject and user
+# cls.columns
+# tt = cls.groupby(['subject_ids', 'user_name', 'classification_id']).size()
+# tt = tt[tt > 1]
+#
+#
+#
+# # workflows
+# cls.iloc[1672081,:]['metadata']
+#
+# for i in range(500, 550):
+#     print("%s: ------------------" % i)
+#     print(cls.iloc[i,:]['annotations'])

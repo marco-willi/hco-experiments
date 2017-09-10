@@ -44,26 +44,39 @@ import re
 # Import Subject Data
 #########################
 
-subs = read_subject_data2(cfg_path['db'] + 'subjects.csv')
+subs = read_subject_data_camcat(cfg_path['db'] + 'subjects.csv')
 subs[list(subs.keys())[0]]
 
 ###############################
 # Import Classification Data
 ###############################
 
-cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
-cls.head
+cls = read_classification_data_camcat(cfg_path['db'] + 'classifications.csv')
+cls[list(cls.keys())[0]]
 
-# filter on workflow
-cls = cls[cls.workflow_name.isin(['South Africa (4)', 'Vehicle Or Not', 'Empty Or Not'])]
-
-# filter classifications without a choice
-cls = cls[cls.annotations.str.contains('choice') | cls.annotations.str.contains('value')]
+for k in list(cls.keys()):
+    v = cls[k]
+    if v['workflow_name'] not in ['South Africa (4)', 'Vehicle Or Not',
+                                  'Empty Or Not']:
+        del cls[k]
+    elif ('choice' not in v['annotations']) and\
+         ('value' not in v['annotations']):
+        del cls[k]
 
 #[{"task":"T0","task_label":"Are there any animals, people, or vehicles in this photo?","value":"Yes"}]
 
 # get all workflow ids
-work_ids = cls['workflow_id'].unique()
+dd = dict()
+for v in cls.values():
+    key = v['workflow_id']
+    if key not in dd:
+        dd[key] = 1
+    else:
+        dd[key] += 1
+for k, v in dd.items():
+    print("Key: %s Value: %s" % ("{:<20}".format(k), v))
+
+work_ids = list(dd.keys())
 
 
 class_mapper = {

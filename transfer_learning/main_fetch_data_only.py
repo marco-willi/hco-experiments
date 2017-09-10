@@ -2,6 +2,7 @@
 from config.config import config, cfg_path, cfg_model
 from tools.project import Project
 
+
 # Main Program
 def main():
     #######################
