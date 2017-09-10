@@ -276,18 +276,32 @@ subs_used[list(subs.keys())[1000]]
 
 # loop through all classifications and fill subject dictionary
 subs_res = dict()
-for i in range(0, cls.shape[0]):
+for k, v in cls.items():
     # get subject id
-    current_c = cls.iloc[i]
+    current_c = v['subject_ids']
     # retirement
-    ret = json.loads(current_c['subject_data'])
+    ret = json.loads(v['subject_data'])
     key = list(ret.keys())[0]
     if ret[key]['retired'] is None:
         ret_res = 'Not Retired'
     else:
         ret_res = ret[key]['retired']['retirement_reason']
     # classifications
-    cl_extract = json.loads(current_c['annotations'])[0]['value']
+    cl_extract = json.loads(v['annotations'])[0]['value']
+    # map answer based on workflow_id
+    workflow_id = v['workflow_id']
+    if workflow_id == '4636':
+        mapper = {'Yes': 'novehicle', 'No': 'vehicle'}
+        try:
+            cl_extract = mapper[cl_extract]
+        except:
+            pass
+    elif workflow_id == '4403':
+        mapper = {'Yes': 'notblank', 'No': 'blank'}
+        try:
+            cl_extract = mapper[cl_extract]
+        except:
+            pass
     if type(cl_extract) not in (list, str):
         cls_usr = [str(cl_extract)]
     elif 'choice' in cl_extract[0]:
@@ -299,16 +313,16 @@ for i in range(0, cls.shape[0]):
         if cls_usr[ii] in class_mapper.keys():
             cls_usr[ii] = class_mapper[cls_usr[ii]]
     # create user in subject key
-    if current_c['subject_ids'] not in subs_res:
-        subs_res[current_c['subject_ids']] = {'users': dict(),
-                                              'retirement_reason': ''}
+    if v['subject_ids'] not in subs_res:
+        subs_res[v['subject_ids']] = {'users': dict(),
+                                      'retirement_reason': ''}
     # create dictionary for user
-    if current_c['user_name'] not in subs_res[current_c['subject_ids']]['users']:
-        subs_res[current_c['subject_ids']]['users'][current_c['user_name']] = dict()
+    if v['user_name'] not in subs_res[v['subject_ids']]['users']:
+        subs_res[v['subject_ids']]['users'][v['user_name']] = dict()
     # add all classifications / species to subject/user combination
     for cl in cls_usr:
-        subs_res[current_c['subject_ids']]['users'][current_c['user_name']][cl] = 1
-    subs_res[current_c['subject_ids']]['retirement_reason'] = ret_res
+        subs_res[v['subject_ids']]['users'][v['user_name']][cl] = 1
+    subs_res[v['subject_ids']]['retirement_reason'] = ret_res
 
 subs_res[list(subs_res.keys())[0]]
 
@@ -318,7 +332,7 @@ subs_res_final = dict()
 for k, v in subs_res.items():
     # blanks
     blank_classes = ['nothing_here', 'VEGETATIONNOANIMAL',
-                     'NOTHINGHERE', 'NTHNGHR']
+                     'NOTHINGHERE', 'NTHNGHR', 'blank']
     # check retirement reason
     if v['retirement_reason'] in ['Not Retired', 'classification_count',
                                   'consensus', 'other', None]:
@@ -371,10 +385,11 @@ for k, v in subs_res_final.items():
         else:
             labels_all[l] += 1
 for k, v in labels_all.items():
-    print("Label %s has %s obs" % (k, v))
+    print("Label %s has %s obs" % ("{:<20}".format(k), v))
 
 # prepare final dictionary that contains all relevant data
 subs_all_data = dict()
+remove_labels = ['1', '0', 'unknown answer label', 'unknown']
 for k in subs_used.keys():
     if k in subs_res_final:
         v = subs_res_final[k]
@@ -390,7 +405,11 @@ for k in subs_used.keys():
     #     label = label[0]
     # else:
     #     continue
-    if label is None:
+    if type(label) is list:
+        label = [x for x in label if x not in remove_labels]
+        if len(label) == 0:
+            continue
+    elif label in remove_labels:
         continue
     # get subject meta data
     current_sub = subs_used[k]
@@ -447,6 +466,6 @@ subject_set.save(cfg_path['db'] + 'subject_set.json')
 
 # checks
 urls, labels, ids = subject_set.getAllURLsLabelsIDs()
-for i in range(0, 50):
+for i in range(0, 200):
     ii = random.randint(0, len(urls))
     print("%s is a %s on: %s" % (ids[ii], labels[ii], urls[ii]))

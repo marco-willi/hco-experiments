@@ -14,6 +14,7 @@ import pickle
 from datetime import datetime
 from db.data_prep_functions import *
 
+
 #########################
 # Parameters
 #########################
@@ -42,59 +43,96 @@ from db.data_prep_functions import *
 # Get Data
 #########################
 
-subs = read_subject_data2(cfg_path['db'] + 'subjects.csv')
+subs = read_subject_data_camcat(cfg_path['db'] + 'subjects.csv')
 subs[list(subs.keys())[0]]
 
-cls = read_classification_data(cfg_path['db'] + 'classifications.csv')
-cls.head
+cls2 = read_classification_data_camcat(cfg_path['db'] + 'classifications.csv')
+cls2.head
+cls2s[list(cls2.keys())[0]]
+
 
 ###############################
 # Analysis
 ###############################
 
 # workflows
-cls['workflow_name'].unique()
-cls.groupby(['workflow_name']).size()
+dd = dict()
+for v in cls2.values():
+    if v['workflow_name'] not in dd:
+        dd[v['workflow_name']] = 1
+    else:
+        dd[v['workflow_name']] += 1
+for k, v in dd.items():
+    print("Key: %s Value: %s" % ("{:<20}".format(k), v))
 
 # workflow_name
-# Angola               553147
-# Empty Or Not         361505
-# Gabon (1)             61848
-# Namibia (1)          292281
-# SE Asia (1)          265923
-# SW Angola           1835325
-# South Africa (4)    1718643
-# Tajikistan (1)       408102
-# Vehicle Or Not       227717
-# test                     39
+# Key: Vehicle Or Not       Value: 227717
+# Key: South Africa (4)     Value: 1718643
+# Key: SE Asia (1)          Value: 265923
+# Key: Namibia (1)          Value: 292281
+# Key: Angola               Value: 553147
+# Key: Tajikistan (1)       Value: 408102
+# Key: test                 Value: 39
+# Key: SW Angola            Value: 1835325
+# Key: Gabon (1)            Value: 61848
+# Key: Empty Or Not         Value: 361505
 
-cls.groupby(['workflow_id', 'workflow_name']).size()
-# workflow_id  workflow_name
-# 1643         SW Angola           1835325
-# 1986         test                     39
-# 2647         South Africa (4)    1718643
-# 2672         Angola               553147
-# 2731         Namibia (1)          292281
-# 2863         Gabon (1)             61848
-# 3206         SE Asia (1)          265923
-# 3210         Tajikistan (1)       408102
-# 4403         Empty Or Not         361505
-# 4636         Vehicle Or Not       227717
+dd = dict()
+for v in cls2.values():
+    key = v['workflow_name'] + '_' + v['workflow_id']
+    if key not in dd:
+        dd[key] = 1
+    else:
+        dd[key] += 1
+for k, v in dd.items():
+    print("Key: %s Value: %s" % ("{:<20}".format(k), v))
+
+# Key: South Africa (4)_2647 Value: 1718643
+# Key: SE Asia (1)_3206     Value: 265923
+# Key: test_1986            Value: 39
+# Key: Gabon (1)_2863       Value: 61848
+# Key: Empty Or Not_4403    Value: 361505
+# Key: Tajikistan (1)_3210  Value: 408102
+# Key: Vehicle Or Not_4636  Value: 227717
+# Key: Namibia (1)_2731     Value: 292281
+# Key: SW Angola_1643       Value: 1835325
+# Key: Angola_2672          Value: 553147
 
 
 # workflow versions
-cls.groupby(['workflow_version']).size()
+dd = dict()
+for v in cls2.values():
+    key = v['workflow_version']
+    if key not in dd:
+        dd[key] = 1
+    else:
+        dd[key] += 1
+for k, v in dd.items():
+    print("Key: %s Value: %s" % ("{:<20}".format(k), v))
 
-# filter on workflow
-cls = cls[cls.workflow_name.isin(['South Africa (4)', 'Vehicle Or Not', 'Empty Or Not'])]
-
-# filter classifications without a choice
-cls = cls[cls.annotations.str.contains('choice') | cls.annotations.str.contains('value')]
+for k in list(cls2.keys()):
+    v = cls2[k]
+    if v['workflow_name'] not in ['South Africa (4)', 'Vehicle Or Not',
+                                  'Empty Or Not']:
+        del cls2[k]
+    elif ('choice' not in v['annotations']) and\
+         ('value' not in v['annotations']):
+        del cls2[k]
 
 #[{"task":"T0","task_label":"Are there any animals, people, or vehicles in this photo?","value":"Yes"}]
 
 # get all workflow ids
-work_ids = cls['workflow_id'].unique()
+dd = dict()
+for v in cls2.values():
+    key = v['workflow_id']
+    if key not in dd:
+        dd[key] = 1
+    else:
+        dd[key] += 1
+for k, v in dd.items():
+    print("Key: %s Value: %s" % ("{:<20}".format(k), v))
+
+work_ids = list(dd.keys())
 # array([2647, 4403, 4636])
 
 
@@ -106,9 +144,17 @@ work_ids = cls['workflow_id'].unique()
 # most_recent_wf = work_v.index[-1]
 # cls = cls[cls.workflow_version == most_recent_wf]
 
+dd = dict()
+for v in cls2.values():
+    key = v['subject_ids']
+    if key not in dd:
+        dd[key] = 1
+    else:
+        dd[key] += 1
+
 # subject id
-print("number of subjects %s" % len(cls['subject_ids'].unique()))
-print("number of subjects %s" % len(subs['subject_ids'].unique()))
+print("number of subjects %s" % len(dd.keys()))
+print("number of subjects %s" % len(subs.keys()))
 
 # look for multiple choices per classification
 choic = list()
