@@ -1,5 +1,5 @@
 """ Code to download raw images for classification """
-from tools.predictor_external import PredictorExternal2
+from tools.predictor_external import PredictorExternal
 from config.config import cfg_path
 
 # score images
@@ -11,7 +11,7 @@ output_path = cfg_path['save']
 model_cfg_json = cfg_path['save'] + 'cc_species_v2_201708210308_cfg.json'
 model_cfg_json = cfg_path['save'] + 'cc_blank_vehicle_species_v2_201708200608_cfg.json'
 
-predictor = PredictorExternal2(
+predictor = PredictorExternal(
     path_to_model=model_file,
     model_cfg_json=model_cfg_json)
 
