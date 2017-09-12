@@ -155,7 +155,7 @@ class PredictorExternal(object):
         n_batches = (generator.n // batch_size) + extra_step
 
         # loop over all batches
-        preds = np.zeroes(shape=(generator.n, len(self.class_list)))
+        preds = np.zeros(shape=(generator.n, len(self.class_list)))
         for step in range(0, n_batches):
             print("Starting with Batch %s / %s" % (step+1, n_batches))
             batch_x = generator.next()
