@@ -161,7 +161,9 @@ class PredictorExternal(object):
             print("Starting with Batch %s / %s" % (step+1, n_batches))
             batch_x = generator.next()
             # resize
-            batch_x = imresize(batch_x, size=self.model.input_shape[1:3])
+            for i in range(0, batch_x.shape[0]):
+                batch_x[i, :, :, :] = imresize(batch_x[i, :, :, :],
+                                               size=self.model.input_shape[1:3])
             p_batch = self.model.predict_on_batch(batch_x)
             idx_start = step * batch_size
             idx_end = np.min(idx_start + batch_size - 1, preds.shape[1])
