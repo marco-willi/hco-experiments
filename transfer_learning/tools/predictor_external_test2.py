@@ -11,6 +11,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import json
+from scipy.misc import imresize
 
 
 class PredictorExternal(object):
@@ -140,7 +141,7 @@ class PredictorExternal(object):
                     shuffle=False)
 
             for k, v in self.pre_processing.items():
-                setattr(gen, k, v)
+                setattr(generator, k, v)
 
         # predict whole set
         print("Starting to predict images in path")
@@ -159,6 +160,8 @@ class PredictorExternal(object):
         for step in range(0, n_batches):
             print("Starting with Batch %s / %s" % (step+1, n_batches))
             batch_x = generator.next()
+            # resize
+            batch_x = imresize(batch_x, size=self.model.input_shape[1:3])
             p_batch = self.model.predict_on_batch(batch_x)
             idx_start = step * batch_size
             idx_end = np.min(idx_start + batch_size - 1, preds.shape[1])
