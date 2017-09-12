@@ -134,7 +134,6 @@ class PredictorExternal(object):
 
             generator = gen.flow_from_directory(
                     path,
-                    target_size=None,
                     color_mode=self.color_mode,
                     batch_size=batch_size,
                     seed=123,
@@ -153,9 +152,12 @@ class PredictorExternal(object):
         else:
             extra_step = 0
 
+        n_batches = (generator.n // batch_size) + extra_step
+
         # loop over all batches
         preds = np.zeroes(shape=(generator.n, len(self.class_list)))
-        for step in range(0, (generator.n // batch_size) + extra_step):
+        for step in range(0, n_batches):
+            print("Starting with Batch %s / %s" % (step+1, n_batches))
             batch_x = generator.next()
             p_batch = self.model.predict_on_batch(batch_x)
             idx_start = step * batch_size
