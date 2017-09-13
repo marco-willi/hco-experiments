@@ -2,17 +2,18 @@
 import pandas as pd
 from config.config import cfg_path
 import random
+import csv
 
 
 # Parameters
 pred_species_file = cfg_path['save'] + 'predictions_species.csv'
 pred_vbs_file = cfg_path['save'] + 'predictions_vehicle_blank_species.csv'
 manifest_file = cfg_path['db'] + 'manifest_set_28_2017.09.07.csv'
-output_manifest = cfg_path['db'] + 'NEW_manifest_set_28_2017.09.07.csv'
-output_full = cfg_path['db'] + 'CHECK_manifest_set_28_2017.09.07.csv'
+output_manifest = cfg_path['db'] + 'NEW_manifest_set_28_2017.09.12.csv'
+output_full = cfg_path['db'] + 'CHECK_manifest_set_28_2017.09.12.csv'
 
 # import files
-pred_species = pd.read_csv(pred_species_file)
+pred_species = pd.read_csv(pred_species_file, )
 pred_vbs = pd.read_csv(pred_vbs_file)
 
 pred_species.head
@@ -54,15 +55,25 @@ pred_final = pred_final.rename(columns={
 pred_final[pred_final['subject_id'] == 1]
 
 # read manifest
-manifest = pd.read_csv(manifest_file)
+manifest = pd.read_csv(manifest_file,  converters={
+    'subject_id': int,
+    'image_name': str,
+    'origin': str,
+    'licence': str,
+    'link': str,
+    'workflow': str,
+    'subject_set': str})
+
 manifest[manifest['subject_id'] == 1]
+manifest[manifest['workflow'] == '2647']
 manifest.columns
+manifest.dtypes
 pred_final.columns
 
 # join
 manifest_merge = pd.merge(manifest, pred_final,
                           how="inner", on=['subject_id', 'image_name'])
-
+manifest_merge.dtypes
 # create experiment group
 idx = [x for x in range(0, manifest_merge.shape[0])]
 
@@ -86,15 +97,15 @@ idx_blank = \
       (~manifest_merge['#machine_prediction'].isin(['blank', 'vehicle']))) |
      (~manifest_merge['#machine_prediction'].isin(species_allowed)))
 
-manifest_merge.loc[idx_blank, '#experiment_group'] = 3
+manifest_merge.loc[idx_blank, '#experiment_group'] = 2
 
 
 # Create final export
-manifest_merge.to_csv(output_full, index=False)
+manifest_merge.to_csv(output_full, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 final_columns = list(manifest.columns)
 final_columns = final_columns + ['#experiment_group', '#machine_prediction',
                                  '#machine_probability']
 manifest_final = manifest_merge[final_columns]
 
-manifest_final.to_csv(output_manifest, index=False)
+manifest_final.to_csv(output_manifest, index=False, quoting=csv.QUOTE_NONNUMERIC)

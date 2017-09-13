@@ -133,6 +133,13 @@ class PredictorExternal(object):
         else:
             print("Initializing generator")
             gen = ImageDataGenerator(rescale=1./255)
+
+            # set pre-processing attributes
+            for k, v in self.pre_processing.items():
+                if type(v) is list:
+                    v = np.array(v)
+                setattr(gen, k, v)
+
             generator = gen.flow_from_directory(
                     path,
                     target_size=self.model.input_shape[1:3],
@@ -141,9 +148,6 @@ class PredictorExternal(object):
                     class_mode='sparse',
                     seed=123,
                     shuffle=False)
-
-            for k, v in self.pre_processing.items():
-                setattr(generator, k, v)
 
         # predict whole set
         print("Starting to predict images in path")

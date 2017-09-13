@@ -104,15 +104,19 @@ def create_class_mappings(mapping="1_on_1", excl_classes=None,
     # Camera Catalogue: blank vs vehicle vs species
     elif mapping == 'cc_blank_vehicle_species':
         veh_bl = ['vehicle', 'blank']
+        excl_classes = ['notblank', 'novehicle']
         map_spec = {c: 'species' for c in all_classes if c not in veh_bl}
         map_veh_bl = {c: c for c in veh_bl}
         map_dict = {**map_spec, **map_veh_bl}
 
+        for lo in excl_classes:
+            map_dict.pop(lo, None)
+
     # Camera Catalogue: species
     elif mapping == 'cc_species':
-        veh_bl = ['vehicle', 'blank']
+        veh_bl = ['vehicle', 'blank', 'notblank', 'novehicle']
         low_occurrence_classes = ['reptile', 'otter', 'pangolin', 'polecat',
-                                  'MACAQUE']
+                                  'MACAQUE', 'hyrax', 'roan', 'fire', 'sable']
         map_dict = {c: c for c in all_classes}
         for bl in veh_bl:
             map_dict.pop(bl, None)
