@@ -150,6 +150,8 @@ def create_optimizer(name="standard"):
     """ Creates optimizers according to pre-defined options """
     if name == "sgd":
         opt = SGD(lr=0.01, momentum=0.9, decay=0)
+    if name == "sgd_resnet":
+        opt = SGD(lr=0.01, momentum=0.9, decay=1e-4)
     elif name == "sgd_ss":
         opt = SGD(lr=0.01, momentum=0.9, decay=5e-4)
     elif name == "sgd_low":

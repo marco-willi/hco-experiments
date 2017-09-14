@@ -6,14 +6,14 @@ import csv
 
 
 # Parameters
-pred_species_file = cfg_path['save'] + 'predictions_species.csv'
-pred_vbs_file = cfg_path['save'] + 'predictions_vehicle_blank_species.csv'
+pred_species_file = cfg_path['save'] + 'predictions_species_v2.csv'
+pred_vbs_file = cfg_path['save'] + 'predictions_bvs_v2.csv'
 manifest_file = cfg_path['db'] + 'manifest_set_28_2017.09.07.csv'
-output_manifest = cfg_path['db'] + 'NEW_manifest_set_28_2017.09.12.csv'
-output_full = cfg_path['db'] + 'CHECK_manifest_set_28_2017.09.12.csv'
+output_manifest = cfg_path['db'] + 'NEW2_manifest_set_28_2017.09.12.csv'
+output_full = cfg_path['db'] + 'CHECK2_manifest_set_28_2017.09.12.csv'
 
 # import files
-pred_species = pd.read_csv(pred_species_file, )
+pred_species = pd.read_csv(pred_species_file)
 pred_vbs = pd.read_csv(pred_vbs_file)
 
 pred_species.head
@@ -64,8 +64,13 @@ manifest = pd.read_csv(manifest_file,  converters={
     'workflow': str,
     'subject_set': str})
 
+
+manifest.groupby(['workflow']).size()
+print("Warning: Changing workflow id")
+manifest['workflow'] = '4963'
+manifest.groupby(['workflow']).size()
 manifest[manifest['subject_id'] == 1]
-manifest[manifest['workflow'] == '2647']
+manifest[manifest['workflow'] == '4963']
 manifest.columns
 manifest.dtypes
 pred_final.columns
