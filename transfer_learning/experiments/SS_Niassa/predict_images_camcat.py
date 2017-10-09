@@ -22,7 +22,7 @@ def predict_images():
 
     # save csv with scored images
     output_path = '/host/data_hdd/save/niassa/'
-    out_file_names = ['predictions_species_cc.csv', 'predictions_blank_cc.csv']
+    out_file_names = ['predictions_species_cc2.csv', 'predictions_blank_cc2.csv']
 
     for model_file, model_cfg_json, output_file_name in \
      zip(model_files, model_cfg_jsons, out_file_names):
@@ -33,7 +33,7 @@ def predict_images():
         predictor = PredictorExternal(
             path_to_model=model_file,
             model_cfg_json=model_cfg_json,
-            refit_on_data=True)
+            refit_on_data=False)
 
         # predict images in path
         predictor.predict_path(path=pred_path, output_path=output_path,
