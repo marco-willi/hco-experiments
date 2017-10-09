@@ -17,6 +17,13 @@ class PredictorExternal(object):
     """ class to implement a predictor, completely independent of the specific
         project infrastructure - to be used for researches who want to apply
         one of the models
+    path_to_model: path to model file, string
+    model_cfg_json: path to json with model config, string
+    keras_datagen: Object of keras.preprocessing.image.ImageDataGenerator
+                   will be fit on data using a batch of 2'000 randomly selected
+                   images, will override parameters in model_cfg_json
+    class_list: list of classes in order of model output layer, list
+                - only needs to be specified if not in model_cfg_json
     """
     def __init__(self,
                  path_to_model=None,
@@ -117,7 +124,8 @@ class PredictorExternal(object):
                 print("Fitting data generator")
                 # create a generator to randomly select images to calculate
                 # image statistics for data pre-processing
-                generator_fit = self.keras_datagen.flow_from_directory(
+                datagen_raw = ImageDataGenerator(rescale=1./255)
+                raw_generator = datagen_raw.flow_from_directory(
                         path,
                         target_size=self.model.input_shape[1:3],
                         color_mode=self.color_mode,
@@ -127,7 +135,7 @@ class PredictorExternal(object):
                         shuffle=True)
 
                 # fit the generator with a batch of sampled data
-                generator.fit(generator_fit.next())
+                self.keras_datagen.fit(raw_generator.next())
 
         # use pre-defined pre_processing options and add to generator
         else:
