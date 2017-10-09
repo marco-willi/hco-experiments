@@ -3,14 +3,15 @@ import pandas as pd
 from config.config import cfg_path
 import random
 import csv
+from experiments.camera_catalogue_south_africa_4.class_mapping import mapping_to_caesar
 
 
 # Parameters
 pred_species_file = cfg_path['save'] + 'predictions_species_v2.csv'
 pred_vbs_file = cfg_path['save'] + 'predictions_bvs_v2.csv'
 manifest_file = cfg_path['db'] + 'manifest_set_28_2017.09.07.csv'
-output_manifest = cfg_path['db'] + 'NEW2_manifest_set_28_2017.09.12.csv'
-output_full = cfg_path['db'] + 'CHECK2_manifest_set_28_2017.09.12.csv'
+output_manifest = cfg_path['db'] + 'NEW3_manifest_set_28_2017.09.20.csv'
+output_full = cfg_path['db'] + 'CHECK3_manifest_set_28_2017.09.20.csv'
 
 # import files
 pred_species = pd.read_csv(pred_species_file)
@@ -39,6 +40,21 @@ pred_final.iloc[species_preds_index, :] = \
 pred_final[0:4]
 
 
+# map class labels to Caesar compatible labels
+predicted_orig_labels = pred_final['predicted_class']
+
+def caesar_mapper(x):
+    if x in  mapping_to_caesar:
+        return  mapping_to_caesar[x]
+    else:
+        return x
+predicted_caesar_labels = [caesar_mapper(x) for x in predicted_orig_labels]
+predicted_caesar_labels[0:10]
+predicted_orig_labels[0:10]
+
+pred_final['predicted_class_caesar'] = predicted_caesar_labels
+pred_final[0:10]
+
 # build original columns to match with manifest
 pred_final['subject_id'] = [int(x.split('_')[1])
                             for x in pred_final['file_name']]
@@ -50,7 +66,7 @@ pred_final['image_name'] = [x[x.find('_', x.find('_') + 1)+1:]
 # create additional columns
 pred_final = pred_final.rename(columns={
     'predicted_probability': '#machine_probability',
-    'predicted_class': '#machine_prediction'})
+    'predicted_class_caesar': '#machine_prediction'})
 
 pred_final[pred_final['subject_id'] == 1]
 
@@ -69,6 +85,13 @@ manifest.groupby(['workflow']).size()
 print("Warning: Changing workflow id")
 manifest['workflow'] = '4963'
 manifest.groupby(['workflow']).size()
+
+manifest.groupby(['subject_set']).size()
+print("Warning: Changing subject_set")
+manifest['subject_set'] = '14772'
+manifest.groupby(['subject_set']).size()
+
+
 manifest[manifest['subject_id'] == 1]
 manifest[manifest['workflow'] == '4963']
 manifest.columns
@@ -99,8 +122,8 @@ species_allowed = ["bird", "buffalo", "eland", "elephant", "gemsbock",
 idx_blank = \
    (manifest_merge['#experiment_group'] == 1) & \
      (((manifest_merge['#machine_probability'] < threshold) &
-      (~manifest_merge['#machine_prediction'].isin(['blank', 'vehicle']))) |
-     (~manifest_merge['#machine_prediction'].isin(species_allowed)))
+      (~manifest_merge['predicted_class'].isin(['blank', 'vehicle']))) |
+     (~manifest_merge['predicted_class'].isin(species_allowed)))
 
 manifest_merge.loc[idx_blank, '#experiment_group'] = 2
 
