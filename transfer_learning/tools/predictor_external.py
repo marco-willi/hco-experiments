@@ -29,7 +29,8 @@ class PredictorExternal(object):
                  path_to_model=None,
                  model_cfg_json=None,
                  keras_datagen=None,
-                 class_list=None):
+                 class_list=None,
+                 refit_on_data=False):
 
         self.path_to_model = path_to_model
         self.keras_datagen = keras_datagen
@@ -89,8 +90,13 @@ class PredictorExternal(object):
 
     def predict_path(self, path, output_path,
                      output_file_name='predictions.csv'):
-        """ Predict class for images in a directory with subdirectories that
-            contain the images """
+        """ Predict class for images
+            - path: path to directory that contains 1:N directories
+                    with images, string
+            - output_path: path to directory to which prediction csv will be
+                           written, string
+            - output_file_name: file name of the output csv, string
+        """
 
         # check input
         if any([x is None for x in [path, output_path]]):
@@ -121,33 +127,21 @@ class PredictorExternal(object):
                     self.keras_datagen.samplewise_std_normalization,
                     self.keras_datagen.zca_whitening]):
 
-                print("Fitting data generator")
-                # create a generator to randomly select images to calculate
-                # image statistics for data pre-processing
-                datagen_raw = ImageDataGenerator(rescale=1./255)
-                raw_generator = datagen_raw.flow_from_directory(
-                        path,
-                        target_size=self.model.input_shape[1:3],
-                        color_mode=self.color_mode,
-                        batch_size=2000,
-                        class_mode='sparse',
-                        seed=123,
-                        shuffle=True)
-
-                # fit the generator with a batch of sampled data
-                X_raw, Y_raw = raw_generator.next()
-                self.keras_datagen.fit(X_raw)
+                self._refit_datagen(path, self.keras_datagen)
 
         # use pre-defined pre_processing options and add to generator
         else:
             print("Initializing generator")
             gen = ImageDataGenerator(rescale=1./255)
 
-            # set pre-processing attributes
-            for k, v in self.pre_processing.items():
-                if type(v) is list:
-                    v = np.array(v)
-                setattr(gen, k, v)
+            if self.refit_on_data:
+                self._refit_datagen(path, gen)
+            else:
+                # set pre-processing attributes
+                for k, v in self.pre_processing.items():
+                    if type(v) is list:
+                        v = np.array(v)
+                    setattr(gen, k, v)
 
             generator = gen.flow_from_directory(
                     path,
@@ -234,7 +228,7 @@ class PredictorExternal(object):
             if image_directory == '':
                 image_path = ''
             else:
-                image_path = image_directory + os.path.sep + class_dir +\
+                image_path = image_directory + class_dir +\
                              os.path.sep + fname
 
             res[i] = OrderedDict([('file_name', fname),
@@ -246,6 +240,24 @@ class PredictorExternal(object):
         res_df = pd.DataFrame.from_dict(res, orient="index")
 
         return res_df
+
+    def _refit_datagen(self, path, datagen):
+        """ Fit Datagenerator on Raw Images """
+        print("Fitting data generator")
+        # create a generator to randomly select images to calculate
+        # image statistics for data pre-processing
+        datagen_raw = ImageDataGenerator(rescale=1./255)
+        raw_generator = datagen_raw.flow_from_directory(
+                path,
+                target_size=self.model.input_shape[1:3],
+                color_mode=self.color_mode,
+                batch_size=2000,
+                class_mode='sparse',
+                seed=123,
+                shuffle=True)
+        # fit the generator with a batch of sampled data
+        X_raw, Y_raw = raw_generator.next()
+        datagen.fit(X_raw)
 
 
 if __name__ == '__main__':
