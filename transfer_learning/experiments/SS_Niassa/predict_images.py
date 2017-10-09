@@ -1,7 +1,6 @@
 """ Predict Images """
 from tools.predictor_external import PredictorExternal
-from keras.preprocessing.images import ImageDataGenerator
-
+from keras.preprocessing.image import ImageDataGenerator
 
 def predict_images():
     """ Predict Images in Directory """
@@ -44,6 +43,8 @@ def predict_images():
 
     for model_file, class_list, output_file_name in \
      zip(model_files, class_lists, out_file_names):
+
+        print("Starting with model %s" % model_file)
 
         # predictor
         predictor = PredictorExternal(
