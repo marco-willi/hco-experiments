@@ -135,7 +135,8 @@ class PredictorExternal(object):
                         shuffle=True)
 
                 # fit the generator with a batch of sampled data
-                self.keras_datagen.fit(raw_generator.next())
+                X_raw, Y_raw = raw_generator.next()
+                self.keras_datagen.fit(X_raw)
 
         # use pre-defined pre_processing options and add to generator
         else:
