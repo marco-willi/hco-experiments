@@ -1,6 +1,5 @@
 """ Predict Images """
 from tools.predictor_external import PredictorExternal
-from config.config import cfg_path
 from keras.preprocessing.images import ImageDataGenerator
 
 
@@ -37,10 +36,10 @@ def predict_images():
     class_lists = [class_list_species, class_list_blank]
 
     # input images for scoring
-    pred_path = cfg_path['images']
+    pred_path = '/host/data_hdd/images/niassa/'
 
     # save csv with scored images
-    output_path = cfg_path['save']
+    output_path = '/host/data_hdd/save/niassa/'
     out_file_names = ['predictions_species.csv', 'predictions_blank.csv']
 
     for model_file, class_list, output_file_name in \
