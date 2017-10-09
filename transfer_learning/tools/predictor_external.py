@@ -36,11 +36,12 @@ class PredictorExternal(object):
         self.keras_datagen = keras_datagen
         self.class_list = class_list
         self.model_cfg_json = model_cfg_json
+        self.refit_on_data = refit_on_data
         self.model = None
         self.preds = None
         self.pre_processing = None
         self.color_mode = "rgb"
-
+        
         if path_to_model is None:
             raise IOError("Path to model has to be specified")
 
