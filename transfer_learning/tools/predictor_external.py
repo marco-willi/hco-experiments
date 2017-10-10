@@ -1,12 +1,10 @@
 """
-Class to implement a Predictor for applying a model on new images
-- takes a folder with images and a model as input
-- additionally requires pre-processing specification and class list
+Class to provide a Predictor for applying a model on new images
+- takes a folder with image, a model, and model configs as input
 """
 import os
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
-# from tools.double_iterator import DoubleIterator
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
@@ -14,16 +12,38 @@ import json
 
 
 class PredictorExternal(object):
-    """ class to implement a predictor, completely independent of the specific
+    """ Predictor completely independent of the specific
         project infrastructure - to be used for researches who want to apply
-        one of the models
-    path_to_model: path to model file, string
-    model_cfg_json: path to json with model config, string
-    keras_datagen: Object of keras.preprocessing.image.ImageDataGenerator
-                   will be fit on data using a batch of 2'000 randomly selected
-                   images, will override parameters in model_cfg_json
-    class_list: list of classes in order of model output layer, list
-                - only needs to be specified if not in model_cfg_json
+        one of the models on their images
+
+    Parameters
+    ------------
+    path_to_model:
+        - path to model file
+        - string
+
+    model_cfg_json:
+        - path to json with model config
+        - Json-string with keys: "class_mapper" & "pre_processing"
+        - Optional if keras_datagen provided
+
+    keras_datagen:
+        - DataGenerator which will be fit on data using a batch
+          of 2'000 randomly selected images, will override
+          parameters in model_cfg_json
+        - Object of keras.preprocessing.image.ImageDataGenerator
+        - Optional if model_cfg_json provided
+
+    class_list:
+        - list of classes in order of model output layer
+        - list
+        - Optional, only needs to be specified if not in model_cfg_json
+
+    refit_on_data:
+        - Whether to re-fit the DataGenerator on a batch of
+          randomly selected images of the provided data
+        - Boolean
+        - Default: False (recommended)
     """
     def __init__(self,
                  path_to_model=None,
@@ -41,13 +61,14 @@ class PredictorExternal(object):
         self.preds = None
         self.pre_processing = None
         self.color_mode = "rgb"
-        
+
+        # Checks
         if path_to_model is None:
             raise IOError("Path to model has to be specified")
 
         if model_cfg_json is None:
             if keras_datagen is None:
-                raise IOError("Specify keras ImageDataGenerator")
+                raise IOError("Specify keras ImageDataGenerator or model cfg")
 
             if class_list is None:
                 raise IOError("Specify class list to map predictions\
@@ -56,7 +77,8 @@ class PredictorExternal(object):
         if model_cfg_json is not None:
             if (keras_datagen is not None) or (class_list is not None):
                 raise IOError("Specify only one of model_cfg_json or\
-                               (keras_datagen and class_list)")
+                               (keras_datagen and class_list)\
+                               class_list should be in model cfg json")
 
         if not os.path.isfile(self.path_to_model):
             raise FileNotFoundError("Model File %s not found" %
@@ -77,8 +99,13 @@ class PredictorExternal(object):
             cfg_file = open(model_cfg_json, 'r')
             model_cfg = json.load(cfg_file)
             # check model_cfg
-            assert 'class_mapper' in model_cfg.keys()
-            assert 'pre_processing' in model_cfg.keys()
+            assert 'class_mapper' in model_cfg.keys(),\
+                "class_mapper not found in model_cfg_json,\
+                 following keys found %s" % model_cfg.keys()
+
+            assert 'pre_processing' in model_cfg.keys(),\
+                "pre_processing not found in model_cfg_json,\
+                 following keys found %s" % model_cfg.keys()
 
             # extract class mapping and order
             class_list = list()
@@ -90,13 +117,29 @@ class PredictorExternal(object):
             self.pre_processing = model_cfg['pre_processing']
 
     def predict_path(self, path, output_path,
-                     output_file_name='predictions.csv'):
+                     output_file_name='predictions.csv'
+                     batch_size=256):
         """ Predict class for images
-            - path: path to directory that contains 1:N directories
-                    with images, string
-            - output_path: path to directory to which prediction csv will be
-                           written, string
-            - output_file_name: file name of the output csv, string
+
+            Parameters
+            ------------
+            path:
+                - path to directory that contains 1:N sub-directories
+                  with images
+                - string
+
+            output_path:
+                - path to directory to which prediction csv will be written
+                - string
+
+            output_file_name:
+                - file name of the output csv written to output_path
+                - string
+
+            batch_size:
+                - number of images to process in one batch, if too large it
+                  might not fit into memory
+                - integer
         """
 
         # check input
@@ -107,8 +150,9 @@ class PredictorExternal(object):
         if not output_path[-1] in ('/', '\\'):
             output_path = output_path + os.path.sep
 
-        # prediction batch sizes
-        batch_size = 256
+        # check batch_size
+        assert type(eval(batch_size)) == int,\
+            "batch_size has to be an integer, is %s" % type(eval(batch_size))
 
         # fit data generator on input data
         if self.pre_processing is None:
@@ -163,23 +207,12 @@ class PredictorExternal(object):
         else:
             extra_step = 0
 
-        # use double iterator to speed up training
-        # gen_double = DoubleIterator(generator, batch_size=batch_size,
-        #                             inner_shuffle=False)
-
         preds = self.model.predict_generator(
             generator,
             steps=(generator.n // batch_size) + extra_step,
             workers=1,
             use_multiprocessing=False,
             verbose=1)
-
-        # preds = self.model.predict_generator(
-        #     generator,
-        #     steps=(generator.n // batch_size) + extra_step,
-        #     workers=1,
-        #     use_multiprocessing=False,
-        #     verbose=1)
 
         print("Finished predicting %s of %s images" %
               (preds.shape[0], generator.n))
@@ -262,8 +295,6 @@ class PredictorExternal(object):
 
 
 if __name__ == '__main__':
-    pass
-
     model_file = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/models/3663/mnist_testing_201708141308_model_best.hdf5"
     pre_processing = ImageDataGenerator(rescale=1./255)
     pred_path = "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/images/3663/unknown"
@@ -284,103 +315,3 @@ if __name__ == '__main__':
     model_cfg = json.load(cfg_file)
     model_cfg.keys()
     model_cfg['pre_processing']
-
-    # preds.shape
-    # preds.shape
-    # generator.directory
-    # generator.class_indices
-    # generator.filenames
-    # model.summary()
-
-
-
-    # model_file = cfg_path['models'] +\
-    #              'cat_vs_dog_testing_201707111307_model_best' + '.hdf5'
-    #
-    # model_file
-    # model = load_model(model_file)
-    # model.get_config()
-    # model
-
-
-
-
-
-    # datagen = ImageDataGenerator(
-    #     rescale=1./255)
-    #
-    # generator = datagen.flow_from_directory(
-    #         cfg_path['images'] + 'val',
-    #         target_size=model.input_shape[1:3],
-    #         color_mode='rgb',
-    #         batch_size=256,
-    #         class_mode='sparse',
-    #         seed=123,
-    #         shuffle=False)
-    # preds = model.predict_generator(
-    #     generator,
-    #     steps=(generator.n // 256)+1,
-    #     workers=2)
-    # preds.shape
-    # preds[0:5,:]
-    # generator.
-
-
-    # predictor = Predictor(mod_file='cat_vs_dog_testing_201707111307_model_best',
-    #                       cfg_model=cfg_model,
-    #                       cfg_path=cfg_path)
-    #
-    # res = predictor.predict_path(cfg_path['images'] + 'val')
-    #
-    # res.head
-
-
-    # model_file
-    # model = load_model(model_file)
-    # model.get_config()
-    # predictor = Predictor(mod_file='mnist_testing_201707231307_model_best',
-    #                       cfg_model=cfg_model,
-    #                       cfg_path=cfg_path)
-    #
-    # res = predictor.predict_dir(cfg_path['images'] + 'val')
-    #
-    # res.head
-
-    # preds, nams, cl, cl_i = predictor.predict_dir(cfg_path['images'] + 'val')
-    #
-    # import numpy as np
-    # import pandas as pd
-    # id_max = np.argmax(preds, axis=1)
-    # max_pred = np.amax(preds, axis=1)
-    # y_true = cl
-    # class_mapper = {v: k for k, v in cl_i.items()}
-    #
-    # # create result dictionary
-    # res = pd.DataFrame(columns=('subject_id', 'image_id', 'y_true',
-    #                             'y_pred', 'p'))
-    # i=0
-    # for i in range(0, len(nams)):
-    #     subject_id = nams[i].split('\\')[1].split('_')[0]
-    #     image_id = nams[i].split('_')[1].split('.')[0]
-    #     p = max_pred[i]
-    #     y_true = cl[i]
-    #     y_pred = class_mapper[id_max[i]]
-    #     res.loc[i] = [subject_id, image_id, y_true, y_pred, p]
-    #
-    # res.head
-    #
-    #
-    #
-    #
-    #
-    #
-    # tt = np.amax(preds, axis=1)
-    # tt.shape
-    # tt[0:10]
-    #
-    # preds.shape
-    # preds[0:5,:]
-    # nams[0:5]
-    # nams[0]
-    # class_mapper
-    # cl_i
