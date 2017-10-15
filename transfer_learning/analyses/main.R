@@ -57,11 +57,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Species"
 
 # Camera Catalogue - Species NEW
-project_id <- "camera_catalogue"
-model <- "cc_species_v2"
-project_name <- "Camera Catalogue"
-ts_id <- "201708210308"
-model_name <- "Species"
+# project_id <- "camera_catalogue"
+# model <- "cc_species_v2"
+# project_name <- "Camera Catalogue"
+# ts_id <- "201708210308"
+# model_name <- "Species"
 
 # Camera Catalogue - Species Fine Tune SS 51 all
 # project_id <- "camera_catalogue"
@@ -77,6 +77,10 @@ model_name <- "Species"
 # ts_id <- "201708212308"
 # model_name <- "Species - Last Layer SS51 only"
 
+#################################################################
+## ELEPHANT EXPEDITION
+#################################################################
+
 
 # Elephant Expedition - blank vs non-blank
 # project_id <- "elephant_expedition"
@@ -84,6 +88,14 @@ model_name <- "Species"
 # ts_id <- "201708012008"
 # project_name <- "Elephant Expedition"
 # model_name <- "Blank vs Non-Blank"
+
+# Elephant Expedition - blank vs non-blank nodups
+# project_id <- "elephant_expedition"
+# model <- "ee_blank_vs_nonblank_v2"
+# ts_id <- "201708231608"
+# project_name <- "Elephant Expedition"
+# model_name <- "Blank vs Non-Blank"
+
 
 # Elephant Expedition - Species
 # project_id <- "elephant_expedition"
@@ -113,6 +125,16 @@ model_name <- "Species"
 # project_name <- "Elephant Expedition"
 # model_name <- "Species (excl. Cannotidentify & no duplicates)"
 
+
+# Elephant Expedition - Species Fine Tune SS 51 layst layer no dups
+# project_id <- "elephant_expedition"
+# model <- "ee_nonblank_no_ci_ss51_last_layer_only_v2"
+# ts_id <- "201709180209"
+# project_name <- "Elephant Expedition"
+# model_name <- "Species - Last Layer SS51 only"
+
+
+
 # Snapshot Wisconsin - blank vs non-blank
 # project_id <- "snapshot_wisconsin"
 # model <- "sw_blank_vs_nonblank"
@@ -127,6 +149,33 @@ model_name <- "Species"
 # project_name <- "Snapshot Wisconsin"
 # model_name <- "Species Detection"
 
+# Snapshot Wisconsin - species cropped
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_species_cropped"
+# ts_id <- "201709092009"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Species Detection"
+
+# # Snapshot Wisconsin - species uncropped
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_species_uncropped"
+# ts_id <- "201709120509"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Species Detection"
+
+# Snapshot Wisconsin - blank vs non-blank cropped (v2)
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_blank_vs_nonblank_cropped"
+# ts_id <- "201709140409"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Blank vs Non-Blank Cropped"
+
+# Snapshot Wisconsin - blank vs non-blank uncropped (v2)
+project_id <- "snapshot_wisconsin"
+model <- "sw_blank_vs_nonblank_uncropped"
+ts_id <- "201709150309"
+project_name <- "Snapshot Wisconsin"
+model_name <- "Blank vs Non-Blank"
 
 
 ############################ -

@@ -9,6 +9,7 @@ from config.config import cfg_path, cfg_model, config
 from learning.model_components import create_class_mappings
 from config.config import logging
 import random
+from collections import OrderedDict
 
 
 class Experiment(object):
@@ -203,6 +204,11 @@ class Experiment(object):
             # get all relevant subject ids
             subject_ids = sub_set.getAllIDs()
 
+            # create ordered dict
+            subject_ids_dict = OrderedDict()
+            for sid in subject_ids:
+                subject_ids_dict[sid] = 1
+
             # check if some already exist and keep them
             if not clear_old_files:
                 # get all files already on disk
@@ -226,7 +232,8 @@ class Experiment(object):
                     logging.debug("%s files already exist in %s directory" %
                                   (len(existing_dict.keys()), tag))
                     # relevant subject ids that are not already on disk
-                    subject_ids_relev = set(subject_ids) - existing_dict.keys()
+                    subject_ids_relev = subject_ids_dict.keys() - \
+                        existing_dict.keys()
 
                     # existing files that have to be removed
                     to_be_removed = existing_dict.keys() - set(subject_ids)
@@ -272,6 +279,8 @@ class Experiment(object):
         """ downsample larger classes to match size of smallest class """
 
         logging.info("Balanced class sampling ...")
+
+        # TODO: ensure ordering of input ids does not change
 
         # count labels
         label_count = dict()
@@ -370,7 +379,11 @@ class Experiment(object):
         split_labels = [class_mapper_split_id[i] for i in split_ids]
 
         # deduplicate splitting ids to be used in creating test / train splits
-        split_ids_unique = list(set(split_ids))
+        split_ids_unique_dict = OrderedDict()
+        for spl_id in split_ids:
+            if spl_id not in split_ids_unique_dict:
+                split_ids_unique_dict[spl_id] = 1
+        split_ids_unique = list(split_ids_unique_dict.keys())
         split_labels_unique = [class_mapper_split_id[x]
                                for x in split_ids_unique]
 
@@ -394,9 +407,11 @@ class Experiment(object):
             logging.debug("Class %s has %s Obs" % (k, v))
 
         # training and test split
-        id_train_s, id_test_s = train_test_split(split_ids_unique,
-                                                 train_size=self.train_size,
-                                                 test_size=self.test_size,
+        # reverse train/test to guarantee the test set is the same for
+        # equal test_size samples on identical ids
+        id_test_s, id_train_s = train_test_split(split_ids_unique,
+                                                 train_size=self.test_size,
+                                                 test_size=self.train_size,
                                                  stratify=split_labels_unique,
                                                  random_state=int(rand))
 

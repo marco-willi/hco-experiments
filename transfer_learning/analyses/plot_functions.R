@@ -178,7 +178,6 @@ plot_class_most_conf<- function(preds, model, p_conf=0.95){
   class_numbers <- dplyr::group_by(preds, y_true) %>% summarise(n_total=n_distinct(subject_id))
   
   preds_class <- left_join(preds_class, class_numbers, by="y_true") %>% mutate(p_high_threshold=round(n/n_total,2)*100)
-  browser()
   gg <- ggplot(preds_class, aes(x=reorder(y_true, accuracy),y=accuracy)) + 
     geom_bar(stat="identity", fill="wheat") +
     theme_light() +
@@ -429,8 +428,16 @@ plot_subject_image <- function(preds, subjects, id, path_scratch, ii){
     scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
     labs(x=NULL)
   
-  
-  title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=20,fontface="bold"), vjust=1)
+  font_size_adjuster <- function(cex, nchars){
+    if (nchars<=10){
+      return(cex)
+    } else if (nchars<=15){
+      return(cex*0.66)
+    } else{
+      return(cex*0.5)
+    }
+  }
+  title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=font_size_adjuster(20,nchar(label)),fontface="bold"), vjust=1)
   
   gg <- arrangeGrob(gg1,gg2,top=title)
   
@@ -486,6 +493,16 @@ plot_subject_image_set <- function(pred_set, subjects, path_scratch, n_samples=1
     # colours[hit_id] <- "salmon"
     colours[hit_id] <- "springgreen"
     
+    # adjust font size according to number of chars
+    font_size_adjuster <- function(cex, nchars){
+      if (nchars<=10){
+        return(cex)
+      } else if (nchars<=15){
+        return(cex*0.66)
+      } else{
+        return(cex*0.5)
+      }
+    }
     gg2 <- ggplot(preds0, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill=rev(colours)) +
       coord_flip() +
       theme_light() +
@@ -497,12 +514,14 @@ plot_subject_image_set <- function(pred_set, subjects, path_scratch, n_samples=1
             axis.title.y=element_text(size=16),
             plot.title = element_text(size=16),
             axis.ticks.y = element_blank()) +
-      geom_text(aes(label=paste(class," (",round(prob,3)*100," %)",sep=""), y=0.05), size=5,fontface="bold", vjust="middle", hjust="left") +
+      geom_text(aes(label=paste(class," (",round(prob,3)*100," %)",sep=""), y=0.05), size=4,fontface="bold", vjust="middle", hjust="left") +
       theme(plot.margin = unit(c(0.7,0.9,0.5,0.9), "cm"), panel.border=element_rect(fill=NA)) +
       scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
       labs(x=NULL)
     
-    title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=20,fontface="bold"), vjust=1)
+
+    title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=font_size_adjuster(20,nchar(label)),fontface="bold"), vjust=1)
+
     
     ga <- arrangeGrob(gg1,gg2,top=title)
     

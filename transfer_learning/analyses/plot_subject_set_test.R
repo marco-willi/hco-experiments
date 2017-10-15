@@ -78,7 +78,16 @@ for (ii in 1:10){
     scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
     labs(x=NULL)
   
-  title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=20,fontface="bold"), vjust=1)
+  font_size_adjuster <- function(cex, nchars){
+    if (nchars<=10){
+      return(cex)
+    } else if (nchars<=15){
+      return(cex*0.66)
+    } else{
+      return(cex*0.5)
+    }
+  }
+  title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=font_size_adjuster(20,nchar(label)),fontface="bold"), vjust=1)
   
   ga <- arrangeGrob(gg1,gg2,top=title)
   

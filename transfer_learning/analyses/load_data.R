@@ -30,4 +30,21 @@ if (nlevels(preds$y_true) < 6){
   log <- log[,!grepl("top_k",colnames(log))]
 }
 
-
+# 
+# # replace levels
+# replace_level <- function(lvls, old, new){
+#   if (old %in% lvls){
+#     lvls[which(lvls == old)] <- new
+#   }
+#   return(lvls)
+# }
+# 
+# lvls <- levels(preds$y_true)
+# lvls <- replace_level(lvls, "SQUIRRELSANDCHIPMUNKS", "SQUIRREL")
+# lvls <- replace_level(lvls, "OTHERSMALLMAMMAL", "OTHSMALL")
+# levels(preds$y_true) <- lvls
+# 
+# lvls <- levels(preds$y_pred)
+# lvls <- replace_level(lvls, "SQUIRRELSANDCHIPMUNKS", "SQUIRREL")
+# lvls <- replace_level(lvls, "OTHERSMALLMAMMAL", "OTHSMALL")
+# levels(preds$y_pred) <- lvls

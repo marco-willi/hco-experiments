@@ -1,6 +1,6 @@
 """
-Class to provide a Predictor for applying a model on new images
-- takes a folder with image, a model, and model configs as input
+Class to provide a Predictor for applying a model on images
+- takes a folder/folders with images, a model, and model configs as input
 """
 import os
 from keras.models import load_model
@@ -117,7 +117,7 @@ class PredictorExternal(object):
             self.pre_processing = model_cfg['pre_processing']
 
     def predict_path(self, path, output_path,
-                     output_file_name='predictions.csv'
+                     output_file_name='predictions.csv',
                      batch_size=256):
         """ Predict class for images
 
@@ -147,8 +147,7 @@ class PredictorExternal(object):
             raise IOError("Path and output_path have to be specified")
 
         # check output_path
-        if not output_path[-1] in ('/', '\\'):
-            output_path = output_path + os.path.sep
+        output_path = os.path.join(output_path, "")
 
         # check batch_size
         assert type(eval(batch_size)) == int,\
@@ -200,7 +199,7 @@ class PredictorExternal(object):
         # predict whole set
         print("Starting to predict images in path")
 
-        # calculate number of iterations to make
+        # calculate number of iterations required to process whole dataset
         steps_remainder = generator.n % batch_size
         if steps_remainder > 0:
             extra_step = 1
@@ -278,6 +277,7 @@ class PredictorExternal(object):
     def _refit_datagen(self, path, datagen):
         """ Fit Datagenerator on Raw Images """
         print("Fitting data generator")
+        
         # create a generator to randomly select images to calculate
         # image statistics for data pre-processing
         datagen_raw = ImageDataGenerator(rescale=1./255)
@@ -289,6 +289,7 @@ class PredictorExternal(object):
                 class_mode='sparse',
                 seed=123,
                 shuffle=True)
+
         # fit the generator with a batch of sampled data
         X_raw, Y_raw = raw_generator.next()
         datagen.fit(X_raw)

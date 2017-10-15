@@ -69,7 +69,7 @@ def read_subject_data2(path_csv):
 
 
 def read_subject_data_camcat(path_csv):
-    subs_df_dict = dict()
+    subs_df_dict = OrderedDict()
     counter = 0
     with open(path_csv, newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
