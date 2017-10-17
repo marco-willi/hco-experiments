@@ -1,5 +1,5 @@
 # load modules
-from config.config import config, cfg_path, cfg_model
+from config.config import config, cfg_path, cfg_model, logging
 from tools.project import Project
 from tools.experiment import Experiment
 from tools.model import Model
@@ -105,6 +105,8 @@ def main():
                                    cfg_model['experiment_id'] +
                                    '_' + str(cfg_model['ts']) +
                                    '_objects.pkl', "wb"))
+
+    logging.info("Finished")
 
 
 if __name__ == "__main__":
