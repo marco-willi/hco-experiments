@@ -28,7 +28,6 @@ def init_panoptes(Panoptes=Panoptes, config_credentials=config_credentials,
     # get my project
     project_id = int(project_id)
     my_project = Project.find(id=project_id)
-
     return my_project
 
 
@@ -92,7 +91,7 @@ if __name__ == '__main__':
     workflow_ids = [5000, 5001, 4963]
     cls_filtered = cls[cls.workflow_id.isin(workflow_ids)]
     cls_filtered.to_csv(cfg_path['db'] +\
-        'classifications_experiment_20171008.csv')
+        'classifications_experiment_20171012.csv')
 
     # save to disk
     subs = get_subject_info(my_project)

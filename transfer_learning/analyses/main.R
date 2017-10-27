@@ -26,13 +26,18 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # ts_id <- "201708072308"
 # model_name <- "Species Top51"
 
-
 # Snapshot Serengeti - Blank vs Non Blank
 # path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
 # project_id <- "ss"
 # pred_file = "ss_blank_vs_non_blank_small_201707271407_preds_test"
 # log_file <- "ss_blank_vs_non_blank_small_201707172207_training"
 # model <- "blank_vs_non_blank_small"
+
+# does not conform standard
+# project_id <- "ss"
+# model <- "ss_blank_vs_non_blank_small"
+# ts_id <- "201707172107"
+# project_name <- "Snapshot Serengeti"
 
 
 # Camera Catalogue - Blank vs Vehicle vs Species
@@ -171,11 +176,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Blank vs Non-Blank Cropped"
 
 # Snapshot Wisconsin - blank vs non-blank uncropped (v2)
-project_id <- "snapshot_wisconsin"
-model <- "sw_blank_vs_nonblank_uncropped"
-ts_id <- "201709150309"
-project_name <- "Snapshot Wisconsin"
-model_name <- "Blank vs Non-Blank"
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_blank_vs_nonblank_uncropped"
+# ts_id <- "201709150309"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Blank vs Non-Blank"
 
 
 ############################ -

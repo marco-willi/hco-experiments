@@ -525,7 +525,7 @@ plot_subject_image_set <- function(pred_set, subjects, path_scratch, n_samples=1
     
     ga <- arrangeGrob(gg1,gg2,top=title)
     
-    gb <- rectGrob(height = .98, width = .98, gp = gpar(lwd = 1.5, col = "blue",  fill=rgb(1, 1, 1, 0))) # border
+    gb <- rectGrob(height = .98, width = .98, gp = gpar(lwd = 1.5, col = "black",  fill=rgb(1, 1, 1, 0))) # border
     gt <- gTree(children = gList(ga, gb))
     
     grobs[[ii]] <- gt

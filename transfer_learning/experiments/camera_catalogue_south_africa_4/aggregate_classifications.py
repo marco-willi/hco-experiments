@@ -16,7 +16,7 @@ import csv
 
 
 cls =  read_classification_data_camcat(cfg_path['db'] +\
-    'classifications_experiment_20171008.csv')
+    'classifications_experiment_20171012.csv')
 cls[list(cls.keys())[0]]
 # dict_keys(['', 'classification_id', 'user_name', 'user_id', 'user_ip',
 #  'workflow_id', 'workflow_name', 'workflow_version', 'created_at',
@@ -29,6 +29,44 @@ for k, v in cls.items():
     json_extract = json.loads(v['subject_data'])
     key = list(json_extract.keys())[0]
     subs_all[v['subject_ids']] = json_extract[key]
+
+# print sample value
+for kk, vv in json_extract[key].items():
+    print("Key: %s Value: %s \\n" % (kk, vv))
+
+# randomly show some results
+keys = np.random.choice(list(subs_all.keys()), size=10)
+for k in keys:
+    print("Key: %s" % k)
+    subs_all[str(k)]
+
+# workflow / retirement data per subject
+subs_all_workflow = OrderedDict()
+for k, v in cls.items():
+    json_extract = json.loads(v['subject_data'])
+    key = list(json_extract.keys())[0]
+    # retirement data
+    if ('retired' in json_extract[key]) and \
+       (type(json_extract[key]['retired']) is dict):
+        retirement_dict = {'ret_' + k: v for k,
+                           v in json_extract[key]['retired'].items()}
+        del json_extract[key]['retired']
+        new_entry = {**json_extract[key], **retirement_dict}
+    else:
+        new_entry = json_extract[key]
+    # workflow
+    wf = v['workflow_id']
+    # create entry
+    if v['subject_ids'] not in subs_all_workflow:
+        subs_all_workflow[v['subject_ids']] = dict()
+    subs_all_workflow[v['subject_ids']][wf] = new_entry
+
+# randomly show some results
+keys = np.random.choice(list(subs_all_workflow.keys()), size=10)
+for k in keys:
+    print("Key: %s" % k)
+    subs_all_workflow[str(k)]
+
 
 # loop through all classifications and fill subject dictionary
 subs_res = OrderedDict()
@@ -134,6 +172,7 @@ for k_sub, v_sub in subs_res.items():
                 label_final[i] = 'blank'
         if k_sub not in subs_res_final:
             subs_res_final[k_sub] = dict()
+        # final dict
         subs_res_final[k_sub][k] = {
             'ret_label': label,
             'retirement_reason': v['retirement_reason'],
@@ -153,11 +192,14 @@ for k in keys:
 
 # prepare final dictionary that contains all relevant data
 subs_all_data = OrderedDict()
-remove_labels = ['1', '0', 'unknown answer label', 'unknown']
-for k, v in subs_all.items():
-    if k in subs_res_final:
-        subs_all_data[k] = subs_res_final[k]
-    subs_all_data[k]['meta_data'] = v
+for k, v in subs_all_workflow.items():
+    for kk, vv in v.items():
+        if k in subs_res_final:
+            if kk in subs_res_final[k]:
+                if k not in subs_all_data:
+                    subs_all_data[k] = dict()
+                subs_all_data[k][kk] = {**subs_res_final[k][kk],
+                                        **vv}
 
 # randomly show some results
 # Key: 13172213
@@ -167,11 +209,11 @@ for k in keys:
     subs_all_data[str(k)]
 
 # save as csv
-with open(cfg_path['db'] + 'classifications_experiment_20171008_converted.csv',
+with open(cfg_path['db'] + 'classifications_experiment_20171012_converted.csv',
           'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=',',
                            quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    csvwriter.writerow(['subject_id', 'attr', 'value'])
+    csvwriter.writerow(['subject_id', 'workflow', 'attr', 'value'])
     for k, v in subs_all_data.items():
         for kk, vv in v.items():
             for kkk, vvv in vv.items():

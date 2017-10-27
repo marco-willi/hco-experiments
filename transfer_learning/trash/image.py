@@ -1,3 +1,24 @@
+model_file = model_files[0]
+class_list = class_lists[0]
+generator = predictor.keras_datagen.flow_from_directory(
+        pred_path,
+        target_size=predictor.model.input_shape[1:3],
+        color_mode=predictor.color_mode,
+        batch_size=256,
+        class_mode='sparse',
+        seed=123,
+        shuffle=False)
+predictor.model.input_shape[3]
+raw_generator = datagen_raw.flow_from_directory(
+        pred_path,
+        target_size=predictor.model.input_shape[1:3],
+        color_mode='rgb',
+        batch_size=2000,
+        class_mode='sparse',
+        seed=123,
+        shuffle=True)
+predictor.keras_datagen.fit(raw_generator.next())
+
 """Fairly basic set of tools for real-time data augmentation on image data.
 Can easily be extended to include new transformations,
 new preprocessing methods, etc...
