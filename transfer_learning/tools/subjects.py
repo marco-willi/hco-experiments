@@ -326,7 +326,7 @@ class SubjectSet(object):
     def add_dir_to_set(self, path):
         """ add a directory with images to the subject set """
         # TODO: not yet finished
-        raise NotImplementedError
+        # raise NotImplementedError
         # get label of directory
         label = path.split(os.path.sep)[-1]
 
