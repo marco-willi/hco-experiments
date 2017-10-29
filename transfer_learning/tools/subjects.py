@@ -135,123 +135,6 @@ class SubjectSet(object):
                     fnames.append(fname)
         return urls, labels, ids, fnames
 
-    def createSplitIDs(self, split_mode="none"):
-        """ Creates splitting ids to be used for test/train splitting """
-        # original ids
-        ids_orig, labels_orig = self.getAllIDsLabels()
-
-        # Return 1 to 1 mapping
-        if split_mode == "none":
-            split_ids = ids_orig
-            split_labels = labels_orig
-
-        # return a mapping based on splitting along locations
-        # and interval between subsequent images
-        elif split_mode == "location_date_time":
-            # loop through all subjects and get relevant attributes
-            locations = list()
-            dates = list()
-            times = list()
-            for ii in ids_orig:
-                meta = self.getSubject(ii).getMetaData()
-                # get attrs and store in list
-                for tag, ll in zip(['location', 'date', 'time'],
-                                   [locations, dates, times]):
-                    if tag in meta:
-                        ll.append(meta[tag])
-                    else:
-                        ll.append('unknown')
-
-            # create date time seconds
-            seconds = list()
-            for dat, tm in zip(dates, times):
-                try:
-                    dtm = datetime.strptime(dat + tm, '%Y%m%d%H%M%S')
-                    secs = dtm.timestamp()
-                except:
-                    secs = 0
-                seconds.append(secs)
-
-            # divide data into different locations
-            loc_dat = dict()
-            for loc, dd, tt, ii, lab in zip(locations, dates, times,
-                                            ids_orig, labels_orig):
-                # prepare location dictionary
-                if loc not in loc_dat:
-                    current_loc = {'ids': list(),
-                                   'labels': list(),
-                                   'dates': list(),
-                                   'times': list(),
-                                   'seconds': list()}
-                    loc_dat[loc] = current_loc
-
-                # add all information
-                for tag, ll in zip(['ids', 'labels', 'dates',
-                                    'times', 'seconds'],
-                                   [ii, lab, dd, tt]):
-                    loc_dat[loc][tag].append(ll)
-
-            # now we have a dictionary entry for each location with all its
-            # ids, labels, dates and times, now create ids for each location
-            for k, v in loc_dat.items():
-                loc_labels = v['labels']
-                loc_times = v['times']
-                loc_seconds = v['seconds']
-
-                # define temporal ordering
-                time_order_ids = sorted(range(len(loc_seconds)),
-                                        key=lambda x: loc_seconds[x])
-
-                # reorder all attributes
-                loc_labels_order = [loc_labels[i] for i in time_order_ids]
-                loc_times_order = [loc_times[i] for i in time_order_ids]
-
-                # calculate time diffs and label diffs
-                time_diffs = [b - a for (a, b) in zip(loc_times_order[0:-1],
-                                                      loc_times_order[1:])]
-                label_diffs = [a != b for (a, b) in zip(loc_labels_order[0:-1],
-                                                        loc_labels_order[1:])]
-
-                # insert dummy data for first observation
-                time_diffs.insert(0, 0)
-                label_diffs.insert(0, True)
-
-                # assign ids
-                split_ids_loc = list()
-                run_id = 0
-                minutes_diff = 30
-                # loop over all label and time diffs
-                for lab_diff, time_diff in zip(label_diffs, time_diffs):
-                    if run_id == 0:
-                        new_id = k + '_' + str(run_id)
-                    else:
-                        if (lab_diff or (time_diff > (60*minutes_diff))):
-                            run_id += 1
-                            new_id = k + '_' + str(run_id)
-                    split_ids_loc.append(new_id)
-                # save new split ids in dictionary
-                jj = [time_order_ids.index(j) for j in
-                      range(0, len(time_order_ids))]
-                split_ids_loc_ord = [split_ids_loc[i] for i in jj]
-                loc_dat[k]['split_ids'] = split_ids_loc_ord
-
-            # map old ids on new split ids
-            ids_map_old_new = dict()
-            for k, v in loc_dat.items():
-                for ii in range(0, len(v['ids'])):
-                    ids_map_old_new[v['ids'][ii]] = \
-                     {'id': v['split_ids'][ii],
-                      'lab': v['split_labels'][ii]}
-
-            # retrieve new split ids in correct order
-            split_ids = list()
-            split_labels = list()
-            for ii in ids_orig:
-                split_ids.append(ids_map_old_new[ii]['id'])
-                split_labels.append(ids_map_old_new[ii]['lab'])
-
-        return ids_orig, split_ids, split_labels
-
     def printLabelDistribution(self):
         """ print distribution of labels to stdout / logging module """
         # get all labels
@@ -439,6 +322,25 @@ class SubjectSet(object):
         logging.info("SubjectSet %s Loaded" % path)
         logging.info("Contains %s subjects" % len(self.subjects.keys()))
         self.printLabelDistribution()
+
+    def add_dir_to_set(self, path):
+        """ add a directory with images to the subject set """
+        # TODO: not yet finished
+        raise NotImplementedError
+        # get label of directory
+        label = path.split(os.path.sep)[-1]
+
+        # list all files
+        files = os.listdir(path)
+
+        # create subjects
+        for f in files:
+            # identifier
+            identifier = f.split('.')[0]
+            # create object
+            subject = Subject(identifier=identifier, labels=label)
+            # add to set
+            self.addSubject(subject)
 
 
 class Subject(object):
