@@ -138,7 +138,9 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # project_name <- "Elephant Expedition"
 # model_name <- "Species - Last Layer SS51 only"
 
-
+#################################################################
+## Snapshot Wisconsin
+#################################################################
 
 # Snapshot Wisconsin - blank vs non-blank
 # project_id <- "snapshot_wisconsin"
@@ -167,6 +169,13 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # ts_id <- "201709120509"
 # project_name <- "Snapshot Wisconsin"
 # model_name <- "Species Detection"
+
+# # Snapshot Wisconsin - retrain last layer SS
+project_id <- "snapshot_wisconsin"
+model <- "sw_species_ss51_last_layer_only"
+ts_id <- "201710290510"
+project_name <- "Snapshot Wisconsin"
+model_name <- "Species Detection - Last Layer SS51 only"
 
 # Snapshot Wisconsin - blank vs non-blank cropped (v2)
 # project_id <- "snapshot_wisconsin"
