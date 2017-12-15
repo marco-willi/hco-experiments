@@ -15,8 +15,10 @@ import re
 import csv
 
 
+
+
 cls =  read_classification_data_camcat(cfg_path['db'] +\
-    'classifications_experiment_20171012.csv')
+    'classifications_experiment_20171208.csv')
 cls[list(cls.keys())[0]]
 # dict_keys(['', 'classification_id', 'user_name', 'user_id', 'user_ip',
 #  'workflow_id', 'workflow_name', 'workflow_version', 'created_at',
@@ -209,7 +211,7 @@ for k in keys:
     subs_all_data[str(k)]
 
 # save as csv
-with open(cfg_path['db'] + 'classifications_experiment_20171012_converted.csv',
+with open(cfg_path['db'] + 'classifications_experiment_20171208_converted.csv',
           'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=',',
                            quotechar='"', quoting=csv.QUOTE_MINIMAL)

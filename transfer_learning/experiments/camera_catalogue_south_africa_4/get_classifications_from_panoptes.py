@@ -91,7 +91,7 @@ if __name__ == '__main__':
     workflow_ids = [5000, 5001, 4963]
     cls_filtered = cls[cls.workflow_id.isin(workflow_ids)]
     cls_filtered.to_csv(cfg_path['db'] +\
-        'classifications_experiment_20171012.csv')
+        'classifications_experiment_20171208.csv')
 
     # save to disk
     subs = get_subject_info(my_project)

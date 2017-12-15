@@ -232,8 +232,8 @@ for k, v in labels_all.items():
     print("Label %s has %s obs" % (k, v))
 
 # write labels to disk
-file = open(cfg_path['db'] + 'classes.txt', "w")
-file2 = open(cfg_path['db'] + 'classes_numbers.txt', "w")
+file = open(cfg_path['db'] + 'classes3.txt', "w")
+file2 = open(cfg_path['db'] + 'classes_numbers3.txt', "w")
 for k, v in labels_all.items():
     file.write(str(k) + ',')
     file2.write(str(k) + ',' + str(v) + "\n")
@@ -241,7 +241,7 @@ file.close()
 file2.close()
 
 # create SubjectSet
-subject_set = SubjectSet(labels=list(labels_all.keys()))
+subject_set = SubjectSet5(labels=list(labels_all.keys()))
 for key, value in subs_all_data.items():
     subject = Subject(identifier=key,
                       labels=value['label'],
@@ -250,7 +250,7 @@ for key, value in subs_all_data.items():
                       )
     subject_set.addSubject(subject)
 # save to disk
-subject_set.save(cfg_path['db'] + 'subject_set_v2.json')
+subject_set.save(cfg_path['db'] + 'subject_set_v5.json')
 
 #pickle.dump(subject_set, open(cfg_path['db'] + 'subject_set2.pkl',
 #                              "wb"), protocol=4)
@@ -261,3 +261,9 @@ urls, labels, ids = subject_set.getAllURLsLabelsIDs()
 for i in range(0, 50):
     ii = random.randint(0, len(urls))
     print("%s is a %s on: %s" % (ids[ii], labels[ii], urls[ii]))
+
+
+# number of users
+n_users = list()
+for key, value in subs_all_data.items():
+    n_users.append(value['meta_data']['n_users'])

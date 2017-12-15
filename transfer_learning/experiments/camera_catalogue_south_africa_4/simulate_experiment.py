@@ -12,9 +12,8 @@ from datetime import datetime
 import re
 import csv
 
-
 cls =  read_classification_data_camcat(cfg_path['db'] +\
-    'classifications_experiment_20171012.csv')
+    'classifications_experiment_20171208.csv')
 cls[list(cls.keys())[0]]
 
 # workflow / retirement data per subject
@@ -183,6 +182,8 @@ for subject_id, v in subs_res.items():
                     retire_label = 'blank'
                 elif machine_label == 'blank':
                     retire_label = 'no_agreement'
+                elif 'blank' in first_user:
+                    retire_label = 'no_agreement'
                 if v[workflow]['retirement_reason'] == 'nothing_here':
                     retire_label_real = 'blank'
             elif workflow == '5001':
@@ -191,6 +192,8 @@ for subject_id, v in subs_res.items():
                 if 'vehicle' in first_user and machine_label == 'vehicle':
                     retire_label = 'vehicle'
                 elif machine_label == 'vehicle':
+                    retire_label = 'no_agreement'
+                elif 'vehicle' in first_user:
                     retire_label = 'no_agreement'
             elif workflow == '4963':
                 annotations = list(v[workflow]['users'].items())
@@ -230,4 +233,109 @@ for k in keys:
 
 # convert to pandas df and export to csv
 df = pd.DataFrame.from_dict(subs_all_data, orient='index')
-df.to_csv(cfg_path['db'] + 'classifications_experiment_20171012_exp_simulation.csv')
+df.to_csv(cfg_path['db'] + 'classifications_experiment_20171208_exp_simulation.csv')
+
+
+
+# checks
+keys = np.random.choice(list(subs_all.keys()), size=10)
+for k in keys:
+    print("-------------------------------------------------")
+    print("-------------------------------------------------")
+    print("-------------------------------------------------")
+    print("Key: %s" % k)
+    print("SUBS ALL DATA -----------------------------------")
+    subs_all[str(k)]
+    print("-------------------------------------------------")
+    print("SUBS RES ----------------------------------------")
+    subs_res[str(k)]
+    print("-------------------------------------------------")
+    print("EXP RES -----------------------------------------")
+    exp_res[str(k)]
+
+
+k = '13092778'
+print("-------------------------------------------------")
+print("-------------------------------------------------")
+print("-------------------------------------------------")
+print("Key: %s" % k)
+print("SUBS ALL DATA -----------------------------------")
+subs_all[str(k)]
+print("-------------------------------------------------")
+print("SUBS RES ----------------------------------------")
+subs_res[str(k)]
+print("-------------------------------------------------")
+print("EXP RES -----------------------------------------")
+exp_res[str(k)]
+
+
+
+subs_all['13446']
+test_id = '13091486'
+for k, v in cls.items():
+    if v['subject_ids'] == test_id:
+        print(v)
+        continue
+    # vv = json.loads(v['subject_data'])
+    # kk = list(vv.keys())[0]
+    # if vv[kk]['subject_id'] == test_id:
+    #     print(v)
+        continue
+
+
+# FIND SUBJECT ID
+test_id = '13132923'
+for k, v in cls.items():
+    vv = json.loads(v['subject_data'])
+    kk = list(vv.keys())[0]
+    if vv[kk]['subject_id'] == test_id:
+        print("--------------------")
+        print(k)
+        print(v['subject_ids'])
+        print(vv[kk]['subject_id'])
+        print(vv[kk])
+        continue
+
+# FIND URL
+test_url = 'https://s3-eu-west-1.amazonaws.com/pantherabucketleopard1/S17_20000101_20170627/images/S17__Station20__Camera2__CAM42203__2017-06-19__09-46-37.JPG'
+for k, v in cls.items():
+    vv = json.loads(v['subject_data'])
+    kk = list(vv.keys())[0]
+    if vv[kk]['link'] == test_url:
+        print("--------------------")
+        print(v['subject_ids'])
+        print(vv[kk]['subject_id'])
+        print(vv[kk])
+        continue
+
+
+# Retirement overview
+res_all = dict()
+for k, v in subs_res.items():
+    # workflows
+    for w, vv in v.items():
+        if w not in ['5000', '5001', '4963']:
+            continue
+        if w not in res_all:
+            res_all[w] = dict()
+            res_all[w]['total'] = 1
+        ret = vv['retirement_reason']
+        if ret not in res_all[w]:
+            res_all[w][ret] = 1
+        else:
+            res_all[w][ret] += 1
+            res_all[w]['total'] += 1
+
+res_all = dict()
+for k, v in exp_res.items():
+    # workflows
+    for w, vv in v.items():
+        if w not in ['5000', '5001', '4963']:
+            continue
+        if w not in res_all:
+            res_all[w] = dict()
+        ret = vv['retirement_reason']
+        if ret not in res_all[w]:
+            res_all[w][ret] = 1
+        else:
+            res_all[w][ret] += 1

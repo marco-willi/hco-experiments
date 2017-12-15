@@ -20,11 +20,11 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Species Top26"
 
 # Snapshot Serengeti - Top51 species
-# project_id <- "ss"
-# model <- "ss_species_51"
-# project_name <- "Snapshot Serengeti"
-# ts_id <- "201708072308"
-# model_name <- "Species Top51"
+project_id <- "ss"
+model <- "ss_species_51"
+project_name <- "Snapshot Serengeti"
+ts_id <- "201708072308"
+model_name <- "Species Top51"
 
 # Snapshot Serengeti - Blank vs Non Blank
 # path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
@@ -171,11 +171,18 @@ path_output_report <- "D:\\Studium_GD\\Zooniverse\\Results\\transfer_learning\\r
 # model_name <- "Species Detection"
 
 # # Snapshot Wisconsin - retrain last layer SS
-project_id <- "snapshot_wisconsin"
-model <- "sw_species_ss51_last_layer_only"
-ts_id <- "201710290510"
-project_name <- "Snapshot Wisconsin"
-model_name <- "Species Detection - Last Layer SS51 only"
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_species_ss51_last_layer_only"
+# ts_id <- "201710290510"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Species Detection - Last Layer SS51 only"
+
+# Snapshot Wisconsin - ImageNet wolf/bear
+# project_id <- "snapshot_wisconsin"
+# model <- "sw_species_uncropped_imagenet_wolfbear"
+# ts_id <- "201710292010"
+# project_name <- "Snapshot Wisconsin"
+# model_name <- "Species Detection - ImageNet Wolf/Bear Augmented"
 
 # Snapshot Wisconsin - blank vs non-blank cropped (v2)
 # project_id <- "snapshot_wisconsin"

@@ -78,7 +78,7 @@ def read_subject_data_camcat(path_csv):
                 counter += 1
                 continue
             else:
-                subject_id = row[0]
+                subject_id = str(row[0])
                 workflow_id = row[2]
                 subject_urls = json.loads(row[5])['0']
                 subject_meta = json.loads(row[4])
@@ -114,6 +114,7 @@ def read_classification_data_camcat(path_csv):
             if (counter % 100000) == 0:
                 print("Processed %s" % counter)
     return cls_dict
+
 
 def calc_pielu(votes, blank_classes):
     """ calculate pielous evenness """

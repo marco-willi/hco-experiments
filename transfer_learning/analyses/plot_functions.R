@@ -2,14 +2,15 @@
 # Libraries ----
 ############################ -
 
+library(plyr)
 library(ggplot2)
 library(reshape2)
 library(jsonlite)
 library(jpeg)
 library(grid)
 library(gridExtra)
-library(plyr)
 library(dplyr)
+library(Hmisc)
 
 ############################ -
 # Parameters ----
@@ -18,6 +19,56 @@ text_small <- 10
 text_med <- 12
 text_large <- 14
 text_very_small <- 8
+
+
+
+############################ -
+# Helper Functions ----
+############################ -
+
+pretty_labels <- function(labels){
+  new_labels <- as.character(unique(labels))
+  if ("HUMAN" %in% new_labels){
+    new_labels[new_labels=="HUMAN"] <- "Human"
+  }
+  if ("SQUIRRELSANDCHIPMUNKS" %in% new_labels){
+    new_labels[new_labels=="SQUIRRELSANDCHIPMUNKS"] <- "Squirrels"
+  }
+  if ("SMALLMEDIUMPRIMATE" %in% new_labels){
+    new_labels[new_labels=="SMALLMEDIUMPRIMATE"] <- "Primates"
+  }
+  if ("OTHERSMALLMAMMAL" %in% new_labels){
+    new_labels[new_labels=="OTHERSMALLMAMMAL"] <- "Mammalsmall"
+  }
+  if ("hippopotamus" %in% tolower(new_labels)){
+    new_labels[tolower(new_labels)=="hippopotamus"] <- "Hippo"
+  }
+  if ("gemsbock" %in% tolower(new_labels)){
+    new_labels[tolower(new_labels)=="gemsbock"] <- "Gemsbok"
+  }
+  if ("humannotvehicles" %in% tolower(new_labels)){
+    new_labels[tolower(new_labels)=="humannotvehicles"] <- "Human"
+  }
+  
+  new_labels <- sapply(new_labels, function(x){capitalize(tolower(x))})
+  return(new_labels)
+}
+
+pretty_labels_conv <- function(x){
+  if (is.factor(x)){
+    new_labels <- pretty_labels(levels(x))
+    levels(x) <- new_labels
+    return(x)
+  } else{
+    new_labels <- pretty_labels(x)
+    if (length(unique(new_labels)) == length(unique(x))){
+      x_new <- factor(x, levels=unique(x), labels = new_labels)
+      return(x_new)
+    }else{
+      x_new <- factor(new_labels[x], levels=unique(new_labels), labels=unique(new_labels))
+    }
+  }
+}
 
 ########################### -
 # Plot Log File ----
@@ -396,12 +447,12 @@ plot_subject_image <- function(preds, subjects, id, path_scratch, ii){
   
   img <- readJPEG(file_name)
   
-  
   gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
     annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
                       -Inf, Inf, -Inf, Inf) + theme_minimal() +
     theme(axis.title = element_blank(), axis.text = element_blank()) +
     theme(plot.margin = unit(c(0.7,0.9,0,0.9), "cm"))
+  
   
   # keep only top 5
   preds0 <- preds0[order(preds0$prob, decreasing = TRUE)[1:min(5,dim(preds0)[1])],]
@@ -475,7 +526,26 @@ plot_subject_image_set <- function(pred_set, subjects, path_scratch, n_samples=1
     file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
     download.file(url, destfile = file_name, mode = 'wb')
     
-    img <- readJPEG(file_name)
+    library(imager)
+   
+    
+    img <- load.image(file_name)
+    img <- resize(img,round(width(img)/3),round(height(img)/3))
+    # img_df <- as.data.frame(img,wide="c") %>% mutate(rgb.val=rgb(c.1,c.2,c.3))
+    # gg1 <- ggplot(img_df,aes(x=x,y=y), geom="blank") +
+    #   geom_raster(aes(fill=rgb.val)) +
+    #   scale_fill_identity() +
+    #   scale_y_reverse() +
+    #   theme_minimal() +
+    #   theme(axis.title = element_blank(), axis.text = element_blank()) +
+    #   theme(plot.margin = unit(c(0.7,0.9,0,0.9), "cm"))
+    # gg1
+    
+    #img <- resize(img,-75, -75)
+    
+    #img <- readJPEG(file_name, native = TRUE)
+    
+    
     
     
     gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
@@ -483,6 +553,7 @@ plot_subject_image_set <- function(pred_set, subjects, path_scratch, n_samples=1
                         -Inf, Inf, -Inf, Inf) + theme_minimal() +
       theme(axis.title = element_blank(), axis.text = element_blank()) +
       theme(plot.margin = unit(c(0.7,0.9,0,0.9), "cm"))
+  
     
     # keep only top 5
     preds0 <- preds0[order(preds0$prob, decreasing = TRUE)[1:min(5,dim(preds0)[1])],]
@@ -538,3 +609,95 @@ plot_subject_image_set <- function(pred_set, subjects, path_scratch, n_samples=1
   return(ml)
 }
   
+
+plot_subject_image_set_paper <- function(pred_set, subjects, path_scratch, n_samples=10, ncol=2, nrow=3, save_graph=FALSE){
+  
+  # list of all figures
+  grobs <- list()
+  
+  for (ii in 1:n_samples){
+    id <- paste(pred_set[ii,"subject_id"])
+    preds <- pred_set[ii,"preds_all"]
+    
+    
+    preds0 <- fromJSON(paste("[",gsub(pattern = "'", "\"", x=as.character(preds[[1]])),"]",sep=""))
+    preds0 <- melt(preds0,value.name = "prob",variable.name = "class")
+    sub <- subjects[id]
+    url <- unlist(sub[[id]]['urls'])[1]
+    label <- unlist(sub[[id]]['label'])
+    label <- pretty_labels(labels = label)
+    file_name <- paste(path_scratch,"image_",ii,".jpeg",sep="")
+    download.file(url, destfile = file_name, mode = 'wb')
+    
+    library(imager)
+    
+    
+    img <- load.image(file_name)
+    img <- resize(img,round(width(img)/3),round(height(img)/3))
+    
+    
+    
+    gg1 <- ggplot(data.frame(x=0:1,y= 0:1),aes(x=x,y=y), geom="blank") +
+      annotation_custom(rasterGrob(img, width=unit(1,"npc"), height=unit(1,"npc")), 
+                        -Inf, Inf, -Inf, Inf) + theme_minimal() +
+      theme(axis.title = element_blank(), axis.text = element_blank()) +
+      theme(plot.margin = unit(c(0.2,0.1,0,0.1), "cm")) +
+      scale_y_continuous(expand=c(0,0), limits = c(0,1)) +
+      labs(x=NULL)
+    
+    
+    # keep only top 5
+    preds0 <- preds0[order(preds0$prob, decreasing = TRUE)[1:min(5,dim(preds0)[1])],]
+    preds0$class <- pretty_labels(as.character(preds0$class))
+    
+    # identify correct one and color differently
+    hit_id <- which(preds0$class == label)
+    colours <- rep("lightblue",dim(preds0)[1])
+    # colours[hit_id] <- "salmon"
+    colours[hit_id] <- "springgreen"
+    
+    # adjust font size according to number of chars
+    font_size_adjuster <- function(cex, nchars){
+      if (nchars<=20){
+        return(cex)
+      } else if (nchars<=30){
+        return(cex*0.66)
+      } else{
+        return(cex*0.5)
+      }
+    }
+    gg2 <- ggplot(preds0, aes(x=reorder(class, prob),y=prob)) + geom_bar(stat="identity", fill=rev(colours)) +
+      coord_flip() +
+      theme_light() +
+      ylab("Model Output (%)") +
+      xlab("") +
+      theme(axis.text.y=element_blank(), axis.text.x=element_text(size=9),
+            axis.title.x=element_text(size=9),
+            axis.title.y=element_text(size=8),
+            plot.title = element_text(size=8),
+            axis.ticks.y = element_blank()) +
+      geom_text(aes(label=paste(class," (",round(prob,4)*100," %)",sep=""), y=0.05), size=3,fontface="bold", vjust="middle", hjust="left") +
+      theme(plot.margin = unit(c(0.2,0.1,0.2,0.1), "cm"), panel.border=element_rect(fill=NA)) +
+      scale_y_continuous(expand=c(0,0), limits = c(0,1), breaks = seq(0.25,0.75,0.25), labels = seq(25,75,25)) +
+      labs(x=NULL)
+    
+    
+    title=textGrob(label = paste("True class: ",label,sep=""),gp=gpar(fontsize=font_size_adjuster(12,nchar(label)),fontface="bold"), vjust=1)
+    
+    
+    lay <- rbind(c(1,1), c(1,1), c(1,1), c(2,2),c(2,2))
+    ga <- arrangeGrob(gg1,gg2,top=title, layout_matrix = lay)
+    
+    gb <- rectGrob(height = .98, width = .98, gp = gpar(lwd = 0, col = "black",  fill=rgb(1, 1, 1, 0))) # border
+    gt <- gTree(children = gList(ga, gb))
+    
+    grobs[[ii]] <- gt
+  }
+  ml <- marrangeGrob(grobs, nrow=nrow, ncol=ncol, top = "")
+  
+  if (save_graph){
+    ggsave(paste(path_scratch,"subject_set.pdf",sep=""), ml, dpi=50, width = 20, height = 40, units = "cm")
+  }
+  return(ml)
+}
+

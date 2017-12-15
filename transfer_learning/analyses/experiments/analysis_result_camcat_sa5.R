@@ -2,6 +2,7 @@
 # Libraries ----
 ############################ -
 
+library(plyr)
 library(dplyr)
 library(ggplot2)
 library(reshape2)
@@ -15,9 +16,17 @@ library(gridExtra)
 
 path_main <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/"
 path_project <- "db/camcat2/"
-fname <- "classifications_experiment_20171012_converted.csv"
+fname <- "classifications_experiment_20171111_converted.csv"
 path_scratch <- "D:/Studium_GD/Zooniverse/Data/transfer_learning_project/scratch/camcat2/"
 path_save <- "D:/Studium_GD/Zooniverse/Project/Poster/CS_PosterFair_Fall2017/"
+
+############################ -
+# Load Functions ----
+############################ -
+
+source("analyses/plot_functions.R")
+
+source("analyses/plot_parameters.R")
 
 ############################ -
 # Read Classifications ----
@@ -35,8 +44,11 @@ names(data_raw)[names(data_raw)=="workflow"] = "workflow_current"
 data <- dcast(data = filter(data_raw, !attr %in% c("subject_id")), formula = subject_id + workflow_current ~ attr, value ="value")
 names(data) <- sapply(names(data), function(x){gsub(pattern = "#","", x)})
 data$machine_probability <- as.numeric(data$machine_probability)
-
+data$machine_prediction <- pretty_labels_conv(data$machine_prediction)
+data$plur_label <- pretty_labels_conv(data$plur_label)
 data$workflow_current <- factor(data$workflow_current, levels=c("5000", "5001", "4963"))
+data$plur_label <- ifelse(data$plur_label=="Notblank","Something",
+                          ifelse(data$plur_label=="Notblank","Species", data$plur_label))
 
 # group totals
 group_totals <- group_by(data, experiment_group) %>% summarise(n_in_group=n_distinct(subject_id))
@@ -45,10 +57,62 @@ group_totals
 data <- left_join(data, group_totals, by="experiment_group")
 
 data$machine_prediction_workflow <- ifelse(data$workflow_current == '5000',
-                                         ifelse(data$machine_prediction == "blank", "blank", "notblank"),
+                                         ifelse(data$machine_prediction == "Blank", "Blank", "Something"),
                                          ifelse(data$workflow_current == '5001', 
-                                                ifelse(data$machine_prediction == "vehicle", "vehicle", "novehicle"),data$machine_prediction))
-data$x_pred_agreement <- ifelse(tolower(data$machine_prediction_workflow) == tolower(data$plur_label),1,0)
+                                                ifelse(data$machine_prediction == "Vehicle", "Vehicle", "Species"),data$machine_prediction))
+data$x_pred_agreement <- ifelse(data$machine_prediction_workflow == data$plur_label,1,0)
+
+
+########################### -
+# Number of Annotations ----
+########################### -
+
+# total species covered
+tt <- filter(data, (!machine_prediction %in% c("Vehicle","Blank")) & (experiment_group %in% c(1,2)))
+prop.table(table(tt$experiment_group))
+
+
+species_allowed <- pretty_labels_conv(tolower(c("bird", "buffalo", "eland", "elephant", "gemsbock",
+                                                "giraffe", "HUMAN", "hyaenabrown",  "impala", "jackalblackbacked","baboon",
+                                                "kudu", "monkeybaboon", "rabbithare",  "rhino", "warthog",
+                                                "wildebeest", "zebra", "blank", "vehicle")))
+
+data_ann <- filter(data_raw, attr %in% c("n_users","#experiment_group","#machine_prediction","#machine_probability"))
+data_ann <- dcast(data_ann, formula = subject_id + workflow_current ~attr, value="value")
+names(data_ann) <- sapply(names(data_ann), function(x){gsub(pattern = "#","", x)})
+data_ann$machine_probability <- as.numeric(data_ann$machine_probability)
+data_ann$machine_prediction <- pretty_labels_conv(data_ann$machine_prediction)
+
+
+data_ann <- dplyr::group_by(data_ann, subject_id) %>% summarise(n_annotations=sum(as.numeric(n_users)),
+                                                                experiment_group = max(experiment_group),
+                                                                x_exp_eligible=max(ifelse(machine_prediction %in% c("Blank", "Vehicle"), 1, 
+                                                                                      ifelse(machine_prediction %in% species_allowed & machine_probability >= 0.85, 1, 0))))
+# check eligiblity flag
+table(data_ann$experiment_group, data_ann$x_exp_eligible)
+
+# Comparison Experiment vs Non-Experiment on eligible only
+data_el <- filter(data_ann, x_exp_eligible==1)
+tab <- group_by(data_el, experiment_group) %>% summarise(n_annotations=sum(n_annotations))
+table(data_el$experiment_group)
+
+# less annotations required on eligible subjects
+1-(tab$n_annotations[2]/ tab$n_annotations[1])
+
+
+tt <- group_by(data_ann, experiment_group) %>% summarise(n_annotations=sum(n_annotations))
+c(tt$n_annotations[1], sum(tt$n_annotations[2:3]))
+
+# less annotations required total
+1-(sum(tt$n_annotations[2:3])/ tt$n_annotations[1])
+
+# experiment group vs non-experiment annotations
+(1/tt$n_annotations[1]) * sum(tt$n_annotations[2:3])
+
+
+
+
+
 
 
 ############################ -
@@ -56,12 +120,9 @@ data$x_pred_agreement <- ifelse(tolower(data$machine_prediction_workflow) == tol
 ############################ -
 
                
-data_gg <- group_by(data, workflow_current, experiment_group, retirement_reason) %>% summarise(n=n()/max(n_in_group))
+data_gg <- dplyr::group_by(data, workflow_current, experiment_group, retirement_reason) %>% dplyr::summarise(n=n()/max(n_in_group))
 ggplot(data_gg, aes(x=workflow_current,y=n)) + geom_bar(stat="identity") + facet_grid(experiment_group~retirement_reason)
 
-
-data_gg <- group_by(data, workflow_current, experiment_group) %>% summarise(n=n()/max(n_in_group))
-ggplot(data_gg, aes(x=workflow_current,y=n)) + geom_bar(stat="identity") + facet_wrap("experiment_group")
 
 data_gg <- group_by(data, workflow_current, experiment_group) %>% summarise(n=n()/max(n_in_group))
 ggplot(data_gg, aes(x=workflow_current,y=n)) + geom_bar(stat="identity") + facet_wrap("experiment_group")
@@ -278,8 +339,10 @@ ggplot(data, aes(x=machine_probability,fill=factor(x_pred_agreement))) + geom_hi
 # retirement per day
 ggplot(filter(data,!is.na(ret_retired_at)), aes(x=as.Date(ret_retired_at),fill=experiment_group)) + 
   geom_bar(position="dodge") + 
-  facet_wrap("workflow_current") +
-  theme_light()
+  facet_wrap("workflow_current", scales="free") +
+  theme_light() +
+  xlab("Date") +
+  ylab("Retired Subjects")
 
 # classifications per day
 dat_gg <- filter(data, !is.na(ret_retired_at)) %>% 
@@ -290,5 +353,11 @@ ggplot(dat_gg, aes(x=ret_retired_at,y=n_users/n_ret, colour=experiment_group)) +
   geom_line(lwd=2)+ 
   facet_grid(workflow_current~.) +
   theme_light() +
-  scale_y_continuous(limits=c(0,10))
+  scale_y_continuous(limits=c(0,10)) +
+  xlab("Date") +
+  ylab("Average Annotations / Retirement")
+
+
+
+
 

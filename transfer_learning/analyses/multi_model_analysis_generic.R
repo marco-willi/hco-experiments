@@ -103,8 +103,8 @@ load_all_data <- function(model, ts_id, project_id){
   # define path
   paths <- define_paths(project_id)
   
-  pred_file <- paste(model,"_",ts_id,"_preds_val",sep="")
-  subject_set <- paste("val_subject_set_",model,sep="")
+  pred_file <- paste(model,"_",ts_id,"_preds_test",sep="")
+  subject_set <- paste("test_subject_set_",model,sep="")
   log_file <- paste(model, "_",ts_id,"_training",sep="")
   
   preds <- read.csv(paste(paths$path_save,pred_file,".csv",sep=""))
@@ -161,8 +161,8 @@ log_data_all <- do.call(rbind, log_data_all)
 # visualize p_train panels
 ggplot(log_data_all, aes(x=epoch, y=val_acc, colour=model)) + 
   geom_line(lwd=2) + theme_minimal() +
-  xlab("Validation Accuracy") +
-  ylab("Epoch") +
+  ylab("Validation Accuracy") +
+  xlab("Epoch") +
   scale_y_continuous(limits=c(min(log_data_all$val_acc),1))
 
 # by species
@@ -171,7 +171,9 @@ preds_data_all <- lapply(all_data, function(x){
   preds$model = x$model[1]
   preds$p_train = gsub(pattern = "- ", "", str_match(x$model_name,  "-(.*)%")[1])[1]
   preds$train_mode = ifelse(grepl("ss", x$model),"Transfer-Learning", "Scratch")[1]
-  class_dist <- dplyr::group_by(preds,model, p_train, train_mode, y_true) %>%
+  preds$project_name = x$project_name
+  preds$model_name = x$model_name
+  class_dist <- dplyr::group_by(preds,model, project_name, model_name, p_train, train_mode, y_true) %>%
     summarise(n_obs = n(),n_obs_hc = sum(ifelse(p >=0.95, 1, 0)), matches = sum(y_true == y_pred), n = n(), matches_hc = sum(ifelse(p >=0.95, y_true == y_pred, 0))) %>%
     mutate(p_obs=n_obs / sum(n_obs), accuracy=matches/n, accuracy_hc=matches_hc /n_obs_hc, p_obs_hc=n_obs_hc / sum(n_obs_hc))
   return(class_dist)})
@@ -182,8 +184,11 @@ order_species <- group_by(preds_data_all, y_true) %>% summarise(n=max(n_obs)) %>
 
 preds_data_all$y_true <- factor(preds_data_all$y_true, levels = order_species$y_true)
 
-group_by(preds_data_all, model) %>% summarise(acc_hc = weighted.mean(accuracy_hc,n_obs_hc, na.rm = TRUE))
-group_by(preds_data_all, model) %>% summarise(acc = weighted.mean(accuracy,n_obs, na.rm = TRUE))
+group_by(preds_data_all, model, project_name, model_name) %>% summarise(acc_hc = weighted.mean(accuracy_hc,n_obs_hc, na.rm = TRUE),
+                                                                        acc = weighted.mean(accuracy,n_obs, na.rm = TRUE))
+
+
+
 
 
 

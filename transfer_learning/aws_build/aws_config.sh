@@ -79,3 +79,9 @@ scp -i ~/keys/zv_test_key.pem ~/data_hdd/models/snapshot_wisconsin/* ubuntu@ec2-
 
 # dettach from docker without closing it
 # ctrl+ p ctrl + q
+
+
+# Lucifer - Create new virtualenv
+./bin/python3.6/bin/virtualenv -p /home/will5448/bin/python3.6/bin/python3.6 /home/will5448/virtualenvs/tf
+./bin/python3.6/bin/virtualenv -p python3 /home/will5448/virtualenvs/tf2
+./bin/python3.6/bin/virtualenv -p python3 /home/will5448/virtualenvs/tl2
