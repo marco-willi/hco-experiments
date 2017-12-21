@@ -14,7 +14,8 @@ from sandbox.motion_detection_funcs import\
 
 
 def process_images(image_seq_files, image_path, output_path,
-                   algo, target_shape, grayscale=True):
+                   algo, target_shape, grayscale=True, crop_images=False,
+                   combine_images=True):
     # read and process images
     for img_seq in image_seq_files:
         # get all images
@@ -144,29 +145,64 @@ def process_images(image_seq_files, image_path, output_path,
         #         img_dict_shapes[ii] = img_circle
 
         # crop images from original images
-        img_dict_crops = dict()
-        for ii, img in img_dict.items():
-            if ii == 'avg':
-                continue
-            if res_type == 'rectangle':
-                # crop
-                rec = points[ii]
-                img_crop = np.array(img[rec['lower']:rec['upper'],
-                                        rec['left']:rec['right'], :])
-                # img_crop = np.zeros(shape=(height, width, img.shape[2]))
-                img_dict_crops[ii] = img_crop
-            elif res_type == 'circle':
-                img_dict_crops[ii] = img
+        if crop_images:
+            img_dict_crops = dict()
+            for ii, img in img_dict.items():
+                if ii == 'avg':
+                    continue
+                if res_type == 'rectangle':
+                    # crop
+                    rec = points[ii]
+                    img_crop = np.array(img[rec['lower']:rec['upper'],
+                                            rec['left']:rec['right'], :])
+                    # img_crop = np.zeros(shape=(height, width, img.shape[2]))
+                    img_dict_crops[ii] = img_crop
+                elif res_type == 'circle':
+                    img_dict_crops[ii] = img
 
-        # write cropped image to disk
-        for ii, img_path in image_seq_files[img_seq].items():
-            if ii == 'avg':
-                continue
-            f_path_new = output_path + img_path
-            img = img_dict_crops[ii]
-            if len(img.shape) == 2:
-                img = np.expand_dims(img, axis=2)
-            img_to_save = array_to_img(img, )
+            # write cropped image to disk
+            for ii, img_path in image_seq_files[img_seq].items():
+                if ii == 'avg':
+                    continue
+                f_path_new = output_path + img_path
+                img = img_dict_crops[ii]
+                if len(img.shape) == 2:
+                    img = np.expand_dims(img, axis=2)
+                img_to_save = array_to_img(img, )
+                # save
+                img_to_save.save(f_path_new)
+
+        # combine set of motion images to one image
+        if combine_images:
+            # define output filename of the sequence
+            f_path_new = output_path + img_seq + '.jpeg'
+            # sequence length
+            n_images_in_sequence = len(image_seq_files[img_seq].keys() -
+                                       set('avg'))
+            dim_image = 0
+            counter = 0
+
+            # read all images of a sequence
+            for ii, img_path in image_seq_files[img_seq].items():
+                if counter == 0:
+                    # create numpy array for the sequence
+                    img = img_blurr_dict[ii]
+                    images_concat = np.zeros(shape=img.shape +
+                                             (n_images_in_sequence,))
+                counter += 1
+                # omit the average image
+                if ii == 'avg':
+                    continue
+                # get current image
+                img = img_blurr_dict[ii]
+                if len(img.shape) == 3:
+                    img = np.squeeze(img)
+                # add to images_concat
+                images_concat[:, :, dim_image] = img
+                dim_image += 1
+
+            # save sequence of image as one image
+            img_to_save = array_to_img(images_concat)
             # save
             img_to_save.save(f_path_new)
 
@@ -174,7 +210,7 @@ def process_images(image_seq_files, image_path, output_path,
 def run_motion_detection():
     # Parameters
     image_path_overall = cfg_path['images'] + 'all' + os.path.sep
-    image_path_output = cfg_path['images'] + 'all_cropped' + os.path.sep
+    image_path_output = cfg_path['images'] + 'all_comb' + os.path.sep
     algo = 'mixer'
     grayscale = True
     target_shape = (330, 330)
@@ -234,7 +270,9 @@ def run_motion_detection():
                            output_path=output_path,
                            algo=algo,
                            target_shape=target_shape,
-                           grayscale=grayscale)
+                           grayscale=grayscale,
+                           crop_images=False,
+                           combine_images=True)
 
 if __name__ == '__main__':
     run_motion_detection()
