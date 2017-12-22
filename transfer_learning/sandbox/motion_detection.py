@@ -20,11 +20,17 @@ def process_images(image_seq_files, image_path, output_path,
     for img_seq in image_seq_files:
         # get all images
         img_dict = dict()
+        n_in_seq = 0
         for ii, img_path in image_seq_files[img_seq].items():
             f_path = image_path + img_path
             # read image from disk
             img = load_img(f_path)
             img_arr = img_to_array(img) / 255
+            if n_in_seq == 0:
+                img_shape = img_arr.shape
+            elif img_shape != img_arr.shape:
+                img = load_img(f_path, target_size=img_shape)
+                img_arr = img_to_array(img) / 255
             # store in images_dict
             img_dict[ii] = img_arr
             # calculate average image
@@ -32,6 +38,7 @@ def process_images(image_seq_files, image_path, output_path,
                 img_avg = np.copy(img_arr)
             else:
                 img_avg = img_avg + img_arr
+            n_in_seq += 1
         img_avg = img_avg / len(image_seq_files[img_seq].keys())
         img_dict['avg'] = img_avg
 
