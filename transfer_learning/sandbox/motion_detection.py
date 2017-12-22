@@ -186,6 +186,9 @@ def process_images(image_seq_files, image_path, output_path,
             # sequence length
             n_images_in_sequence = len(image_seq_files[img_seq].keys() -
                                        set('avg'))
+            # skip if not 3 images, because cant convert that to RGB image
+            if n_images_in_sequence != 3:
+                continue
             dim_image = 0
             counter = 0
 
@@ -253,11 +256,10 @@ def run_motion_detection():
         print("Found %s Already Processed Files" % len(files_done))
         image_seq_done = dict()
         for f in files_done:
-            if "_" in f:
-                id_name = f.split("_")[0]
+            id_name = f.split("_")[0]
+            if "_" in id_name:
                 seq_id = f.split("_")[1].split(".")[0]
             else:
-                id_name = f.split(".")[0]
                 seq_id = "0"
             if id_name not in image_seq_done:
                 image_seq_done[id_name] = dict()
@@ -265,6 +267,8 @@ def run_motion_detection():
         for k, v in image_seq_done.items():
             if len(v.keys()) == seq_length:
                 image_seq_files.pop(k, None)
+
+        print("Processing %s subjects" % len(image_seq_files))
 
         # process image sequences in batches
         all_imgs = list(image_seq_files.keys())
