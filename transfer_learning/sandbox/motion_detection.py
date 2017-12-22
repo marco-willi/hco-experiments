@@ -256,10 +256,11 @@ def run_motion_detection():
         print("Found %s Already Processed Files" % len(files_done))
         image_seq_done = dict()
         for f in files_done:
-            id_name = f.split("_")[0]
             if "_" in id_name:
+                id_name = f.split("_")[0]
                 seq_id = f.split("_")[1].split(".")[0]
             else:
+                id_name = f.split(".")[0]
                 seq_id = "0"
             if id_name not in image_seq_done:
                 image_seq_done[id_name] = dict()
