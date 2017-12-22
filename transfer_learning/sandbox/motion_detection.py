@@ -221,7 +221,7 @@ def run_motion_detection():
     algo = 'mixer'
     grayscale = True
     target_shape = (330, 330)
-    seq_length = 3
+    seq_length = 1 # 3 for cropped images
 
     # loop over all subfolders
     subfolders = [f.path for f in os.scandir(image_path_overall) if f.is_dir()]
@@ -253,7 +253,10 @@ def run_motion_detection():
         image_seq_done = dict()
         for f in files_done:
             id_name = f.split("_")[0]
-            seq_id = f.split("_")[1].split(".")[0]
+            if "_" in id_name:
+                seq_id = f.split("_")[1].split(".")[0]
+            else:
+                seq_id = "0"
             if id_name not in image_seq_done:
                 image_seq_done[id_name] = dict()
             image_seq_done[id_name][seq_id] = f
