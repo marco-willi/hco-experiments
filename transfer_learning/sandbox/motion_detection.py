@@ -221,7 +221,7 @@ def run_motion_detection():
     algo = 'mixer'
     grayscale = True
     target_shape = (330, 330)
-    seq_length = 1 # 3 for cropped images
+    seq_length = 1 # 3 for crop_images
 
     # loop over all subfolders
     subfolders = [f.path for f in os.scandir(image_path_overall) if f.is_dir()]
@@ -250,12 +250,14 @@ def run_motion_detection():
 
         # remove already processed images
         files_done = sorted(os.listdir(output_path))
+        print("Found %s Already Processed Files" % len(files_done))
         image_seq_done = dict()
         for f in files_done:
-            id_name = f.split("_")[0]
-            if "_" in id_name:
+            if "_" in f:
+                id_name = f.split("_")[0]
                 seq_id = f.split("_")[1].split(".")[0]
             else:
+                id_name = f.split(".")[0]
                 seq_id = "0"
             if id_name not in image_seq_done:
                 image_seq_done[id_name] = dict()
