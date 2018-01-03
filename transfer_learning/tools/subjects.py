@@ -389,7 +389,7 @@ class Subject(object):
         return self.urls
 
     def getImage(self, fname):
-        return self.iamges[fname]
+        return self.images[fname]
 
     def _setURLs(self, urls):
         self.urls = [x[::-1] for x in sorted([x[::-1] for x in urls])]
